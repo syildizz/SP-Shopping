@@ -38,6 +38,7 @@ namespace SP_Shopping.Controllers
             }
 
             var product = await _context.Products
+                .Include(p => p.Category)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {
@@ -96,7 +97,11 @@ namespace SP_Shopping.Controllers
             {
                 return NotFound();
             }
-            return View(product);
+            IEnumerable<Category> categories = _context.Categories.ToList();
+            ProductCreateViewModel pcvm = new ProductCreateViewModel();
+            pcvm.SetProductFields(product);
+            pcvm.SetCategorySelectList(categories, product.CategoryId);
+            return View(pcvm);
         }
 
         // POST: Products/Edit/5
@@ -151,6 +156,7 @@ namespace SP_Shopping.Controllers
             }
 
             var product = await _context.Products
+                .Include(p => p.Category)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {

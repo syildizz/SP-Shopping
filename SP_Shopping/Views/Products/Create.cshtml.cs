@@ -34,18 +34,46 @@ namespace SP_Shopping.Views.Products
 
         }
 
-        public ProductCreateViewModel SetCategorySelectList(IEnumerable<Category> categories)
+        //public ProductCreateViewModel SetCategorySelectList(IEnumerable<Category> categories)
+        //{
+        //    foreach(var category in categories)
+        //    {
+        //        CategorySelectItems.Add(new SelectListItem()
+        //            {
+        //                Text = category.Name,
+        //                Value = category.Id.ToString()
+        //            }
+        //        );
+        //    }
+        //    return this;
+        //}
+
+        public ProductCreateViewModel SetCategorySelectList(IEnumerable<Category> categories, int? selected = null)
         {
             foreach(var category in categories)
             {
+                bool isSelected = false;
+                if (selected != null && category.Id == selected)
+                {
+                    isSelected = true;
+                }
                 CategorySelectItems.Add(new SelectListItem()
                     {
                         Text = category.Name,
-                        Value = category.Id.ToString()
+                        Value = category.Id.ToString(),
+                        Selected = isSelected
                     }
                 );
             }
             return this;
         }
+
+        public ProductCreateViewModel SetProductFields(Product product)
+        {
+            Name = product.Name;
+            Price = product.Price;
+            return this;
+        }
+
     }
 }
