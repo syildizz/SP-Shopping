@@ -19,7 +19,7 @@ namespace SP_Shopping.Controllers
         public async Task<IActionResult> Index()
         {
             var pdtoList = await _context.Products.Include(p => p.Category)
-                .Select(pr => new ProductDetailsDtoMapper(_context).MapTo(pr))
+                .Select(pr => new ProductDetailsDtoMapper(_context).Map(pr))
                 .ToListAsync();
             return View(pdtoList);
         }
@@ -40,7 +40,7 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            ProductDetailsDto pdto = new ProductDetailsDtoMapper(_context).MapTo(product);
+            ProductDetailsDto pdto = new ProductDetailsDtoMapper(_context).Map(product);
 
             return View(pdto);
         }
@@ -49,7 +49,7 @@ namespace SP_Shopping.Controllers
         public IActionResult Create()
         {
             IEnumerable<Category> categories = _context.Categories.ToList();
-            var pdto = new ProductCreateDtoMapper(_context).MapTo(new Product());
+            var pdto = new ProductCreateDtoMapper(_context).Map(new Product());
             return View(pdto);
         }
 
@@ -64,7 +64,7 @@ namespace SP_Shopping.Controllers
             {
                 try
                 {
-                    Product product = new ProductCreateDtoMapper(_context).MapFrom(pdto);
+                    Product product = new ProductCreateDtoMapper(_context).Map(pdto);
                     product.InsertionDate = DateTime.Now;
                     await _context.AddAsync(product);
                     await _context.SaveChangesAsync();
@@ -92,7 +92,7 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var pdto = new ProductCreateDtoMapper(_context).MapTo(product);
+            var pdto = new ProductCreateDtoMapper(_context).Map(product);
 
             return View(pdto);
         }
@@ -113,7 +113,7 @@ namespace SP_Shopping.Controllers
             {
                 try
                 {
-                    var product = new ProductCreateDtoMapper(_context).MapFrom(pdto);
+                    var product = new ProductCreateDtoMapper(_context).Map(pdto);
                     product.ModificationDate = DateTime.Now;
                     await _context.Products
                         .Where(p => p.Id == id)
@@ -158,7 +158,7 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var pdto = new ProductDetailsDtoMapper(_context).MapTo(product);
+            var pdto = new ProductDetailsDtoMapper(_context).Map(product);
             return View(pdto);
         }
 

@@ -16,7 +16,7 @@ namespace SP_Shopping.Dtos
             _context = context;
         }
 
-        public ProductCreateDto MapTo(Product product)
+        public ProductCreateDto Map(Product product)
         {
             ProductCreateDto dto = new ProductCreateDto();
             dto.Name = product.Name;
@@ -32,7 +32,7 @@ namespace SP_Shopping.Dtos
             return dto;
 
         }
-        public Product MapFrom(ProductCreateDto productCreateDto)
+        public Product Map(ProductCreateDto productCreateDto)
         {
             Product product = new Product()
             {

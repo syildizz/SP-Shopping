@@ -10,7 +10,7 @@ namespace SP_Shopping.Dtos
         {
             _context = context;
         }
-        public Product MapFrom(ProductDetailsDto productCreateDto)
+        public Product Map(ProductDetailsDto productCreateDto)
         {
             Product product = new Product()
             {
@@ -23,7 +23,7 @@ namespace SP_Shopping.Dtos
             return product;
         }
 
-        public ProductDetailsDto MapTo(Product product)
+        public ProductDetailsDto Map(Product product)
         {
             ProductDetailsDto dto = new ProductDetailsDto();
             dto.Id = product.Id;
