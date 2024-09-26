@@ -38,6 +38,8 @@ namespace SP_Shopping
 
             var app = builder.Build();
 
+            app.UseRequestLocalization("tr-TR");
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
