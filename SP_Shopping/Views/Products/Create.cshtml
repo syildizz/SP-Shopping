@@ -1,4 +1,4 @@
-﻿@model SP_Shopping.Views.Products.ProductCreateViewModel
+﻿@model ProductCreateViewModel
 
 @{
     ViewData["Title"] = "Create";
@@ -23,7 +23,8 @@
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <select asp-for="CategorySelectedValue" asp-items="@Model.CategorySelectItems" class="form-select sm"></select>
+                <label asp-for="CategorySelectListItems" class="control-label"></label>
+                <select asp-for="CategorySelectedOptionValue" asp-items="@Model.CategorySelectListItems" class="form-select sm"></select>
             </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />

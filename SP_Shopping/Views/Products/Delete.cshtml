@@ -1,4 +1,4 @@
-﻿@model SP_Shopping.Models.Product
+﻿@model SP_Shopping.ViewModels.ProductDetailsViewModel
 
 @{
     ViewData["Title"] = "Delete";
@@ -24,10 +24,10 @@
             @Html.DisplayFor(model => model.Price)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Category)
+            @Html.DisplayNameFor(model => model.CategoryName)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Category.Name)
+            @Html.DisplayFor(model => model.CategoryName)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.InsertionDate)

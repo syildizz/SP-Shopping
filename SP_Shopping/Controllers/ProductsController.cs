@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.CodeAnalysis.Operations;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
-using SP_Shopping.Views.Products;
+using SP_Shopping.ViewModels;
 
 namespace SP_Shopping.Controllers
 {
@@ -25,8 +18,15 @@ namespace SP_Shopping.Controllers
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            var Unused = _context.Products.ToList();
-            return View(await _context.Products.Include(p => p.Category).ToListAsync());
+            var products = await _context.Products.Include(p => p.Category).ToListAsync();
+            List<ProductDetailsViewModel> pdvmList = [];
+            foreach (var product in products)
+            {
+                var pdvm = new ProductDetailsViewModel();
+                pdvm.SetProductFields(product);
+                pdvmList.Add(pdvm);
+            }
+            return View(pdvmList);
         }
 
         // GET: Products/Details/5
@@ -45,7 +45,10 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            return View(product);
+            var pdvm = new ProductDetailsViewModel();
+            pdvm.SetProductFields(product);
+
+            return View(pdvm);
         }
 
         // GET: Products/Create
@@ -69,9 +72,9 @@ namespace SP_Shopping.Controllers
                 try
                 {
                     Category? category = await _context.Categories
-                        .Where(c => c.Id == pcvm.CategorySelectedValue)
+                        .Where(c => c.Id == pcvm.CategorySelectedOptionValue)
                         .FirstOrDefaultAsync();
-                    Product product = pcvm.Product(category);
+                    Product product = pcvm.GetProductFields(category);
                     await _context.AddAsync(product);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
@@ -109,9 +112,9 @@ namespace SP_Shopping.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind($"{nameof(Product.Id)},{nameof(Product.Name)},{nameof(Product.Price)},{nameof(Product.Category)}")] Product product)
+        public async Task<IActionResult> Edit(int id, ProductCreateViewModel pcvm)
         {
-            if (id != product.Id)
+            if (!ProductExists(id))
             {
                 return NotFound();
             }
@@ -121,11 +124,11 @@ namespace SP_Shopping.Controllers
                 try
                 {
                     await _context.Products
-                        .Where(p => p.Id == product.Id)
+                        .Where(p => p.Id == id)
                         .ExecuteUpdateAsync(s => s
-                            .SetProperty(b => b.Name, product.Name)
-                            .SetProperty(b => b.Price, product.Price)
-                            .SetProperty(b => b.Category, product.Category)
+                            .SetProperty(b => b.Name, pcvm.Name)
+                            .SetProperty(b => b.Price, pcvm.Price)
+                            .SetProperty(b => b.CategoryId, pcvm.CategorySelectedOptionValue)
                             .SetProperty(b => b.ModificationDate, DateTime.Now)
                         );
                     //_context.Update(product);
@@ -133,7 +136,7 @@ namespace SP_Shopping.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductExists(product.Id))
+                    if (!ProductExists(id))
                     {
                         return NotFound();
                     }
@@ -144,7 +147,7 @@ namespace SP_Shopping.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(product);
+            return View(pcvm);
         }
 
         // GET: Products/Delete/5
@@ -163,7 +166,10 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            return View(product);
+            var pdvm = new ProductDetailsViewModel();
+            pdvm.SetProductFields(product);
+
+            return View(pdvm);
         }
 
         // POST: Products/Delete/5

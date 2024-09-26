@@ -1,4 +1,4 @@
-﻿@model IEnumerable<SP_Shopping.Models.Product>
+﻿@model IEnumerable<SP_Shopping.ViewModels.ProductDetailsViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -19,7 +19,7 @@
                 @Html.DisplayNameFor(model => model.Price)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Category)
+                @Html.DisplayNameFor(model => model.CategoryName)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.InsertionDate)
@@ -40,7 +40,7 @@
                 @Html.DisplayFor(modelItem => item.Price)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Category.Name) 
+                @Html.DisplayFor(modelItem => item.CategoryName) 
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.InsertionDate)

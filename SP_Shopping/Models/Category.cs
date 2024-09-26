@@ -10,6 +10,6 @@ namespace SP_Shopping.Models
         [Required]
         [MaxLength(50, ErrorMessage = "A genre name cannot be longer than 50 characters.")]
         public required string Name { get; set; }
-        public required IEnumerable<Product> Products { get; set; }
+        public List<Product> Products { get; set; } = new();
     }
 }
