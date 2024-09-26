@@ -2,13 +2,13 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace SP_Shopping.ViewModels
+namespace SP_Shopping.Dtos
 {
-    public class ProductDetailsViewModel
+    public class ProductDetailsDto
     {
         public int Id { get; set; }
         [Required]
-        [MaxLength(100, ErrorMessage="The name of the product can at most be 100 characters.")]
+        [MaxLength(100, ErrorMessage = "The name of the product can at most be 100 characters.")]
         [DisplayName("Name")]
         public string Name { get; set; }
         [DataType(DataType.Currency)]
@@ -19,20 +19,9 @@ namespace SP_Shopping.ViewModels
         public string? CategoryName { get; set; }
         [DataType(DataType.DateTime)]
         [DisplayName("Publishing Date")]
-        public DateTime InsertionDate { get; set; } 
+        public DateTime InsertionDate { get; set; }
         [DataType(DataType.DateTime)]
         [DisplayName("Last Modified")]
         public DateTime? ModificationDate { get; set; }
-
-        public ProductDetailsViewModel SetProductFields(Product product)
-        {
-            Id = product.Id;
-            Name = product.Name;
-            Price = product.Price;
-            CategoryName = product.Category?.Name;
-            InsertionDate = product.InsertionDate;
-            ModificationDate = product.ModificationDate;
-            return this;
-        }
     }
 }

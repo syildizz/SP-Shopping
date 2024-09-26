@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
+using SP_Shopping.Dtos;
 using SP_Shopping.Models;
-using SP_Shopping.ViewModels;
 
 namespace SP_Shopping.Controllers
 {
@@ -18,15 +18,10 @@ namespace SP_Shopping.Controllers
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            var products = await _context.Products.Include(p => p.Category).ToListAsync();
-            List<ProductDetailsViewModel> pdvmList = [];
-            foreach (var product in products)
-            {
-                var pdvm = new ProductDetailsViewModel();
-                pdvm.SetProductFields(product);
-                pdvmList.Add(pdvm);
-            }
-            return View(pdvmList);
+            var pdtoList = await _context.Products.Include(p => p.Category)
+                .Select(pr => new ProductDetailsDtoMapper(_context).MapTo(pr))
+                .ToListAsync();
+            return View(pdtoList);
         }
 
         // GET: Products/Details/5
@@ -45,19 +40,17 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var pdvm = new ProductDetailsViewModel();
-            pdvm.SetProductFields(product);
+            ProductDetailsDto pdto = new ProductDetailsDtoMapper(_context).MapTo(product);
 
-            return View(pdvm);
+            return View(pdto);
         }
 
         // GET: Products/Create
         public IActionResult Create()
         {
             IEnumerable<Category> categories = _context.Categories.ToList();
-            var pcvm = new ProductCreateViewModel();
-            pcvm.SetCategorySelectList(categories);
-            return View(pcvm);
+            var pdto = new ProductCreateDtoMapper(_context).MapTo(new Product());
+            return View(pdto);
         }
 
         // POST: Products/Create
@@ -65,16 +58,14 @@ namespace SP_Shopping.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ProductCreateViewModel pcvm)
+        public async Task<IActionResult> Create(ProductCreateDto pdto)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    Category? category = await _context.Categories
-                        .Where(c => c.Id == pcvm.CategorySelectedOptionValue)
-                        .FirstOrDefaultAsync();
-                    Product product = pcvm.GetProductFields(category);
+                    Product product = new ProductCreateDtoMapper(_context).MapFrom(pdto);
+                    product.InsertionDate = DateTime.Now;
                     await _context.AddAsync(product);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
@@ -84,7 +75,7 @@ namespace SP_Shopping.Controllers
                     return BadRequest();
                 }
             }
-            return View(pcvm);
+            return View(pdto);
         }
 
         // GET: Products/Edit/5
@@ -100,11 +91,10 @@ namespace SP_Shopping.Controllers
             {
                 return NotFound();
             }
-            IEnumerable<Category> categories = _context.Categories.ToList();
-            ProductCreateViewModel pcvm = new ProductCreateViewModel();
-            pcvm.SetProductFields(product);
-            pcvm.SetCategorySelectList(categories, product.CategoryId);
-            return View(pcvm);
+
+            var pdto = new ProductCreateDtoMapper(_context).MapTo(product);
+
+            return View(pdto);
         }
 
         // POST: Products/Edit/5
@@ -112,7 +102,7 @@ namespace SP_Shopping.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, ProductCreateViewModel pcvm)
+        public async Task<IActionResult> Edit(int id, ProductCreateDto pdto)
         {
             if (!ProductExists(id))
             {
@@ -123,13 +113,15 @@ namespace SP_Shopping.Controllers
             {
                 try
                 {
+                    var product = new ProductCreateDtoMapper(_context).MapFrom(pdto);
+                    product.ModificationDate = DateTime.Now;
                     await _context.Products
                         .Where(p => p.Id == id)
                         .ExecuteUpdateAsync(s => s
-                            .SetProperty(b => b.Name, pcvm.Name)
-                            .SetProperty(b => b.Price, pcvm.Price)
-                            .SetProperty(b => b.CategoryId, pcvm.CategorySelectedOptionValue)
-                            .SetProperty(b => b.ModificationDate, DateTime.Now)
+                            .SetProperty(b => b.Name, product.Name)
+                            .SetProperty(b => b.Price, product.Price)
+                            .SetProperty(b => b.CategoryId, product.CategoryId)
+                            .SetProperty(b => b.ModificationDate, product.ModificationDate)
                         );
                     //_context.Update(product);
                     await _context.SaveChangesAsync();
@@ -147,7 +139,7 @@ namespace SP_Shopping.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(pcvm);
+            return View(pdto);
         }
 
         // GET: Products/Delete/5
@@ -166,10 +158,8 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var pdvm = new ProductDetailsViewModel();
-            pdvm.SetProductFields(product);
-
-            return View(pdvm);
+            var pdto = new ProductDetailsDtoMapper(_context).MapTo(product);
+            return View(pdto);
         }
 
         // POST: Products/Delete/5
