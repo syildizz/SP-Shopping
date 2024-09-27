@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
 using SP_Shopping.Dtos;
@@ -9,17 +12,19 @@ namespace SP_Shopping.Controllers
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ProductsController(ApplicationDbContext context)
+        public ProductsController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: Products
         public async Task<IActionResult> Index()
         {
             var pdtoList = await _context.Products.Include(p => p.Category)
-                .Select(pr => new ProductDetailsDtoMapper(_context).Map(pr))
+                .Select(pr => _mapper.Map<Product,ProductDetailsDto>(pr))
                 .ToListAsync();
             return View(pdtoList);
         }
@@ -40,16 +45,17 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            ProductDetailsDto pdto = new ProductDetailsDtoMapper(_context).Map(product);
+            ProductDetailsDto pdto = _mapper.Map<Product, ProductDetailsDto>(product);
 
             return View(pdto);
         }
 
         // GET: Products/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            IEnumerable<Category> categories = _context.Categories.ToList();
-            var pdto = new ProductCreateDtoMapper(_context).Map(new Product());
+            var pdto = _mapper.Map<Product, ProductCreateDto>(new Product());
+            IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
+            ViewBag.categorySelectList = categorySelectList;
             return View(pdto);
         }
 
@@ -64,7 +70,7 @@ namespace SP_Shopping.Controllers
             {
                 try
                 {
-                    Product product = new ProductCreateDtoMapper(_context).Map(pdto);
+                    Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
                     product.InsertionDate = DateTime.Now;
                     await _context.AddAsync(product);
                     await _context.SaveChangesAsync();
@@ -92,7 +98,9 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var pdto = new ProductCreateDtoMapper(_context).Map(product);
+            var pdto = _mapper.Map<Product, ProductCreateDto>(product);
+            var categorySelectList = await GetCategoriesSelectListAsync();
+            ViewBag.categorySelectList = categorySelectList;
 
             return View(pdto);
         }
@@ -113,7 +121,7 @@ namespace SP_Shopping.Controllers
             {
                 try
                 {
-                    var product = new ProductCreateDtoMapper(_context).Map(pdto);
+                    var product = _mapper.Map<ProductCreateDto, Product>(pdto);
                     product.ModificationDate = DateTime.Now;
                     await _context.Products
                         .Where(p => p.Id == id)
@@ -139,6 +147,8 @@ namespace SP_Shopping.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            var categorySelectList = await GetCategoriesSelectListAsync();
+            ViewBag.CategorySelectList = categorySelectList;
             return View(pdto);
         }
 
@@ -158,7 +168,7 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var pdto = new ProductDetailsDtoMapper(_context).Map(product);
+            var pdto = _mapper.Map<Product, ProductDetailsDto>(product);
             return View(pdto);
         }
 
@@ -180,6 +190,13 @@ namespace SP_Shopping.Controllers
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.Id == id);
+        }
+
+        private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
+        {
+            return await _context.Categories
+                .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
+                .ToListAsync();
         }
     }
 }
