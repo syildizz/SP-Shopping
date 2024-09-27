@@ -21,14 +21,14 @@ namespace SP_Shopping.Dtos
             ProductCreateDto dto = new ProductCreateDto();
             dto.Name = product.Name;
             dto.Price = product.Price;
-            dto.CategorySelectListItems = _context.Categories
+            dto.CategorySelectList = _context.Categories
                 .Select(c => new SelectListItem()
                 {
                     Text = c.Name,
                     Value = c.Id.ToString()
                 })
                 .ToList();
-            dto.CategorySelectedOptionValue = product.CategoryId;
+            dto.CategoryId = product.CategoryId;
             return dto;
 
         }
@@ -38,7 +38,7 @@ namespace SP_Shopping.Dtos
             {
                 Name = productCreateDto.Name,
                 Price = productCreateDto.Price,
-                CategoryId = productCreateDto.CategorySelectedOptionValue
+                CategoryId = productCreateDto.CategoryId
             };
             return product;
         }

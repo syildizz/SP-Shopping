@@ -11,6 +11,6 @@
     <span asp-validation-for="Price" class="text-danger"></span>
 </div>
 <div class="form-group">
-    <label asp-for="CategorySelectListItems" class="control-label"></label>
-    <select asp-for="CategorySelectedOptionValue" asp-items="@Model.CategorySelectListItems" class="form-select sm"></select>
+    <label asp-for="CategorySelectList" class="control-label"></label>
+    <select asp-for="CategoryId" asp-items="@Model.CategorySelectList" class="form-select sm"></select>
 </div>

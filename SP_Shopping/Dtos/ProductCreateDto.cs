@@ -14,8 +14,8 @@ namespace SP_Shopping.Dtos
         [Required]
         public decimal Price { get; set; }
         [DisplayName(nameof(Category))]
-        public ICollection<SelectListItem> CategorySelectListItems { get; set; } = [];
-        public int CategorySelectedOptionValue { get; set; }
+        public ICollection<SelectListItem> CategorySelectList { get; set; } = [];
+        public int CategoryId { get; set; }
     }
 
 }
