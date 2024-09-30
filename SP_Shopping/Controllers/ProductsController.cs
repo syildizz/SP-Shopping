@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
+using SP_Shopping.Repository;
 
 namespace SP_Shopping.Controllers
 {
@@ -13,19 +13,20 @@ namespace SP_Shopping.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ProductRepository _productRepository;
 
         public ProductsController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
+            _productRepository = new ProductRepository(_context);
         }
 
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            var pdtoList = await _context.Products.Include(p => p.Category)
-                .Select(pr => _mapper.Map<Product,ProductDetailsDto>(pr))
-                .ToListAsync();
+            var pdtoList = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>
+                (await _productRepository.GetAllAsync());
             return View(pdtoList);
         }
 
@@ -37,9 +38,10 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            //var product = await _context.Products
+            //    //.Include(p => p.Category)
+            //    .FirstOrDefaultAsync(m => m.Id == id);
+            var product = await _productRepository.GetByIdAsync((int)id);
             if (product == null)
             {
                 return NotFound();
@@ -92,7 +94,8 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products.FindAsync(id);
+            //var product = await _context.Products.FindAsync(id);
+            var product = await _productRepository.GetByIdAsync((int)id);
             if (product == null)
             {
                 return NotFound();
@@ -160,9 +163,10 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            //var product = await _context.Products
+            //    .Include(p => p.Category)
+            //    .FirstOrDefaultAsync(m => m.Id == id);
+            var product = await _productRepository.GetByIdAsync((int)id);
             if (product == null)
             {
                 return NotFound();
@@ -177,7 +181,8 @@ namespace SP_Shopping.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            //var product = await _context.Products.FindAsync(id);
+            var product = await _productRepository.GetByIdAsync(id);
             if (product != null)
             {
                 _context.Products.Remove(product);
