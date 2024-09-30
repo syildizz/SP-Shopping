@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
-using SP_Shopping.Models;
 
 namespace SP_Shopping.Repository;
 

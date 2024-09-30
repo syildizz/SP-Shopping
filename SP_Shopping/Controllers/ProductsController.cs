@@ -13,13 +13,15 @@ namespace SP_Shopping.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
-        private readonly ProductRepository _productRepository;
+        private readonly IProductRepository _productRepository;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public ProductsController(ApplicationDbContext context, IMapper mapper)
+        public ProductsController(ApplicationDbContext context, IMapper mapper, IProductRepository productRepository, ICategoryRepository categoryRepository)
         {
             _context = context;
             _mapper = mapper;
-            _productRepository = new ProductRepository(_context);
+            _productRepository = productRepository;
+            _categoryRepository = categoryRepository;
         }
 
         // GET: Products
@@ -73,9 +75,10 @@ namespace SP_Shopping.Controllers
                 try
                 {
                     Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
-                    product.InsertionDate = DateTime.Now;
-                    await _context.AddAsync(product);
-                    await _context.SaveChangesAsync();
+                    //product.InsertionDate = DateTime.Now;
+                    //await _context.AddAsync(product);
+                    //await _context.SaveChangesAsync();
+                    await _productRepository.CreateAsync(product);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateException)
@@ -125,17 +128,19 @@ namespace SP_Shopping.Controllers
                 try
                 {
                     var product = _mapper.Map<ProductCreateDto, Product>(pdto);
-                    product.ModificationDate = DateTime.Now;
-                    await _context.Products
-                        .Where(p => p.Id == id)
-                        .ExecuteUpdateAsync(s => s
-                            .SetProperty(b => b.Name, product.Name)
-                            .SetProperty(b => b.Price, product.Price)
-                            .SetProperty(b => b.CategoryId, product.CategoryId)
-                            .SetProperty(b => b.ModificationDate, product.ModificationDate)
-                        );
+                    product.Id = id;
+                    //product.ModificationDate = DateTime.Now;
+                    //await _context.Products
+                    //    .Where(p => p.Id == id)
+                    //    .ExecuteUpdateAsync(s => s
+                    //        .SetProperty(b => b.Name, product.Name)
+                    //        .SetProperty(b => b.Price, product.Price)
+                    //        .SetProperty(b => b.CategoryId, product.CategoryId)
+                    //        .SetProperty(b => b.ModificationDate, product.ModificationDate)
+                    //    );
+                    await _productRepository.UpdateAsync(product);
                     //_context.Update(product);
-                    await _context.SaveChangesAsync();
+                    //await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -185,7 +190,8 @@ namespace SP_Shopping.Controllers
             var product = await _productRepository.GetByIdAsync(id);
             if (product != null)
             {
-                _context.Products.Remove(product);
+                //_context.Products.Remove(product);
+                await _productRepository.DeleteAsync(product);
             }
 
             await _context.SaveChangesAsync();
@@ -194,14 +200,13 @@ namespace SP_Shopping.Controllers
 
         private bool ProductExists(int id)
         {
-            return _context.Products.Any(e => e.Id == id);
+            return _productRepository.GetById(id) is not null;
         }
 
         private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
         {
-            return await _context.Categories
-                .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
-                .ToListAsync();
+            return (await _categoryRepository.GetAllAsync())
+                .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() });
         }
     }
 }
