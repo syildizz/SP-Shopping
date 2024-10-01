@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SP_Shopping.Models
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 {
     [Index(nameof(Name),IsUnique = true)]
     public class Product
@@ -18,8 +19,9 @@ namespace SP_Shopping.Models
         public int CategoryId { get; set; }
         public Category Category { get; set; }
         [DataType(DataType.DateTime)]
+        public List<Order> Orders { get; set; }
         public DateTime InsertionDate { get; set; } 
-        [DataType(DataType.DateTime)]
         public DateTime? ModificationDate { get; set; }
     }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 }

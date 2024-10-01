@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
+using System.Linq.Expressions;
 
 namespace SP_Shopping.Repository;
 
@@ -84,7 +86,7 @@ public class ProductRepository : RepositoryBase<Product>, IProductRepository
         product.ModificationDate = DateTime.Now;
         _context.Products
             .Where(p => p.Id == product.Id)
-            .ExecuteUpdateAsync(s => s
+            .ExecuteUpdate(s => s
                 .SetProperty(b => b.Name, product.Name)
                 .SetProperty(b => b.Price, product.Price)
                 .SetProperty(b => b.CategoryId, product.CategoryId)
@@ -93,6 +95,13 @@ public class ProductRepository : RepositoryBase<Product>, IProductRepository
         //_context.Update(product);
         int numSaved = _context.SaveChanges();
         return (numSaved > 0);
+    }
+
+    public override async Task<bool> ExecuteUpdateAsync(Product product,
+        Expression<Func<Product, bool>> predicate,
+        Expression<Func<SetPropertyCalls<Product>, SetPropertyCalls<Product>>> setPropertyCalls)
+    {
+        return await base.ExecuteUpdateAsync(product, predicate, setPropertyCalls);
     }
 
     public override async Task<bool> DeleteAsync(Product product)

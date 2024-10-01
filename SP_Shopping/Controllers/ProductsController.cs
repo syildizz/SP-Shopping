@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.Operations;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using System.Diagnostics;
 
 namespace SP_Shopping.Controllers
 {
@@ -139,6 +141,16 @@ namespace SP_Shopping.Controllers
                     //        .SetProperty(b => b.ModificationDate, product.ModificationDate)
                     //    );
                     await _productRepository.UpdateAsync(product);
+                    //product.ModificationDate = DateTime.Now;
+                    //await _productRepository.ExecuteUpdateAsync(product,
+                    //    p => p.Id == id,
+                    //    s => s
+                    //        .SetProperty(b => b.Name, product.Name)
+                    //        .SetProperty(b => b.Price, product.Price)
+                    //        .SetProperty(b => b.CategoryId, product.CategoryId)
+                    //        .SetProperty(b => b.ModificationDate, product.ModificationDate)
+
+                    //);
                     //_context.Update(product);
                     //await _context.SaveChangesAsync();
                 }

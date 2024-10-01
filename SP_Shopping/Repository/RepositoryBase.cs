@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using SP_Shopping.Data;
+using System.Linq.Expressions;
 
 namespace SP_Shopping.Repository;
 
@@ -65,6 +67,17 @@ public class RepositoryBase<TEntity> : IRepository<TEntity> where TEntity : clas
     public virtual bool Delete(TEntity entity)
     {
         _context.Set<TEntity>().Remove(entity);
+        int numSaved = _context.SaveChanges();
+        return (numSaved > 0);
+    }
+
+    public virtual async Task<bool> ExecuteUpdateAsync(TEntity entity,
+        Expression<Func<TEntity, bool>> predicate, 
+        Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls)
+    {
+        await _context.Set<TEntity>()
+            .Where(predicate)
+            .ExecuteUpdateAsync(setPropertyCalls);
         int numSaved = _context.SaveChanges();
         return (numSaved > 0);
     }

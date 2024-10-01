@@ -8,8 +8,7 @@ namespace SP_Shopping.MapProfiles
     {
         public ProductDetailsProfile()
         {
-            CreateMap<Product, ProductDetailsDto>()
-                .ForMember(p => p.CategoryName, opt => opt.MapFrom(p => p.Category.Name));
+            CreateMap<Product, ProductDetailsDto>().ReverseMap();
         }
     }
 }
