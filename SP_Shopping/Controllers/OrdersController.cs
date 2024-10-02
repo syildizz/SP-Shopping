@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
@@ -21,7 +22,7 @@ public class OrdersController(ApplicationDbContext context, IMapper mapper) : Co
     public async Task<IActionResult> Index()
     {
         var orders = await _context.Orders.Include(o => o.User).ToListAsync();
-        var cdtos = _mapper.Map<IEnumerable<Order>, IEnumerable<OrderCreateDto>>(orders);
+        var cdtos = _mapper.Map<IEnumerable<Order>, IEnumerable<OrderDetailsDto>>(orders);
         return View(cdtos);
     }
 
@@ -47,7 +48,7 @@ public class OrdersController(ApplicationDbContext context, IMapper mapper) : Co
     // GET: Orders/Create
     public IActionResult Create()
     {
-        ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id");
+        OrderCreateDto order = _mapper.Map<Order, OrderCreateDto>(new Order());
         return View();
     }
 
@@ -56,16 +57,26 @@ public class OrdersController(ApplicationDbContext context, IMapper mapper) : Co
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,UserId,InsertionDate,ModificationDate")] Order order)
+    public async Task<IActionResult> Create(OrderCreateDto ocdto)
     {
         if (ModelState.IsValid)
         {
+            if (_context.Users.Where(u => u.UserName == ocdto.UserName).FirstOrDefault() == null)
+            {
+                return BadRequest("Invalid customer name");
+            }
+            var order = _mapper.Map<OrderCreateDto, Order>(ocdto);
+            var products = _context.Products.Where(p => ocdto.ProductNames.Contains(p.Name)).ToList();
+            if (!products.Any())
+            {
+                return BadRequest("Invalid product name");
+            }
+            order.InsertionDate = DateTime.Now;
             _context.Add(order);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-        ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", order.UserId);
-        return View(order);
+        return View(ocdto);
     }
 
     // GET: Orders/Edit/5
