@@ -46,8 +46,8 @@ public class OrdersController(ApplicationDbContext context, IMapper mapper) : Co
         {
             return NotFound();
         }
-
-        return View(order);
+        var oddto = _mapper.Map<Order, OrderDetailsDto>(order);
+        return View(oddto);
     }
 
     // GET: Orders/Create
