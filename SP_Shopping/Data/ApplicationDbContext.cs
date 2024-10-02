@@ -13,5 +13,13 @@ namespace SP_Shopping.Data
         public DbSet<Category> Categories { get; set; } = default!;
         public DbSet<Order> Orders { get; set; } = default!;
 
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<Product>()
+                .Navigation(p => p.Category)
+                .AutoInclude();
+            base.OnModelCreating(builder);
+        }
+
     }
 }

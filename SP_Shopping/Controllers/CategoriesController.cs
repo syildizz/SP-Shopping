@@ -9,9 +9,9 @@ namespace SP_Shopping.Controllers
     public class CategoriesController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly ICategoryRepository _categoryRepository;
+        private readonly IRepository<Category> _categoryRepository;
 
-        public CategoriesController(ApplicationDbContext context, ICategoryRepository categoryRepository)
+        public CategoriesController(ApplicationDbContext context, IRepository<Category> categoryRepository)
         {
             _context = context;
             _categoryRepository = categoryRepository;
@@ -31,7 +31,7 @@ namespace SP_Shopping.Controllers
                 return NotFound();
             }
 
-            var category = await _categoryRepository.GetByIdAsync((int)id);
+            var category = await _categoryRepository.GetByKeyAsync((int)id);
             if (category == null)
             {
                 return NotFound();
@@ -72,7 +72,7 @@ namespace SP_Shopping.Controllers
             }
 
             //var category = await _context.Categories.FindAsync(id);
-            var category = await _categoryRepository.GetByIdAsync((int)id);
+            var category = await _categoryRepository.GetByKeyAsync((int)id);
             if (category == null)
             {
                 return NotFound();
@@ -126,7 +126,7 @@ namespace SP_Shopping.Controllers
 
             //var category = await _context.Categories
             //    .FirstOrDefaultAsync(m => m.Id == id);
-            var category = await _categoryRepository.GetByIdAsync((int)id);
+            var category = await _categoryRepository.GetByKeyAsync((int)id);
             if (category == null)
             {
                 return NotFound();
@@ -141,7 +141,7 @@ namespace SP_Shopping.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             //var category = await _context.Categories.FindAsync(id);
-            var category = await _categoryRepository.GetByIdAsync(id);
+            var category = await _categoryRepository.GetByKeyAsync(id);
             if (category != null)
             {
                 //_context.Categories.Remove(category);
@@ -155,7 +155,7 @@ namespace SP_Shopping.Controllers
         private bool CategoryExists(int id)
         {
             //return _context.Categories.Any(e => e.Id == id);
-            return _categoryRepository.GetById(id) is not null;
+            return _categoryRepository.GetByKeyAsync(id) is not null;
         }
     }
 }

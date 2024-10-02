@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
+using SP_Shopping.Models;
 using SP_Shopping.Repository;
 
 namespace SP_Shopping;
@@ -38,8 +39,8 @@ public class Program
 
         builder.Services.AddControllersWithViews();
 
-        builder.Services.AddScoped<IProductRepository, ProductRepository>();
-        builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+        builder.Services.AddScoped<IRepository<Product>, RepositoryBase<Product>>();
+        builder.Services.AddScoped<IRepository<Category>, RepositoryBase<Category>>();
 
 
         var app = builder.Build();
