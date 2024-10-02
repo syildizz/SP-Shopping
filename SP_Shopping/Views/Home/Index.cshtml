@@ -1,8 +1,11 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+    string? UserId = (string?)ViewBag.UserId;
+    string? UserName = (string?)ViewBag.UserName;
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
+    <h1 class="display-4">Welcome @UserName</h1>
+    <p class="align-content-center">@(!string.IsNullOrWhiteSpace(UserId) ? $"{nameof(UserId)} is {UserId}" : "No user is logged in")</p>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>

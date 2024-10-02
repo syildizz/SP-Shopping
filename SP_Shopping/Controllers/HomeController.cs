@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Models;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace SP_Shopping.Controllers
 {
@@ -15,6 +16,8 @@ namespace SP_Shopping.Controllers
 
         public IActionResult Index()
         {
+            ViewBag.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            ViewBag.UserName = User.FindFirstValue(ClaimTypes.Name);
             return View();
         }
 
