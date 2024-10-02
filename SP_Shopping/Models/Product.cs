@@ -19,6 +19,8 @@ namespace SP_Shopping.Models
         public int CategoryId { get; set; }
         public Category Category { get; set; }
         [DataType(DataType.DateTime)]
+        public List<Cart> Cart { get; set; }
+        public List<ApplicationUser> Users { get; set; }
         public DateTime InsertionDate { get; set; } 
         public DateTime? ModificationDate { get; set; }
     }
