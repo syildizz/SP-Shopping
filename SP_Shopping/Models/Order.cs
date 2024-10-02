@@ -8,7 +8,7 @@ public class Order
     [ForeignKey(nameof(User))]
     public string UserId { get; set; } = string.Empty;
     public ApplicationUser User { get; set; } = default!;
-    public List<Product> Products { get; set; } = [];
+    public List<Product> Products { get; set; } = null!;
     public DateTime InsertionDate { get; set; }
     public DateTime? ModificationDate { get; set; } = default;
 }

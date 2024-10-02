@@ -12,7 +12,7 @@ public class OrderDetailsDto
     [Required]
     [MaxLength(100, ErrorMessage = "The name of the product can at most be 100 characters.")]
     [DisplayName("Product")]
-    public string ProductName { get; set; }
+    public List<string> ProductNames { get; set; }
     [DataType(DataType.DateTime)]
     [DisplayName("Publishing Date")]
     public DateTime InsertionDate { get; set; } 

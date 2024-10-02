@@ -21,7 +21,10 @@ public class OrdersController(ApplicationDbContext context, IMapper mapper) : Co
     // GET: Orders
     public async Task<IActionResult> Index()
     {
-        var orders = await _context.Orders.Include(o => o.User).ToListAsync();
+        var orders = await _context.Orders
+            .Include(o => o.User)
+            .Include(o => o.Products)
+            .ToListAsync();
         var cdtos = _mapper.Map<IEnumerable<Order>, IEnumerable<OrderDetailsDto>>(orders);
         return View(cdtos);
     }
@@ -36,6 +39,8 @@ public class OrdersController(ApplicationDbContext context, IMapper mapper) : Co
 
         var order = await _context.Orders
             .Include(o => o.User)
+            .Include(o => o.Products)
+            .IgnoreAutoIncludes()
             .FirstOrDefaultAsync(m => m.Id == id);
         if (order == null)
         {

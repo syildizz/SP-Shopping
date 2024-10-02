@@ -8,7 +8,11 @@ namespace SP_Shopping.MapProfiles
     {
         public OrderDetailsProfile()
         {
-            CreateMap<Order, OrderDetailsDto>().ReverseMap();
+            CreateMap<Order, OrderDetailsDto>()
+                .ForMember(oddto => oddto.UserName, opt => opt.MapFrom(order => order.User.UserName))
+                .ForMember(oddto => oddto.ProductNames, opt => opt.MapFrom(order => order.Products.Select(p => p.Name).ToList()))
+                .ReverseMap()
+           ;
         }
     }
 }
