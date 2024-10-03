@@ -18,7 +18,7 @@ namespace SP_Shopping.Models
         [ForeignKey(nameof(Category))]
         public int CategoryId { get; set; }
         public Category Category { get; set; }
-        //public List<Cart> Cart { get; set; }
+        public List<CartItem> CartItem { get; set; }
         public List<ApplicationUser> Users { get; set; }
         [DataType(DataType.DateTime)]
         public DateTime InsertionDate { get; set; } 
