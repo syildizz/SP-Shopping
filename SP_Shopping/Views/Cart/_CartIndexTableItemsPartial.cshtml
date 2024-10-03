@@ -26,6 +26,11 @@
             <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
             <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
 *@
+            <form asp-action="Delete">
+                <input type="hidden" name="@nameof(CartItemDetailsDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
+                <input type="hidden" name="@nameof(CartItemDetailsDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
+                <input type="submit" value="Remove from cart" class="btn btn-danger btn-sm" /> |
+            </form>
         </td>
     </tr>
 }

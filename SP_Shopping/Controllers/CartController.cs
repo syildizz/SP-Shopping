@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
 using SP_Shopping.Data.Migrations;
@@ -47,7 +48,7 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
 
     [HttpPost()]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CartItemCreateDto cidto)
+    public async Task<IActionResult> Create(CartItemCreateDto cidto, string? returnPath)
     {
         CartItem cartItem = _mapper.Map<CartItemCreateDto, CartItem>(cidto);
         string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -61,9 +62,29 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
 
         cartItem.UserId = userId!;
 
-        await _context.CartItems.AddAsync(cartItem);
-        int savedNum = await _context.SaveChangesAsync();
+        try
+        {
+            await _context.CartItems.AddAsync(cartItem);
+            int savedNum = await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        { }
 
-        return Redirect(nameof(Index));
+        return Redirect(returnPath ?? nameof(Index));
     }
+
+    [HttpPost()]
+    [ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(CartItemDetailsDto cidto)
+    {
+        var cartItem = _mapper.Map<CartItemDetailsDto, CartItem>(cidto);
+        await _context.CartItems
+            .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId)
+            .ExecuteDeleteAsync()
+        ;
+        await _context.SaveChangesAsync();
+        return Redirect(nameof(Index));
+    } 
+
 }

@@ -14,7 +14,7 @@
     </dl>
 </div>
 <div>
-    <form asp-controller="Cart" asp-action="Create" method="post">
+    <form asp-controller="Cart" asp-action="Create" asp-route-returnPath="/Products/" method="post">
         <input name="@nameof(CartItemCreateDto.ProductId)" asp-for="Id" type="hidden" />
         <input type="submit" value="Add to card" class="btn btn-primary" />
     </form>
