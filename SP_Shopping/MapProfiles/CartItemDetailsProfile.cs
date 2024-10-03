@@ -8,7 +8,9 @@ namespace SP_Shopping.MapProfiles
     {
         public CartItemDetailsProfile()
         {
-            CreateMap<CartItem, CartItemDetailsDto>().ReverseMap();
+            CreateMap<CartItem, CartItemDetailsDto>()
+                .ForMember(c => c.UserName, opt => opt.MapFrom(c => c.User.UserName))
+                .ReverseMap();
         }
 
     }

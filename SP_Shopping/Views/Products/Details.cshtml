@@ -1,4 +1,4 @@
-﻿@model             ProductDetailsDto
+﻿@model ProductDetailsDto
 
 @{
     ViewData["Title"] = "Details";
@@ -14,6 +14,10 @@
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <form asp-controller="Cart" asp-action="Create" method="post">
+        <input name="@nameof(CartItemCreateDto.ProductId)" asp-for="Id" type="hidden" />
+        <input type="submit" value="Add to card" class="btn btn-primary" />
+    </form>
+    <a asp-action="Edit" asp-route-ProductId="@Model?.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
