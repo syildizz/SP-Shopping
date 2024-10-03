@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace SP_Shopping.Models
+namespace SP_Shopping.Models;
+
+public class ApplicationUser : IdentityUser
 {
-    public class ApplicationUser : IdentityUser
-    {
-        public List<CartItem> CartItem { get; set; }
-        public List<Product> Products { get; set; }
-    }
+    public List<CartItem> CartItem { get; set; }
+    public List<Product> Products { get; set; }
 }

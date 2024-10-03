@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using SP_Shopping.Models;
+﻿using SP_Shopping.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 

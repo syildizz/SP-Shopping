@@ -2,13 +2,12 @@
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 
-namespace SP_Shopping.MapProfiles
+namespace SP_Shopping.MapProfiles;
+
+public class ProductDetailsProfile : Profile
 {
-    public class ProductDetailsProfile : Profile
+    public ProductDetailsProfile()
     {
-        public ProductDetailsProfile()
-        {
-            CreateMap<Product, ProductDetailsDto>().ReverseMap();
-        }
+        CreateMap<Product, ProductDetailsDto>().ReverseMap();
     }
 }
