@@ -26,4 +26,14 @@ public class CartController(ApplicationDbContext context) : Controller
         }
         return View(model: message);
     }
+    [Route($"Cart/Index/{{{nameof(id)}}}")]
+    public IActionResult Index(string? id)
+    {
+        if (!string.IsNullOrEmpty(id) && Regex.IsMatch(id, @"[sS]elf", RegexOptions.Compiled))
+        {
+            return View(nameof(Index));
+        }
+        return View(model: id);
+    }
+
 }
