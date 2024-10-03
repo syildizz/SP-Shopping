@@ -1,31 +1,37 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Data;
+using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 
 namespace SP_Shopping.Controllers;
 
-public class CartController(ApplicationDbContext context) : Controller
+public class CartController(ApplicationDbContext context, IMapper mapper) : Controller
 {
 
     private readonly ApplicationDbContext _context = context;
+    private readonly IMapper _mapper = mapper;
 
     [Authorize]
     public IActionResult Index()
     {
         string? userName = User.FindFirstValue(ClaimTypes.Name);
-        string message = String.Empty;
         if (userName == null)
         {
-            message = "You need to log in to see your cart";
+            ViewBag.Message = "You need to log in to see your cart";
         }
         else
         {
-            message = $"Welcome {userName}";
+            ViewBag.Message = $"Welcome {userName}";
         }
-        return View(model: message);
+        
+        IEnumerable<CartItem> cartItems = _context.CartItems.Where(c => c.User.UserName == userName);
+        var cidtos = _mapper.Map<IEnumerable<CartItem>,IEnumerable<CartItemDetailsDto>>(cartItems);
+
+        return View(cidtos);
     }
     [Route($"Cart/Index/{{{nameof(id)}}}")]
     public IActionResult Index(string? id)
@@ -34,7 +40,7 @@ public class CartController(ApplicationDbContext context) : Controller
         {
             return View(nameof(Index));
         }
-        return View(model: id);
+        return View();
     }
 
     [HttpPost()]

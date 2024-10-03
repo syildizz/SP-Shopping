@@ -1,3 +1,10 @@
-﻿@model string?
+﻿@model IEnumerable<CartItemDetailsDto>
+@{
+    string message = (string)ViewBag.Message;
+}
 
-<h1>Hello @(Model != null ? $"user with id {Model}" : "Guest")</h1>
+<h1>@message</h1>
+
+<table class="table">
+    <partial name="_CartIndexTableItemsPartial" model="Model"/>
+</table>
