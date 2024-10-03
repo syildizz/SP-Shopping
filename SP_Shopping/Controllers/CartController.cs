@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Data;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
@@ -8,14 +9,21 @@ namespace SP_Shopping.Controllers;
 public class CartController(ApplicationDbContext context) : Controller
 {
 
-    private readonly ApplicationDbContext _context = context; 
+    private readonly ApplicationDbContext _context = context;
 
-    public IActionResult Index(string? id)
+    [Authorize]
+    public IActionResult Index()
     {
-        if (!string.IsNullOrEmpty(id) && Regex.IsMatch(id, @"[sS]elf"))
+        string? userName = User.FindFirstValue(ClaimTypes.Name);
+        string message = String.Empty;
+        if (userName == null)
         {
-            id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            message = "You need to log in to see your cart";
         }
-        return View(model: id);
+        else
+        {
+            message = $"Welcome {userName}";
+        }
+        return View(model: message);
     }
 }
