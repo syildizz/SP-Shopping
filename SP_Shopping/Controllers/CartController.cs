@@ -51,12 +51,12 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
 
         return View(cidtos);
     }
-    [Route($"Cart/Index/{{{nameof(id)}}}")]
+    [Route($"/Cart/Index/{{{nameof(id)}}}")]
     public IActionResult Index(string? id)
     {
         if (!string.IsNullOrEmpty(id) && Regex.IsMatch(id, @"[sS]elf", RegexOptions.Compiled))
         {
-            return Redirect(nameof(Index));
+            return Redirect($"/Cart/{nameof(Index)}");
         }
         if (!_context.Users.Any(u => u.Id == id))
         {
