@@ -18,6 +18,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Product>()
             .Navigation(p => p.Category)
             .AutoInclude();
+
+        //IEnumerable<Product>? seedData = new ProductSeederFromJson("MOCK_DATA.json").MakeProductList();
+        //if (seedData != null)
+        //{
+        //    builder.Entity<Product>().HasData(seedData);
+        //}
+
         base.OnModelCreating(builder);
     }
 
