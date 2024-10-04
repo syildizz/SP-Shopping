@@ -35,7 +35,6 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
         IEnumerable<CartItem> cartItems = _context.CartItems
             .Where(c => c.User.UserName == userName)
             .Include(c => c.Product)
-            .Include(c => c.User)
             .Select(c => new CartItem()
             {
                 ProductId = c.ProductId,
@@ -43,10 +42,6 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
                 Product = new Product()
                 {
                     Name = c.Product.Name
-                },
-                User = new ApplicationUser()
-                {
-                    UserName = c.User.UserName
                 }
             }
             );
@@ -70,7 +65,6 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
         IEnumerable<CartItem> cartItem = _context.CartItems
             .Where(c => c.UserId == id)
             .Include(c => c.Product)
-            .Include(c => c.User)
             .Select(c => new CartItem()
             {
                 ProductId = c.ProductId,
@@ -78,10 +72,6 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
                 Product = new Product()
                 {
                     Name = c.Product.Name
-                },
-                User = new ApplicationUser()
-                {
-                    UserName = c.User.UserName
                 }
             });
 
