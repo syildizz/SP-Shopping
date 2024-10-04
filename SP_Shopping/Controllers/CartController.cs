@@ -60,12 +60,40 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
     {
         if (!string.IsNullOrEmpty(id) && Regex.IsMatch(id, @"[sS]elf", RegexOptions.Compiled))
         {
-            return View(nameof(Index));
+            return Redirect(nameof(Index));
         }
-        return View();
+        if (!_context.Users.Any(u => u.Id == id))
+        {
+            return NotFound("The user was not found");
+        }
+
+        IEnumerable<CartItem> cartItem = _context.CartItems
+            .Where(c => c.UserId == id)
+            .Include(c => c.Product)
+            .Include(c => c.User)
+            .Select(c => new CartItem()
+            {
+                ProductId = c.ProductId,
+                UserId = c.User.Id,
+                Product = new Product()
+                {
+                    Name = c.Product.Name
+                },
+                User = new ApplicationUser()
+                {
+                    UserName = c.User.UserName
+                }
+            });
+
+        IEnumerable<CartItemDetailsDto> cidto = _mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDetailsDto>>(cartItem);
+
+        ViewBag.Message = $"The shopping cart of {_context.Users.Find(id)?.UserName ?? "User not found"}";
+
+        return View(cidto);
     }
 
     [HttpPost()]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CartItemCreateDto cidto, string? returnPath)
     {
@@ -94,9 +122,14 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
 
     [HttpPost()]
     [ActionName("Delete")]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(CartItemDetailsDto cidto)
     {
+        if (cidto.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+        {
+            return Unauthorized("You cannot only delete products from your own shopping cart");
+        }
         var cartItem = _mapper.Map<CartItemDetailsDto, CartItem>(cidto);
         await _context.CartItems
             .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId)
