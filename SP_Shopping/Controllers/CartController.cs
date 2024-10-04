@@ -7,6 +7,7 @@ using SP_Shopping.Data;
 using SP_Shopping.Data.Migrations;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
+using System.Drawing.Text;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 
@@ -30,8 +31,26 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
         {
             ViewBag.Message = $"Welcome {userName}";
         }
-        
-        IEnumerable<CartItem> cartItems = _context.CartItems.Where(c => c.User.UserName == userName).Include(c => c.Product).Include(c => c.User);
+
+        IEnumerable<CartItem> cartItems = _context.CartItems
+            .Where(c => c.User.UserName == userName)
+            .Include(c => c.Product)
+            .Include(c => c.User)
+            .Select(c => new CartItem()
+            {
+                ProductId = c.ProductId,
+                UserId = c.User.Id,
+                Product = new Product()
+                {
+                    Name = c.Product.Name
+                },
+                User = new ApplicationUser()
+                {
+                    UserName = c.User.UserName
+                }
+            }
+            );
+
         var cidtos = _mapper.Map<IEnumerable<CartItem>,IEnumerable<CartItemDetailsDto>>(cartItems);
 
         return View(cidtos);
