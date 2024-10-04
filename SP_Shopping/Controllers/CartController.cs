@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 using SP_Shopping.Data;
 using SP_Shopping.Data.Migrations;
 using SP_Shopping.Dtos;
@@ -62,7 +63,7 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
             return NotFound("The user was not found");
         }
 
-        IEnumerable<CartItem> cartItem = _context.CartItems
+        IEnumerable<CartItem> cartItems = _context.CartItems
             .Where(c => c.UserId == id)
             .Include(c => c.Product)
             .Select(c => new CartItem()
@@ -75,9 +76,36 @@ public class CartController(ApplicationDbContext context, IMapper mapper) : Cont
                 }
             });
 
-        IEnumerable<CartItemDetailsDto> cidto = _mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDetailsDto>>(cartItem);
+        IEnumerable<CartItemDetailsDto> cidto = _mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDetailsDto>>(cartItems);
 
         ViewBag.Message = $"The shopping cart of {_context.Users.Find(id)?.UserName ?? "User not found"}";
+
+        return View(cidto);
+    }
+
+    public async Task<IActionResult> Details()
+    {
+        IEnumerable<CartItem> cartItems = await _context.CartItems
+            .Include(c => c.Product)
+            .Include(c => c.User)
+            .Select(c => new CartItem()
+            {
+                ProductId = c.ProductId,
+                UserId = c.User.Id,
+                Product = new Product()
+                {
+                    Name = c.Product.Name
+                },
+                User = new ApplicationUser()
+                {
+                    UserName = c.User.UserName
+                }
+            })
+            .ToListAsync();
+
+        IEnumerable<CartItemDetailsDto> cidto = _mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDetailsDto>>(cartItems);
+
+        ViewBag.Message = $"The shopping carts of all users";
 
         return View(cidto);
     }
