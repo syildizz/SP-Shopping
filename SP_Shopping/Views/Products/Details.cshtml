@@ -18,6 +18,6 @@
         <input name="@nameof(CartItemCreateDto.ProductId)" asp-for="Id" type="hidden" />
         <input type="submit" value="Add to card" class="btn btn-primary" />
     </form>
-    <a asp-action="Edit" asp-route-ProductId="@Model?.Id">Edit</a> |
+    <a asp-action="Edit" asp-route-Id="@Model?.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
