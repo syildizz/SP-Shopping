@@ -98,7 +98,6 @@ public class CategoriesController : Controller
             {
                 //_context.Update(category);
                 await _categoryRepository.UpdateAsync(category);
-                await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {

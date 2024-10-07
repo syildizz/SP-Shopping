@@ -43,7 +43,8 @@ public class ProductsController : Controller
         //var product = await _context.Products
         //    //.Include(p => p.Category)
         //    .FirstOrDefaultAsync(m => m.Id == id);
-        var product = await _productRepository.GetByPredicateAsync(predicate: m => m.Id == id);
+        var product = await _productRepository
+            .GetSingleAsync(q => q.Where(m => m.Id == id));
         if (product == null)
         {
             return NotFound();
@@ -130,7 +131,7 @@ public class ProductsController : Controller
                 var product = _mapper.Map<ProductCreateDto, Product>(pdto);
                 product.Id = id;
                 await _productRepository.UpdateCertainFieldsAsync(product,
-                    predicate: p => p.Id == id,
+                    q => q.Where(p => p.Id == id),
                     setPropertyCalls: s => s
                         .SetProperty(b => b.Name, product.Name)
                         .SetProperty(b => b.Price, product.Price)
@@ -168,7 +169,7 @@ public class ProductsController : Controller
         //var product = await _context.Products
         //    .Include(p => p.Category)
         //    .FirstOrDefaultAsync(m => m.Id == id);
-        var product = await _productRepository.GetByPredicateAsync(predicate: p => p.Id == id);
+        var product = await _productRepository.GetSingleAsync(q => q.Where(p => p.Id == id));
         if (product == null)
         {
             return NotFound();

@@ -11,40 +11,22 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
 
     public virtual List<TEntity> GetAll()
     {
-        return _context.Set<TEntity>()
-            .ToList();
+        return _context.Set<TEntity>().ToList();
     }
 
-    public List<TEntity> GetAll
-    (
-        List<Expression<Func<TEntity, object>>> includedModel
-    )
+    public virtual List<TEntity> GetAll(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
-        IQueryable<TEntity> query = _context.Set<TEntity>();
-        foreach (var include in includedModel)
-        {
-            query = query.Include(include);
-        }
-        return query.ToList();
+        return query(_context.Set<TEntity>()).ToList();
     }
 
     public virtual async Task<List<TEntity>> GetAllAsync()
     {
-        return await _context.Set<TEntity>()
-            .ToListAsync();
+        return await _context.Set<TEntity>().ToListAsync();
     }
 
-    public virtual async Task<List<TEntity>> GetAllAsync
-    (
-        List<Expression<Func<TEntity, object>>> includedModel
-    )
+    public virtual async Task<List<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
-        IQueryable<TEntity> query = _context.Set<TEntity>();
-        foreach (var include in includedModel)
-        {
-            query = query.Include(include);
-        }
-        return await query.ToListAsync();
+        return await query(_context.Set<TEntity>()).ToListAsync();
     }
 
     public virtual TEntity? GetByKey(params object?[]? keyValues)
@@ -59,93 +41,17 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
             .FindAsync(keyValues);
     }
 
-    public virtual TEntity? GetByPredicate(Expression<Func<TEntity, bool>> predicate)
+    public virtual TEntity? GetSingle(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
-        return _context.Set<TEntity>()
-            .Where(predicate)
-            .FirstOrDefault();
+        return query(_context.Set<TEntity>()).FirstOrDefault();
     }
 
-    public TEntity? GetByPredicate
-    (
-        Expression<Func<TEntity, bool>> predicate,
-        List<Expression<Func<TEntity, object>>> includedModel
-    )
+
+    public virtual async Task<TEntity?> GetSingleAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
-        IQueryable<TEntity> query = _context.Set<TEntity>();
-        foreach (var include in includedModel)
-        {
-            query = query.Include(include);
-        }
-        query = query.Where(predicate);
-        return query.FirstOrDefault();
+        return await query(_context.Set<TEntity>()).FirstOrDefaultAsync();
     }
 
-    public virtual async Task<TEntity?> GetByPredicateAsync(Expression<Func<TEntity, bool>> predicate)
-    {
-        return await _context.Set<TEntity>()
-            .Where(predicate)
-            .FirstOrDefaultAsync();
-    }
-
-    public virtual async Task<TEntity?> GetByPredicateAsync
-    (
-        Expression<Func<TEntity, bool>> predicate,
-        List<Expression<Func<TEntity, object>>> includedModel
-    )
-    {
-        IQueryable<TEntity> query = _context.Set<TEntity>();
-        foreach (var include in includedModel)
-        {
-            query = query.Include(include);
-        }
-        query = query.Where(predicate);
-        return await query.FirstOrDefaultAsync();
-    }
-
-    public virtual IEnumerable<TEntity?> GetByPredicateList(Expression<Func<TEntity, bool>> predicate)
-    {
-        return _context.Set<TEntity>()
-            .Where(predicate)
-            .ToList();
-    }
-
-    public virtual IEnumerable<TEntity?> GetByPredicateList
-    (
-        Expression<Func<TEntity, bool>> predicate,
-        List<Expression<Func<TEntity, object>>> includedModel
-    )
-    {
-        IQueryable<TEntity> query = _context.Set<TEntity>();
-        foreach (var include in includedModel)
-        {
-            query = query.Include(include);
-        }
-        query = query.Where(predicate);
-        return query.ToList();
-    }
-
-    public virtual async Task<IEnumerable<TEntity?>> GetByPredicateListAsync(Expression<Func<TEntity, bool>> predicate)
-    {
-        return await _context.Set<TEntity>()
-            .Where(predicate)
-            .ToListAsync();
-    }
-
-    public virtual async Task<IEnumerable<TEntity?>> GetByPredicateListAsync
-    (
-        Expression<Func<TEntity, bool>> predicate,
-        List<Expression<Func<TEntity, object>>> includedModel
-    )
-    {
-        IQueryable<TEntity> query = _context.Set<TEntity>();
-        foreach (var include in includedModel)
-        {
-            query = query.Include(include);
-        }
-        query = query.Where(predicate);
-        return await query.ToListAsync();
-    }
 
     public virtual bool Create(TEntity entity)
     {
@@ -177,12 +83,11 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
     public virtual bool UpdateCertainFields
     (
         TEntity entity,
-        Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     )
     {
-        _context.Set<TEntity>()
-            .Where(predicate)
+        query(_context.Set<TEntity>())
             .ExecuteUpdate(setPropertyCalls);
         int numSaved = _context.SaveChanges();
         return (numSaved > 0);
@@ -191,12 +96,11 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
     public virtual async Task<bool> UpdateCertainFieldsAsync
     (
         TEntity entity,
-        Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     )
     {
-        await _context.Set<TEntity>()
-            .Where(predicate)
+        await query(_context.Set<TEntity>())
             .ExecuteUpdateAsync(setPropertyCalls);
         int numSaved = await _context.SaveChangesAsync();
         return (numSaved > 0);
@@ -216,27 +120,25 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
         return (numSaved > 0);
     }
 
-    public virtual bool DeleteByPredicate
+    public virtual bool DeleteCertainEntries
     (
         TEntity entity,
-        Expression<Func<TEntity, bool>> predicate
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     )
     {
-        _context.Set<TEntity>()
-            .Where(predicate)
+        query(_context.Set<TEntity>())
             .ExecuteDelete();
         int numSaved = _context.SaveChanges();
         return (numSaved > 0);
     }
 
-    public virtual async Task<bool> DeleteByPredicateAsync
+    public virtual async Task<bool> DeleteCertainEntriesAsync
     (
         TEntity entity,
-        Expression<Func<TEntity, bool>> predicate
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     )
     {
-        await _context.Set<TEntity>()
-            .Where(predicate)
+        await query(_context.Set<TEntity>())
             .ExecuteDeleteAsync();
         int numSaved = await _context.SaveChangesAsync();
         return (numSaved > 0);

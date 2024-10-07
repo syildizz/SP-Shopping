@@ -8,36 +8,13 @@ public interface IRepository<TEntity> where TEntity : class
 {
 
     List<TEntity> GetAll();
-    List<TEntity> GetAll(List<Expression<Func<TEntity, object>>> includedModel);
+    List<TEntity> GetAll(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
     Task<List<TEntity>> GetAllAsync();
-    Task<List<TEntity>> GetAllAsync(List<Expression<Func<TEntity, object>>> includedModel);
+    Task<List<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
     TEntity? GetByKey(params object?[]? keyValues);
     Task<TEntity?> GetByKeyAsync(params object?[]? keyValues);
-    public TEntity? GetByPredicate(Expression<Func<TEntity, bool>> predicate);
-    public TEntity? GetByPredicate
-    (
-        Expression<Func<TEntity, bool>> predicate,
-        List<Expression<Func<TEntity, object>>> includedModel
-    );
-    public Task<TEntity?> GetByPredicateAsync(Expression<Func<TEntity, bool>> predicate);
-    public Task<TEntity?> GetByPredicateAsync
-    (
-        Expression<Func<TEntity, bool>> predicate,
-        List<Expression<Func<TEntity, object>>> includedModel
-    );
-    public IEnumerable<TEntity?> GetByPredicateList(Expression<Func<TEntity, bool>> predicate);
-    public IEnumerable<TEntity?> GetByPredicateList
-    (
-        Expression<Func<TEntity, bool>> predicate,
-        List<Expression<Func<TEntity, object>>> includedModel
-    );
-    public Task<IEnumerable<TEntity?>> GetByPredicateListAsync(Expression<Func<TEntity, bool>> predicate);
-    public Task<IEnumerable<TEntity?>> GetByPredicateListAsync
-    (
-        Expression<Func<TEntity, bool>> predicate,
-        List<Expression<Func<TEntity, object>>> includedModel
-    );
-
+    TEntity? GetSingle(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
+    Task<TEntity?> GetSingleAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
     bool Create(TEntity entity);
     Task<bool> CreateAsync(TEntity entity);
 
@@ -46,27 +23,27 @@ public interface IRepository<TEntity> where TEntity : class
     bool UpdateCertainFields
     (
         TEntity entity,
-        Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     );
     Task<bool> UpdateCertainFieldsAsync
     (
         TEntity entity,
-        Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     );
 
     bool Delete(TEntity entity);
     Task<bool> DeleteAsync(TEntity entity);
-    public bool DeleteByPredicate
+    public bool DeleteCertainEntries
     (
         TEntity entity,
-        Expression<Func<TEntity, bool>> predicate
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     );
-    public Task<bool> DeleteByPredicateAsync
+    public Task<bool> DeleteCertainEntriesAsync
     (
         TEntity entity,
-        Expression<Func<TEntity, bool>> predicate
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     );
 
 }
