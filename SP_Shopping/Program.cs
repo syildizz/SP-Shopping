@@ -22,6 +22,7 @@ public class Program
             .AddEntityFrameworkStores<ApplicationDbContext>();
 
         builder.Services.AddAutoMapper(typeof(Program));
+        builder.Services.AddMemoryCache();
 
         builder.Services.Configure<IdentityOptions>(options =>
         {
