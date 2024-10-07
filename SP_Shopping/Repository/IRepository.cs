@@ -37,13 +37,13 @@ public interface IRepository<TEntity> where TEntity : class
     Task<bool> DeleteAsync(TEntity entity);
     public bool DeleteCertainEntries
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     );
     public Task<bool> DeleteCertainEntriesAsync
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     );
+    public bool Exists(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
+    public Task<bool> ExistsAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
 
 }

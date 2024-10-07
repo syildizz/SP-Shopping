@@ -42,6 +42,8 @@ public class Program
 
         builder.Services.AddScoped<IRepository<Product>, RepositoryBase<Product>>();
         builder.Services.AddScoped<IRepository<Category>, RepositoryBase<Category>>();
+        builder.Services.AddScoped<IRepository<ApplicationUser>, RepositoryBase<ApplicationUser>>();
+        builder.Services.AddScoped<IRepository<CartItem>, RepositoryBase<CartItem>>();
 
 
         var app = builder.Build();

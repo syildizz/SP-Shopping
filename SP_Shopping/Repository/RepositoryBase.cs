@@ -122,7 +122,6 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
 
     public virtual bool DeleteCertainEntries
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     )
     {
@@ -134,7 +133,6 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
 
     public virtual async Task<bool> DeleteCertainEntriesAsync
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     )
     {
@@ -142,6 +140,16 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
             .ExecuteDeleteAsync();
         int numSaved = await _context.SaveChangesAsync();
         return (numSaved > 0);
+    }
+
+    public virtual bool Exists(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    {
+        return query(_context.Set<TEntity>()).Any();
+    }
+
+    public virtual async Task<bool> ExistsAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    {
+        return await query(_context.Set<TEntity>()).AnyAsync();
     }
 
 }
