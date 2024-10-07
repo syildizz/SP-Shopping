@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Primitives;
+using NuGet.Common;
 using SP_Shopping.Data;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
@@ -15,7 +16,7 @@ namespace SP_Shopping.Controllers;
 public static class Glob
 {
     public static readonly Dictionary<string, CancellationTokenSource> userCancellationTokens = [];
-    public static readonly CancellationTokenSource detailsCancellationToken = new(new TimeSpan(6,0,0));
+    public static CancellationTokenSource detailsCancellationToken = new(new TimeSpan(6,0,0));
 }
 
 public class CartController(ApplicationDbContext context, IMapper mapper, IMemoryCache memoryCache) : Controller
@@ -122,6 +123,10 @@ public class CartController(ApplicationDbContext context, IMapper mapper, IMemor
     public async Task<IActionResult> Details()
     {
 
+        if (Glob.detailsCancellationToken == null)
+        {
+            Glob.detailsCancellationToken = new CancellationTokenSource(new TimeSpan(6,0,0));
+        }
         IEnumerable<CartItem>? cartItems = await _memoryCache.GetOrCreateAsync($"CartItemDetails", async entry =>
         {
             entry.AddExpirationToken(new CancellationChangeToken(Glob.detailsCancellationToken.Token));
@@ -182,8 +187,13 @@ public class CartController(ApplicationDbContext context, IMapper mapper, IMemor
         { }
 
         //Expire cache
-        if (Glob.userCancellationTokens.TryGetValue(userId, out var token)) await token.CancelAsync();
+        if (Glob.userCancellationTokens.TryGetValue(userId, out var token))
+        {
+            await token.CancelAsync();
+            Glob.userCancellationTokens.Remove(userId);
+        }
         await Glob.detailsCancellationToken.CancelAsync();
+        Glob.detailsCancellationToken = null;
 
         return Redirect(returnPath ?? nameof(Index));
     }
@@ -204,8 +214,13 @@ public class CartController(ApplicationDbContext context, IMapper mapper, IMemor
             .ExecuteDeleteAsync()
         ;
         await _context.SaveChangesAsync();
-        if (Glob.userCancellationTokens.TryGetValue(cidto.UserId, out var token)) await token.CancelAsync();
+        if (Glob.userCancellationTokens.TryGetValue(cidto.UserId, out var token))
+        {
+            await token.CancelAsync();
+            Glob.userCancellationTokens.Remove(cidto.UserId);
+        }
         await Glob.detailsCancellationToken.CancelAsync();
+        Glob.detailsCancellationToken = null;
         return Redirect(nameof(Index));
     } 
 
