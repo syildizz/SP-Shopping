@@ -12,13 +12,15 @@ namespace SP_Shopping.Controllers;
 public class ProductsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ProductsController> _logger;
     private readonly IMapper _mapper;
     private readonly IRepository<Product> _productRepository;
     private readonly IRepository<Category> _categoryRepository;
 
-    public ProductsController(ApplicationDbContext context, IMapper mapper, IRepository<Product> productRepository, IRepository<Category> categoryRepository)
+    public ProductsController(ApplicationDbContext context, ILogger<ProductsController> logger, IMapper mapper, IRepository<Product> productRepository, IRepository<Category> categoryRepository)
     {
         _context = context;
+        _logger = logger;
         _mapper = mapper;
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
@@ -27,16 +29,20 @@ public class ProductsController : Controller
     // GET: Products
     public async Task<IActionResult> Index()
     {
+        _logger.LogInformation("GET: Entering Products/Index.");
         var pdtoList = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>
             (await _productRepository.GetAllAsync());
+        _logger.LogDebug("Fetching all product information.");
         return View(pdtoList);
     }
 
     // GET: Products/Details/5
     public async Task<IActionResult> Details(int? id)
     {
+        _logger.LogInformation("GET: Entering Products/Details.");
         if (id == null)
         {
+            _logger.LogError("The specified id \"{Id}\" for Product/Details does not exist.", id);
             return NotFound();
         }
 
@@ -44,9 +50,11 @@ public class ProductsController : Controller
         //    //.Include(p => p.Category)
         //    .FirstOrDefaultAsync(m => m.Id == id);
         var product = await _productRepository
-            .GetSingleAsync(q => q.Where(m => m.Id == id));
+            .GetSingleAsync(q => q.Include(p => p.Category).Where(m => m.Id == id));
+        _logger.LogDebug("Fetching \"{Id}\" product information.", id);
         if (product == null)
         {
+            _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
             return NotFound();
         }
 
@@ -58,7 +66,9 @@ public class ProductsController : Controller
     // GET: Products/Create
     public async Task<IActionResult> Create()
     {
+        _logger.LogInformation($"GET: Entering Products/Details.");
         var pdto = _mapper.Map<Product, ProductCreateDto>(new Product());
+        _logger.LogDebug($"Fetching all categories.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
         return View(pdto);
@@ -71,10 +81,12 @@ public class ProductsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ProductCreateDto pdto)
     {
+        _logger.LogInformation($"POST: Entering Products/Create.");
         if (ModelState.IsValid)
         {
             try
             {
+                _logger.LogDebug($"Creating product.");
                 Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
                 product.InsertionDate = DateTime.Now;
                 //await _context.AddAsync(product);
@@ -84,8 +96,13 @@ public class ProductsController : Controller
             }
             catch (DbUpdateException)
             {
+                _logger.LogError($"Couldn't create product with name of \"{pdto.Name}\".");
                 return BadRequest();
             }
+        }
+        else
+        {
+            _logger.LogError("ModelState is not valid.");
         }
         return View(pdto);
     }
@@ -93,19 +110,24 @@ public class ProductsController : Controller
     // GET: Products/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
+        _logger.LogInformation($"GET: Entering Products/Edit.");
         if (id == null)
         {
+            _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
             return NotFound();
         }
 
         //var product = await _context.Products.FindAsync(id);
+        _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var product = await _productRepository.GetByKeyAsync((int)id);
         if (product == null)
         {
+            _logger.LogError("Could not fetch product for id \"{Id}\".", id);
             return NotFound();
         }
 
         var pdto = _mapper.Map<Product, ProductCreateDto>(product);
+        _logger.LogDebug($"Fetching all categories.");
         var categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
 
@@ -119,8 +141,10 @@ public class ProductsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, ProductCreateDto pdto)
     {
+        _logger.LogInformation($"GET: Entering Products/Edit.");
         if (!ProductExists(id))
         {
+            _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
         }
 
@@ -130,6 +154,8 @@ public class ProductsController : Controller
             {
                 var product = _mapper.Map<ProductCreateDto, Product>(pdto);
                 product.Id = id;
+                
+                _logger.LogDebug("Updating product.");
                 await _productRepository.UpdateCertainFieldsAsync(product,
                     q => q.Where(p => p.Id == id),
                     setPropertyCalls: s => s
@@ -140,19 +166,14 @@ public class ProductsController : Controller
                 );
                 //_context.Update(product);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException dbuce)
             {
-                if (!ProductExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                _logger.LogError(dbuce, "The product with the id of \"{Id}\" could not be updated.", id);
+                throw;
             }
             return RedirectToAction(nameof(Index));
         }
+        _logger.LogDebug($"Fetching all categories.");
         var categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.CategorySelectList = categorySelectList;
         return View(pdto);
@@ -161,17 +182,21 @@ public class ProductsController : Controller
     // GET: Products/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
+        _logger.LogInformation($"GET: Entering Products/Delete.");
         if (id == null)
         {
+            _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
         }
 
         //var product = await _context.Products
         //    .Include(p => p.Category)
         //    .FirstOrDefaultAsync(m => m.Id == id);
+        _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var product = await _productRepository.GetSingleAsync(q => q.Where(p => p.Id == id));
         if (product == null)
         {
+            _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
         }
 
@@ -184,11 +209,18 @@ public class ProductsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        _logger.LogInformation($"POST: Entering Products/Delete.");
         //var product = await _context.Products.FindAsync(id);
+        _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var product = await _productRepository.GetByKeyAsync(id);
-        if (product != null)
+        if (product == null)
+        {
+            _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
+        }
+        else
         {
             //_context.Products.Remove(product);
+            _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
             await _productRepository.DeleteAsync(product);
         }
 
