@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SP_Shopping.Data;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
@@ -16,14 +17,16 @@ public class ProductsController : Controller
     private readonly IMapper _mapper;
     private readonly IRepository<Product> _productRepository;
     private readonly IRepository<Category> _categoryRepository;
+    private readonly IMemoryCache _memoryCache;
 
-    public ProductsController(ApplicationDbContext context, ILogger<ProductsController> logger, IMapper mapper, IRepository<Product> productRepository, IRepository<Category> categoryRepository)
+    public ProductsController(ApplicationDbContext context, ILogger<ProductsController> logger, IMapper mapper, IRepository<Product> productRepository, IRepository<Category> categoryRepository, IMemoryCache memoryCache)
     {
         _context = context;
         _logger = logger;
         _mapper = mapper;
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
+        _memoryCache = memoryCache;
     }
 
     // GET: Products
@@ -235,7 +238,30 @@ public class ProductsController : Controller
 
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
     {
-        return (await _categoryRepository.GetAllAsync())
-            .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() });
+        //if (_memoryCache.TryGetValue($"{nameof(Category)}List", out List<SelectListItem> categoryList)) return categoryList;
+        _logger.LogDebug("Attempting from cache getting categoryList");
+        List<SelectListItem>? categoryList = await _memoryCache.GetOrCreateAsync($"{nameof(Category)}List", async entry =>
+        {
+            _logger.LogDebug("Cache miss for categoryList");
+            entry.SetAbsoluteExpiration(TimeSpan.FromHours(6));
+            entry.SetSlidingExpiration(TimeSpan.FromMinutes(1));
+            return (await _categoryRepository
+                .GetAllAsync())
+                .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
+                .ToList();
+        });
+
+        if (categoryList == null)
+        {
+            _logger.LogError("{CategoryList} is null", $"{nameof(Category)}List");
+            return Enumerable.Empty<SelectListItem>();
+        }
+
+        //categoryList = (await _categoryRepository.GetAllAsync())
+        //    .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() }).ToList();
+
+        //_memoryCache.Set("CategoryList", categoryList, TimeSpan.FromSeconds(20));
+
+        return categoryList;
     }
 }

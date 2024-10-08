@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -10,11 +11,13 @@ public class CategoriesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IRepository<Category> _categoryRepository;
+    private readonly IMemoryCache _memoryCache;
 
-    public CategoriesController(ApplicationDbContext context, IRepository<Category> categoryRepository)
+    public CategoriesController(ApplicationDbContext context, IRepository<Category> categoryRepository, IMemoryCache memoryCache)
     {
         _context = context;
         _categoryRepository = categoryRepository;
+        _memoryCache = memoryCache;
     }
 
     // GET: Categories
@@ -98,6 +101,7 @@ public class CategoriesController : Controller
             {
                 //_context.Update(category);
                 await _categoryRepository.UpdateAsync(category);
+                _memoryCache.Remove($"{nameof(Category)}List");
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -145,6 +149,7 @@ public class CategoriesController : Controller
         {
             //_context.Categories.Remove(category);
             await _categoryRepository.DeleteAsync(category);
+            _memoryCache.Remove($"{nameof(Category)}List");
         }
 
         //await _context.SaveChangesAsync();
