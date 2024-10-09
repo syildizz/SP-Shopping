@@ -120,10 +120,7 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
         return (numSaved > 0);
     }
 
-    public virtual bool DeleteCertainEntries
-    (
-        Func<IQueryable<TEntity>, IQueryable<TEntity>> query
-    )
+    public virtual bool DeleteCertainEntries(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
         query(_context.Set<TEntity>())
             .ExecuteDelete();
@@ -131,10 +128,7 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
         return (numSaved > 0);
     }
 
-    public virtual async Task<bool> DeleteCertainEntriesAsync
-    (
-        Func<IQueryable<TEntity>, IQueryable<TEntity>> query
-    )
+    public virtual async Task<bool> DeleteCertainEntriesAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
         await query(_context.Set<TEntity>())
             .ExecuteDeleteAsync();
