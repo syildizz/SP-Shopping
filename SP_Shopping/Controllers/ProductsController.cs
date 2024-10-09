@@ -12,16 +12,14 @@ namespace SP_Shopping.Controllers;
 
 public class ProductsController : Controller
 {
-    private readonly ApplicationDbContext _context;
     private readonly ILogger<ProductsController> _logger;
     private readonly IMapper _mapper;
     private readonly IRepository<Product> _productRepository;
     private readonly IRepository<Category> _categoryRepository;
     private readonly IMemoryCache _memoryCache;
 
-    public ProductsController(ApplicationDbContext context, ILogger<ProductsController> logger, IMapper mapper, IRepository<Product> productRepository, IRepository<Category> categoryRepository, IMemoryCache memoryCache)
+    public ProductsController(ILogger<ProductsController> logger, IMapper mapper, IRepository<Product> productRepository, IRepository<Category> categoryRepository, IMemoryCache memoryCache)
     {
-        _context = context;
         _logger = logger;
         _mapper = mapper;
         _productRepository = productRepository;
@@ -227,7 +225,6 @@ public class ProductsController : Controller
             await _productRepository.DeleteAsync(product);
         }
 
-        await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
 
