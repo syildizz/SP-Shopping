@@ -18,6 +18,9 @@ public class Product
     [ForeignKey(nameof(Category))]
     public int CategoryId { get; set; }
     public Category Category { get; set; }
+    [ForeignKey(nameof(ApplicationUser))]
+    public string? SubmitterId { get; set; }
+    public ApplicationUser? Submitter { get; set; }
     public List<CartItem> CartItem { get; set; }
     [DataType(DataType.DateTime)]
     public DateTime InsertionDate { get; set; } 
