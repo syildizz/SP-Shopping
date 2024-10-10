@@ -15,4 +15,7 @@ public class CartItem
     [ForeignKey(nameof(User))]
     public string UserId { get; set; }
     public ApplicationUser User { get; set; }
+    [RegularExpression("([0-9]+)", ErrorMessage = "Please enter valid Number")]
+    [Range(0, int.MaxValue)]
+    public int Count { get; set; }
 }
