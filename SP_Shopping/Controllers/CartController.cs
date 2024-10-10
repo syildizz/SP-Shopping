@@ -55,6 +55,7 @@ public class CartController
            {
                ProductId = c.ProductId,
                UserId = c.User.Id,
+               Count = c.Count,
                Product = new Product()
                {
                    Name = c.Product.Name
@@ -88,6 +89,7 @@ public class CartController
                 {
                     ProductId = c.ProductId,
                     UserId = c.User.Id,
+                    Count = c.Count,
                     Product = new Product()
                     {
                         Name = c.Product.Name
@@ -113,6 +115,7 @@ public class CartController
                 {
                     ProductId = c.ProductId,
                     UserId = c.User.Id,
+                    Count = c.Count,
                     Product = new Product()
                     {
                         Name = c.Product.Name
@@ -186,6 +189,31 @@ public class CartController
         );
 
         return Redirect(nameof(Index));
-    } 
+    }
+
+    [HttpPost()]
+    public async Task<IActionResult> Edit(CartItemCreateDto cidto)
+    {
+        _logger.LogInformation("POST: Cart/Delete.");
+
+        if (cidto.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+        {
+            _logger.LogError("The user is not allowed to log from other user's cart.");
+            return Unauthorized("You cannot only delete products from your own shopping cart");
+        }
+
+        var cartItem = _mapper.Map<CartItemCreateDto, CartItem>(cidto);
+
+        _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+        await _cartItemRepository.UpdateCertainFieldsAsync(cartItem, 
+            q => q
+                .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId), 
+            s => s
+                .SetProperty(c => c.Count, cartItem.Count)
+        );
+
+        return Redirect(nameof(Index));
+        
+    }
 
 }

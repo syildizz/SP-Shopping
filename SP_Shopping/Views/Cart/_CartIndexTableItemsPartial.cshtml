@@ -5,6 +5,9 @@
         <th>
             @Html.DisplayNameFor(model => model.ProductName)
         </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Count)
+        </th>
         <th></th>
     </tr>
 </thead>
@@ -13,6 +16,15 @@
     <tr>
         <td>
             @Html.DisplayFor(modelItem => item.ProductName)
+        </td>
+        <td>
+            <form asp-action="Edit">
+                <input type="hidden" name="@nameof(CartItemDetailsDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
+                <input type="hidden" name="@nameof(CartItemDetailsDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
+                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" />
+                <span asp-validation-for="@item.Count" class="text-danger"></span>
+                <input type="submit" value="Update" class="btn btn-secondary btn-sm" />
+            </form>
         </td>
         <td>
 @*          
