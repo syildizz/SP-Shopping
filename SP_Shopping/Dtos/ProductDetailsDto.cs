@@ -17,6 +17,8 @@ public class ProductDetailsDto
     public decimal Price { get; set; }
     [DisplayName("Category")]
     public string? CategoryName { get; set; }
+    [DisplayName("Poster")]
+    public string SubmitterName { get; set; }
     [DataType(DataType.DateTime)]
     [DisplayName("Publishing Date")]
     public DateTime InsertionDate { get; set; }

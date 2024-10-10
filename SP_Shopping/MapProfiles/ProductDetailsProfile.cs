@@ -8,6 +8,8 @@ public class ProductDetailsProfile : Profile
 {
     public ProductDetailsProfile()
     {
-        CreateMap<Product, ProductDetailsDto>().ReverseMap();
+        CreateMap<Product, ProductDetailsDto>()
+            .ForMember(p => p.SubmitterName, opt => opt.MapFrom(pp => pp.Submitter!.UserName))
+            .ReverseMap();
     }
 }
