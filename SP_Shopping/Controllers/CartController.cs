@@ -2,10 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Primitives;
-using NuGet.Common;
-using SP_Shopping.Data;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -14,26 +10,18 @@ using System.Text.RegularExpressions;
 
 namespace SP_Shopping.Controllers;
 
-public static class Glob
-{
-    public static readonly Dictionary<string, CancellationTokenSource> userCancellationTokens = [];
-    public static CancellationTokenSource? detailsCancellationToken = new(new TimeSpan(6,0,0));
-}
-
 public class CartController
 (
     ILogger<CartController> logger,
     IMapper mapper,
     IRepository<CartItem> cartItemRepository,
     IRepository<ApplicationUser> userRepository,
-    IRepository<Product> productRepository,
-    IMemoryCache memoryCache
+    IRepository<Product> productRepository
 ) : Controller
 {
 
     private readonly ILogger<CartController> _logger = logger;
     private readonly IMapper _mapper = mapper;
-    private readonly IMemoryCache _memoryCache = memoryCache;
     private readonly IRepository<CartItem> _cartItemRepository = cartItemRepository;
     private readonly IRepository<ApplicationUser> _userRepository = userRepository;
     private readonly IRepository<Product> _productRepository = productRepository;
@@ -59,39 +47,20 @@ public class CartController
             _logger.LogError("UserId does not exist i.e. no user is logged in.");
             return View("Error");
         }
-        string cacheKey = $"CartItemsIndex_{userId}";
 
-        _logger.LogDebug("Generating cancelation token for user with id \"{UserId}\"", userId);
-        // Generate Cancellation Token
-        if (!Glob.userCancellationTokens.TryGetValue(userId, out CancellationTokenSource? cts))
-        {
-            cts = new CancellationTokenSource(new TimeSpan(6,0,0));
-            Glob.userCancellationTokens.Add(userId, cts);
-        }
-
-        _logger.LogDebug("From cache attempting to get cartitems for user with id \"{UserId}\"", userId);
-        IEnumerable<CartItem>? cartItems = await _memoryCache.GetOrCreateAsync(cacheKey, async entry =>
-        {
-            entry.AddExpirationToken(new CancellationChangeToken(cts.Token));
-            entry.RegisterPostEvictionCallback((key, value, reason, state) =>
-            {
-                _logger.LogDebug("CartItems for user \"{UserId}\" has been invalidated due to {Reason} - {Key} : {Value}", userId, reason, key, value);
-            });
-            _logger.LogDebug("Cache miss, from database fetching cartitems for user with id \"{UserId}\"", userId);
-            return await _cartItemRepository.GetAllAsync(q => q
-                .Where(c => c.UserId == userId)
-                .Include(c => c.Product)
-                .Select(c => new CartItem()
-                {
-                    ProductId = c.ProductId,
-                    UserId = c.User.Id,
-                    Product = new Product()
-                    {
-                        Name = c.Product.Name
-                    }
-                })
-            );
-        });
+        IEnumerable<CartItem> cartItems = await _cartItemRepository.GetAllAsync(q => q
+           .Where(c => c.UserId == userId)
+           .Include(c => c.Product)
+           .Select(c => new CartItem()
+           {
+               ProductId = c.ProductId,
+               UserId = c.User.Id,
+               Product = new Product()
+               {
+                   Name = c.Product.Name
+               }
+           })
+       );
 
         var cidtos = _mapper.Map<IEnumerable<CartItem>,IEnumerable<CartItemDetailsDto>>(cartItems);
 
@@ -112,25 +81,7 @@ public class CartController
             return NotFound("The user was not found");
         }
 
-        // Generate Cancellation Token
-        _logger.LogDebug("Generating cancelation token for user with id \"{UserId}\".", id);
-        if (!Glob.userCancellationTokens.TryGetValue(id, out CancellationTokenSource? cts))
-        {
-            cts = new CancellationTokenSource(new TimeSpan(6,0,0));
-            Glob.userCancellationTokens.Add(id, cts);
-        }
-
-        string cacheKey = $"CartItemsIndex_{id}";
-        _logger.LogDebug("From cache attempting to get cartitems for user with id \"{UserId}\".", id);
-        IEnumerable<CartItem>? cartItems = await _memoryCache.GetOrCreateAsync($"CartItemsIndex_{id}", async entry =>
-        {
-            entry.AddExpirationToken(new CancellationChangeToken(cts.Token));
-            entry.RegisterPostEvictionCallback((key, value, reason, state) =>
-            {
-                _logger.LogDebug("CartItems for user \"{UserId}\" has been invalidated due to {Reason} - {Key} : {Value}.", id, reason, key, value);
-            });
-            _logger.LogDebug("Cache miss, from database fetching cartitems for user with id \"{UserId}\".", id);
-            return await _cartItemRepository.GetAllAsync(q => q
+        IEnumerable<CartItem> cartItems = await _cartItemRepository.GetAllAsync(q => q
                 .Where(c => c.UserId == id)
                 .Include(c => c.Product)
                 .Select(c => new CartItem()
@@ -143,7 +94,6 @@ public class CartController
                     }
                 })
             );
-        });
 
         IEnumerable<CartItemDetailsDto> cidto = _mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDetailsDto>>(cartItems);
 
@@ -156,18 +106,7 @@ public class CartController
     {
         _logger.LogInformation("GET: Cart/Details.");
 
-        _logger.LogDebug("Generating cancelation token for All users.");
-        Glob.detailsCancellationToken ??= new CancellationTokenSource(new TimeSpan(6,0,0));
-        _logger.LogDebug("From cache attempting to get cartitems for all users.");
-        IEnumerable<CartItem>? cartItems = await _memoryCache.GetOrCreateAsync($"CartItemDetails", async entry =>
-        {
-            entry.AddExpirationToken(new CancellationChangeToken(Glob.detailsCancellationToken.Token));
-            entry.RegisterPostEvictionCallback((key, value, reason, state) =>
-            {
-                _logger.LogDebug("CartItems for All users has been invalidated due to {Reason} - {Key} : {Value}", reason, key, value);
-            });
-            _logger.LogDebug("Cache miss, from database fetching cartitems for all users.");
-            return await _cartItemRepository.GetAllAsync(q => q
+        IEnumerable<CartItem> cartItems = await _cartItemRepository.GetAllAsync(q => q
                 .Include(c => c.Product)
                 .Include(c => c.User)
                 .Select(c => new CartItem()
@@ -184,10 +123,8 @@ public class CartController
                     }
                 })
             );
-        });
 
         IEnumerable<CartItemDetailsDto> cidto = _mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDetailsDto>>(cartItems);
-
 
         ViewBag.Message = $"The shopping carts of all users";
 
@@ -224,15 +161,6 @@ public class CartController
         catch (DbUpdateException)
         { }
 
-        //Expire cache
-        _logger.LogDebug("Invalidate the cache for all cartItems and cartItems of user with id \"{UserId}\"", userId);
-        if (Glob.userCancellationTokens.TryGetValue(userId, out var token))
-        {
-            await token.CancelAsync();
-            Glob.userCancellationTokens.Remove(userId);
-        }
-        await Glob.detailsCancellationToken!.CancelAsync();
-
         return Redirect(returnPath ?? nameof(Index));
     }
 
@@ -252,19 +180,10 @@ public class CartController
 
         var cartItem = _mapper.Map<CartItemDetailsDto, CartItem>(cidto);
 
-            _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+        _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
         await _cartItemRepository.DeleteCertainEntriesAsync(q => q
             .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId)
         );
-
-        _logger.LogDebug("Invalidate the cache for all cartItems and cartItems of user with id \"{UserId}\"", cartItem.UserId);
-        if (Glob.userCancellationTokens.TryGetValue(cidto.UserId, out var token))
-        {
-            await token.CancelAsync();
-            Glob.userCancellationTokens.Remove(cidto.UserId);
-        }
-
-        await Glob.detailsCancellationToken!.CancelAsync();
 
         return Redirect(nameof(Index));
     } 
