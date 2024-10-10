@@ -101,10 +101,7 @@ public class ProductsController : Controller
                 return BadRequest();
             }
         }
-        else
-        {
-            _logger.LogError("ModelState is not valid.");
-        }
+        _logger.LogError("ModelState is not valid.");
         return View(pdto);
     }
 
