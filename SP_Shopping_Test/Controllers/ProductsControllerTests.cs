@@ -3,6 +3,7 @@ using FakeItEasy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Build.Framework;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -42,7 +43,7 @@ public class ProductsControllerTests
 
         _productRepository = A.Fake<IRepository<Product>>();
         _categoryRepository = A.Fake<IRepository<Category>>();
-        _memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
+        _memoryCache = A.Fake<IMemoryCache>();
         _mapper = serviceProvider.GetRequiredService<IMapper>();
         _logger = A.Fake<ILogger<ProductsController>>();
 
@@ -91,7 +92,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_Details_ReturnsNotFoundResultWhenProductDoesntExist()
+    public async Task ProductsController_Details_ReturnsFailureWhenProductDoesntExist()
     {
         //Arrange 
         Product? product = null;
@@ -101,6 +102,61 @@ public class ProductsControllerTests
         //Assert
         A.CallTo(() => _productRepository!.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))!.MustHaveHappenedOnceExactly();
         Assert.IsInstanceOfType<NotFoundResult>(result);
+    }
+
+    [TestMethod]
+    public async Task ProductsController_CreateGet_ReturnsSuccess()
+    {
+        // Arrange
+        List<Category>? categories = A.CollectionOfFake<Category>(4) as List<Category>;
+        A.CallTo(() => _memoryCache.CreateEntry(A<string>._)).Returns(A.Fake<ICacheEntry>());
+        A.CallTo(() => _categoryRepository.GetAllAsync()).Returns(Task.FromResult(categories)!);
+        // Act
+        IActionResult result = await _productsController.Create();
+        // Assert
+        Assert.IsInstanceOfType<ViewResult>(result);
+        var viewResult = (ViewResult)result;
+        Assert.IsInstanceOfType<IEnumerable<SelectListItem>>(viewResult.ViewData["categorySelectList"]);
+        IEnumerable<SelectListItem> selectList = (IEnumerable<SelectListItem>)viewResult.ViewData["categorySelectList"]!;
+        Assert.IsTrue(selectList.Count() == categories!.Count);
+    }
+
+    [TestMethod]
+    public async Task ProductsController_CreatePost_ReturnsSuccess()
+    {
+        // Arrange
+        var sentWithPost = A.Fake<ProductCreateDto>();
+        A.CallTo(() => _productRepository.CreateAsync(A<Product>._)).Returns(Task.FromResult(true));
+        // Act
+        IActionResult result = await _productsController.Create(sentWithPost);
+        // Assert
+        Assert.IsInstanceOfType<RedirectToActionResult>(result);
+    }
+
+    [TestMethod]
+    public async Task ProductController_CreatePost_ReturnsFailureWhenModelStateIsNotValid()
+    {
+        // Arrange
+        var sentWithPost = A.Fake<ProductCreateDto>();
+        _productsController.ModelState.AddModelError("CategoryId", "The CategoryId for this product is invalid");
+        // Act
+        IActionResult result = await _productsController.Create(sentWithPost);
+        // Assert
+        Assert.IsInstanceOfType<ViewResult>(result);
+        A.CallTo(() => _productRepository.CreateAsync(A<Product>._)).MustNotHaveHappened();
+    }
+
+    [TestMethod]
+    public async Task ProductController_CreatePost_ReturnsFailureWhenProductCannotBeCreated()
+    {
+        // Arrange
+        var sentWithPost = A.Fake<ProductCreateDto>();
+        A.CallTo(() => _productRepository.CreateAsync(A<Product>._)).Throws<DbUpdateException>();
+        // Act
+        IActionResult result = await _productsController.Create(sentWithPost);
+        // Assert
+        Assert.IsInstanceOfType<BadRequestResult>(result);
+        A.CallTo(() => _productRepository.CreateAsync(A<Product>._)).MustHaveHappenedOnceOrMore();
     }
 
 }
