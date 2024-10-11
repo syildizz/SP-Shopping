@@ -26,6 +26,7 @@ public class ProductsControllerTests
 
     private readonly IRepository<Product> _productRepository;
     private readonly IRepository<Category> _categoryRepository;
+    private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IMemoryCache _memoryCache;
     private readonly IMapper _mapper;
     private readonly ILogger<ProductsController> _logger;
@@ -43,65 +44,74 @@ public class ProductsControllerTests
 
         _productRepository = A.Fake<IRepository<Product>>();
         _categoryRepository = A.Fake<IRepository<Category>>();
+        _userRepository = A.Fake<IRepository<ApplicationUser>>();
         _memoryCache = A.Fake<IMemoryCache>();
         _mapper = serviceProvider.GetRequiredService<IMapper>();
         _logger = A.Fake<ILogger<ProductsController>>();
 
         // SUT
-        _productsController = new ProductsController(_logger, _mapper, _productRepository, _categoryRepository, _memoryCache);
+        _productsController = new ProductsController
+        (
+            logger: _logger,
+            mapper: _mapper,
+            productRepository: _productRepository,
+            categoryRepository:  _categoryRepository,
+            userRepository: _userRepository,
+            memoryCache: _memoryCache
+        );
     }
 
     [TestMethod]
-    public async Task ProductsController_Index_ReturnsSuccess()
+    public async Task ProductsController_Index_Succeeds_WithViewResult()
     {
         // Arrange
         var products = A.CollectionOfFake<Product>(5) as List<Product>;
         Assert.IsNotNull(products);
-        A.CallTo(() => _productRepository.GetAllAsync()).Returns(Task.FromResult(products));
+        A.CallTo(() => _productRepository.GetAllAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(Task.FromResult(products));
         // Act
         IActionResult result = await _productsController.Index();
         // Assert
-        A.CallTo(() => _productRepository.GetAllAsync()).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _productRepository.GetAllAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).MustHaveHappenedOnceExactly();
         Assert.IsInstanceOfType<ViewResult>(result);
         Assert.IsInstanceOfType<IEnumerable<ProductDetailsDto>>(((ViewResult)result).Model);
         Assert.IsTrue(products.Count == ((IEnumerable<ProductDetailsDto>)((ViewResult)result).Model!).Count());
     }
 
     [TestMethod]
-    public async Task ProductsController_Details_ReturnsSuccess()
+    public async Task ProductsController_Details_Succeeds_WithViewResult()
     {
-        //Arrange 
+        // Arrange 
         Product product = A.Fake<Product>();
         A.CallTo(() => _productRepository!.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))!.Returns(Task.FromResult(product));
-        //Act
+        // Act
         IActionResult result = await _productsController.Details(0);
-        //Assert
+        // Assert
         A.CallTo(() => _productRepository!.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))!.MustHaveHappenedOnceExactly();
         Assert.IsInstanceOfType<ViewResult>(result);
         Assert.IsInstanceOfType<ProductDetailsDto>(((ViewResult)result).Model);
     }
 
     [TestMethod]
-    public async Task ProductController_Details_ReturnsNotFoundResultWhenIdIsNull()
+    public async Task ProductController_Details_Fails_WhenIdIsNull_WithBadRequestResponse()
     {
-        //Arrange
-        //Act
+        // Arrange
+        // Act
         IActionResult result = await _productsController.Details(null);
-        //Assert
-        Assert.IsInstanceOfType<NotFoundResult>(result);
+        // Assert
+        Assert.IsTrue(new[] {typeof(BadRequestResult), typeof(BadRequestObjectResult)}.Contains(result.GetType()));
     }
 
     [TestMethod]
-    public async Task ProductsController_Details_ReturnsFailureWhenProductDoesntExist()
+    public async Task ProductsController_Details_Fails_WhenProductDoesntExist_WithNotFoundResponse()
     {
-        //Arrange 
+        // Arrange 
         Product? product = null;
         A.CallTo(() => _productRepository!.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))!.Returns(Task.FromResult(product));
-        //Act
+        // Act
         IActionResult result = await _productsController.Details(0);
-        //Assert
+        // Assert
         A.CallTo(() => _productRepository!.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))!.MustHaveHappenedOnceExactly();
-        Assert.IsInstanceOfType<NotFoundResult>(result);
+        Assert.IsTrue(new[] {typeof(NotFoundResult), typeof(NotFoundObjectResult)}.Contains(result.GetType()));
     }
 
     [TestMethod]
@@ -134,7 +144,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_CreatePost_ReturnsFailureWhenModelStateIsNotValid()
+    public async Task ProductController_CreatePost_Fails_WhenModelStateIsNotValid_ReturnsViewResult()
     {
         // Arrange
         var sentWithPost = A.Fake<ProductCreateDto>();
@@ -147,7 +157,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_CreatePost_ReturnsFailureWhenProductCannotBeCreated()
+    public async Task ProductController_CreatePost_Fails_WhenProductCannotBeCreated_ReturnsBadRequest()
     {
         // Arrange
         var sentWithPost = A.Fake<ProductCreateDto>();
@@ -155,8 +165,22 @@ public class ProductsControllerTests
         // Act
         IActionResult result = await _productsController.Create(sentWithPost);
         // Assert
-        Assert.IsInstanceOfType<BadRequestResult>(result);
+        Assert.IsTrue(new[] {typeof(BadRequestResult), typeof(BadRequestObjectResult)}.Contains(result.GetType()));
         A.CallTo(() => _productRepository.CreateAsync(A<Product>._)).MustHaveHappenedOnceOrMore();
+    }
+
+    [TestMethod]
+    public async Task ProductController_CreatePost_Fails_WhenSubmitterIsInvalid_ReturnsBadRequest()
+    {
+        // Arrange
+        var sentWithPost = A.Fake<ProductCreateDto>();
+        ApplicationUser? nullUser = null;
+        A.CallTo(() => _userRepository.GetSingleAsync(A<Func<IQueryable<ApplicationUser>, IQueryable<ApplicationUser>>>._)).Returns(Task.FromResult(nullUser));
+        // Act
+        IActionResult result = await _productsController.Create(sentWithPost);
+        // Assert
+        Assert.IsTrue(new[] {typeof(BadRequestResult), typeof(BadRequestObjectResult)}.Contains(result.GetType()));
+        A.CallTo(() => _userRepository.GetSingleAsync(A<Func<IQueryable<ApplicationUser>, IQueryable<ApplicationUser>>>._)).MustHaveHappenedOnceOrMore();
     }
 
 }
