@@ -10,10 +10,10 @@
     <h1 class="display-4">Welcome @UserName</h1>
     <p class="align-content-center">@(!string.IsNullOrWhiteSpace(UserId) ? $"{nameof(UserId)} is {UserId}" : "No user is logged in")</p>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-    <div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: 0.5em;">
     @foreach (var product in Model)
     {
-        <div style="display: inline-block; width: 200px; height: 100px; border: solid gray 3px; text-align: center">
+        <div style=" border: solid gray 0.1875em; text-align: center; padding: 0.1875em;">
             <div>@product.Name</div>    
             <div>@product.Price</div>    
             <div>@product.CategoryName</div>    
