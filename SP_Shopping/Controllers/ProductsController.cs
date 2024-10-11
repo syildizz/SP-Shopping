@@ -138,12 +138,23 @@ public class ProductsController : Controller
                 _logger.LogDebug($"Creating product.");
                 Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
                 product.InsertionDate = DateTime.Now;
-                var productSubmitter = await _userRepository.GetSingleAsync(q => q.Where(u => u.UserName == product.Submitter.UserName));
+
+                // Set submitter to null and manually set Submitter foreign key
+                // to avoid generating new ApplicationUser with auto-generated id.
+                product.Submitter = null;
+                var productSubmitter = await _userRepository.GetSingleAsync(q => q
+                        .Where(u => u.UserName == product.Submitter.UserName)
+                        .Select(u => new ApplicationUser()
+                        {
+                            Id = u.Id
+                        })
+                );
                 if (productSubmitter is null)
                 {
                     return BadRequest("User with name does not exist.");
                 }
-                product.Submitter = productSubmitter;
+                product.SubmitterId = productSubmitter.Id;
+
                 //await _context.AddAsync(product);
                 //await _context.SaveChangesAsync();
                 await _productRepository.CreateAsync(product);
