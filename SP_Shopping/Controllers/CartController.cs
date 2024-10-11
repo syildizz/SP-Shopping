@@ -51,6 +51,7 @@ public class CartController
         IEnumerable<CartItem> cartItems = await _cartItemRepository.GetAllAsync(q => q
            .Where(c => c.UserId == userId)
            .Include(c => c.Product)
+           .ThenInclude(p => p.Submitter)
            .Select(c => new CartItem()
            {
                ProductId = c.ProductId,
@@ -58,7 +59,11 @@ public class CartController
                Count = c.Count,
                Product = new Product()
                {
-                   Name = c.Product.Name
+                   Name = c.Product.Name,
+                   Submitter = new ApplicationUser()
+                   {
+                       UserName = c.Product.Submitter.UserName
+                   }
                }
            })
        );
@@ -85,6 +90,7 @@ public class CartController
         IEnumerable<CartItem> cartItems = await _cartItemRepository.GetAllAsync(q => q
                 .Where(c => c.UserId == id)
                 .Include(c => c.Product)
+                .ThenInclude(p => p.Submitter)
                 .Select(c => new CartItem()
                 {
                     ProductId = c.ProductId,
@@ -92,7 +98,12 @@ public class CartController
                     Count = c.Count,
                     Product = new Product()
                     {
-                        Name = c.Product.Name
+                        Name = c.Product.Name,
+                        Submitter = new ApplicationUser
+                        {
+                            UserName = c.Product.Submitter.UserName
+                        }
+                       
                     }
                 })
             );
@@ -110,6 +121,7 @@ public class CartController
 
         IEnumerable<CartItem> cartItems = await _cartItemRepository.GetAllAsync(q => q
                 .Include(c => c.Product)
+                .ThenInclude(p => p.Submitter)
                 .Include(c => c.User)
                 .Select(c => new CartItem()
                 {
@@ -118,7 +130,11 @@ public class CartController
                     Count = c.Count,
                     Product = new Product()
                     {
-                        Name = c.Product.Name
+                        Name = c.Product.Name,
+                        Submitter = new ApplicationUser
+                        {
+                            UserName = c.Product.Submitter.UserName
+                        }
                     },
                     User = new ApplicationUser()
                     {

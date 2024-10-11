@@ -6,6 +6,9 @@
             @Html.DisplayNameFor(model => model.ProductName)
         </th>
         <th>
+            @Html.DisplayNameFor(model => model.SubmitterName)
+        </th>
+        <th>
             @Html.DisplayNameFor(model => model.Count)
         </th>
         <th></th>
@@ -16,6 +19,9 @@
     <tr>
         <td>
             @Html.DisplayFor(modelItem => item.ProductName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.SubmitterName)
         </td>
         <td>
             <form asp-action="Edit">
