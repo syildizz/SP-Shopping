@@ -23,7 +23,6 @@ public class ProductsController : Controller
     (
         ILogger<ProductsController> logger,
         IMapper mapper,
-        ApplicationDbContext context,
         IRepository<Product> productRepository,
         IRepository<Category> categoryRepository,
         IRepository<ApplicationUser> userRepository,
