@@ -13,6 +13,9 @@
             @Html.DisplayNameFor(model => model.CategoryName)
         </th>
         <th>
+            @Html.DisplayNameFor(model => model.SubmitterName)
+        </th>
+        <th>
             @Html.DisplayNameFor(model => model.InsertionDate)
         </th>
         <th>
@@ -34,18 +37,14 @@
             @Html.DisplayFor(modelItem => item.CategoryName) 
         </td>
         <td>
+            @Html.DisplayFor(modelItem => item.SubmitterName) 
+        </td>
+        <td>
             @Html.DisplayFor(modelItem => item.InsertionDate)
         </td>
-        @if (!(item.ModificationDate is null))
-        {
-            <td>
-                @Html.DisplayFor(modelItem => item.ModificationDate)
-            </td>
-        }
-        else
-        {
-            <td></td>   
-        }
+        <td>
+            @Html.DisplayFor(modelItem => item.ModificationDate)
+        </td>
             <td>
             <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
             <a asp-action="Details" asp-route-id="@item.Id">Details</a> |

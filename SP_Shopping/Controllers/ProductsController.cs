@@ -16,14 +16,25 @@ public class ProductsController : Controller
     private readonly IMapper _mapper;
     private readonly IRepository<Product> _productRepository;
     private readonly IRepository<Category> _categoryRepository;
+    private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IMemoryCache _memoryCache;
 
-    public ProductsController(ILogger<ProductsController> logger, IMapper mapper, IRepository<Product> productRepository, IRepository<Category> categoryRepository, IMemoryCache memoryCache)
+    public ProductsController
+    (
+        ILogger<ProductsController> logger,
+        IMapper mapper,
+        ApplicationDbContext context,
+        IRepository<Product> productRepository,
+        IRepository<Category> categoryRepository,
+        IRepository<ApplicationUser> userRepository,
+        IMemoryCache memoryCache
+    )
     {
         _logger = logger;
         _mapper = mapper;
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
+        _userRepository = userRepository;
         _memoryCache = memoryCache;
     }
 
@@ -31,8 +42,26 @@ public class ProductsController : Controller
     public async Task<IActionResult> Index()
     {
         _logger.LogInformation("GET: Entering Products/Index.");
-        var pdtoList = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>
-            (await _productRepository.GetAllAsync());
+        var products = await _productRepository.GetAllAsync(q => q
+            .Include(p => p.Submitter)
+            .Select(p => new Product()
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                InsertionDate = p.InsertionDate,
+                ModificationDate = p.ModificationDate,
+                Category = new Category()
+                {
+                    Name = p.Category.Name
+                },
+                Submitter = new ApplicationUser()
+                {
+                    UserName = p.Submitter.UserName
+                }
+            })
+        );
+        var pdtoList = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>(products);
         _logger.LogDebug("Fetching all product information.");
         return View(pdtoList);
     }
@@ -44,19 +73,39 @@ public class ProductsController : Controller
         if (id == null)
         {
             _logger.LogError("The specified id \"{Id}\" for Product/Details does not exist.", id);
-            return NotFound();
+            return BadRequest("Required parameter id not specified");
         }
 
         //var product = await _context.Products
         //    //.Include(p => p.Category)
         //    .FirstOrDefaultAsync(m => m.Id == id);
         var product = await _productRepository
-            .GetSingleAsync(q => q.Include(p => p.Category).Where(m => m.Id == id));
+            .GetSingleAsync(q => q
+            .Include(p => p.Category)
+            .Include(p => p.Submitter)
+            .Where(p => p.Id == id)
+            .Select(p => new Product()
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                InsertionDate = p.InsertionDate,
+                ModificationDate = p.ModificationDate,
+                Category = new Category()
+                {
+                    Name = p.Category.Name
+                },
+                Submitter = new ApplicationUser()
+                {
+                    UserName = p.Submitter.UserName
+                }
+            })
+        );
         _logger.LogDebug("Fetching \"{Id}\" product information.", id);
         if (product == null)
         {
             _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
-            return NotFound();
+            return NotFound("Product with id does not exist");
         }
 
         ProductDetailsDto pdto = _mapper.Map<Product, ProductDetailsDto>(product);
@@ -90,6 +139,12 @@ public class ProductsController : Controller
                 _logger.LogDebug($"Creating product.");
                 Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
                 product.InsertionDate = DateTime.Now;
+                var productSubmitter = await _userRepository.GetSingleAsync(q => q.Where(u => u.UserName == product.Submitter.UserName));
+                if (productSubmitter is null)
+                {
+                    return BadRequest("User with name does not exist.");
+                }
+                product.Submitter = productSubmitter;
                 //await _context.AddAsync(product);
                 //await _context.SaveChangesAsync();
                 await _productRepository.CreateAsync(product);
@@ -102,6 +157,7 @@ public class ProductsController : Controller
             }
         }
         _logger.LogError("ModelState is not valid.");
+        ViewBag.categorySelectList = await GetCategoriesSelectListAsync();
         return View(pdto);
     }
 
@@ -117,7 +173,10 @@ public class ProductsController : Controller
 
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var product = await _productRepository.GetByKeyAsync((int)id);
+        var product = await _productRepository.GetSingleAsync(q => q
+            .Where(p => p.Id == id)
+            .Include(p => p.Submitter)
+        );
         if (product == null)
         {
             _logger.LogError("Could not fetch product for id \"{Id}\".", id);
@@ -139,8 +198,8 @@ public class ProductsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, ProductCreateDto pdto)
     {
-        _logger.LogInformation($"GET: Entering Products/Edit.");
-        if (!ProductExists(id))
+        _logger.LogInformation($"POST: Entering Products/Edit.");
+        if (!_productRepository.Exists(q => q.Where(p => p.Id == id)))
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
@@ -151,16 +210,22 @@ public class ProductsController : Controller
             try
             {
                 var product = _mapper.Map<ProductCreateDto, Product>(pdto);
-                product.Id = id;
+                var productSubmitter = _userRepository.GetSingle(q => q.Where(u => u.UserName == product.Submitter.UserName));
+                if (productSubmitter is null)
+                {
+                    return BadRequest("User with name does not exist.");
+                }
                 
                 _logger.LogDebug("Updating product.");
-                await _productRepository.UpdateCertainFieldsAsync(product,
-                    q => q.Where(p => p.Id == id),
+                _productRepository.UpdateCertainFields(
+                    q => q
+                    .Where(p => p.Id == id),
                     setPropertyCalls: s => s
-                        .SetProperty(b => b.Name, product.Name)
-                        .SetProperty(b => b.Price, product.Price)
-                        .SetProperty(b => b.CategoryId, product.CategoryId)
-                        .SetProperty(b => b.ModificationDate, DateTime.Now)
+                        .SetProperty(p => p.Name, product.Name)
+                        .SetProperty(p => p.Price, product.Price)
+                        .SetProperty(p => p.CategoryId, product.CategoryId)
+                        .SetProperty(p => p.SubmitterId, productSubmitter.Id)
+                        .SetProperty(p => p.ModificationDate, DateTime.Now)
                 );
                 //_context.Update(product);
             }
@@ -174,6 +239,7 @@ public class ProductsController : Controller
         _logger.LogDebug($"Fetching all categories.");
         var categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.CategorySelectList = categorySelectList;
+        
         return View(pdto);
     }
 
@@ -225,11 +291,6 @@ public class ProductsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private bool ProductExists(int id)
-    {
-        return _productRepository.GetByKeyAsync(id) is not null;
-    }
-
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
     {
         //if (_memoryCache.TryGetValue($"{nameof(Category)}List", out List<SelectListItem> categoryList)) return categoryList;
@@ -244,12 +305,6 @@ public class ProductsController : Controller
                 .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
                 .ToList();
         });
-
-        if (categoryList == null)
-        {
-            _logger.LogError("{CategoryList} is null", $"{nameof(Category)}List");
-            return Enumerable.Empty<SelectListItem>();
-        }
 
         //categoryList = (await _categoryRepository.GetAllAsync())
         //    .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() }).ToList();
