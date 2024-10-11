@@ -61,6 +61,7 @@ public class CategoriesController : Controller
             //_context.Add(category);
             //await _context.SaveChangesAsync();
             await _categoryRepository.CreateAsync(category);
+            await _categoryRepository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
         return View(category);
@@ -100,12 +101,13 @@ public class CategoriesController : Controller
             try
             {
                 //_context.Update(category);
-                await _categoryRepository.UpdateAsync(category);
+                _categoryRepository.Update(category);
+                await _categoryRepository.SaveChangesAsync();
                 _memoryCache.Remove($"{nameof(Category)}List");
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CategoryExists(category.Id))
+                if (await _categoryRepository.ExistsAsync(q => q.Where(c => c.Id == category.Id)))
                 {
                     return NotFound();
                 }
@@ -148,7 +150,8 @@ public class CategoriesController : Controller
         if (category != null)
         {
             //_context.Categories.Remove(category);
-            await _categoryRepository.DeleteAsync(category);
+            _categoryRepository.Delete(category);
+            await _categoryRepository.SaveChangesAsync();
             _memoryCache.Remove($"{nameof(Category)}List");
         }
 
@@ -156,9 +159,4 @@ public class CategoriesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private bool CategoryExists(int id)
-    {
-        //return _context.Categories.Any(e => e.Id == id);
-        return _categoryRepository.GetByKeyAsync(id) is not null;
-    }
 }

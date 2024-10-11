@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Identity.Client;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using System.Linq.Expressions;
@@ -77,74 +78,56 @@ public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemor
     {
         return await base.GetSingleAsync(query);
     }
-    public override bool Create(TEntity entity)
+    public override void Create(TEntity entity)
     {
-        var result = base.Create(entity);
+        base.Create(entity);
         RemoveListKeys();
-        return result;
     }
 
-    public override async Task<bool> CreateAsync(TEntity entity)
+    public override async Task CreateAsync(TEntity entity)
     {
-        var result = await base.CreateAsync(entity);
+        await base.CreateAsync(entity);
         RemoveListKeys();
-        return result;
     }
-    public override bool Update(TEntity entity)
+    public override void Update(TEntity entity)
     {
-        var result = base.Update(entity);
+        base.Update(entity);
         RemoveListKeys();
-        return result;
-    }
-    public override async Task<bool> UpdateAsync(TEntity entity)
-    {
-        var result = await base.UpdateAsync(entity);
-        RemoveListKeys();
-        return result;
     }
     
-    public override bool UpdateCertainFields
+    public override int UpdateCertainFields
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     )
     {
-        var result = base.UpdateCertainFields(entity, query, setPropertyCalls);
+        var result = base.UpdateCertainFields(query, setPropertyCalls);
         RemoveListKeys();
         return result;
     }
 
-    public override async Task<bool> UpdateCertainFieldsAsync
+    public override async Task<int> UpdateCertainFieldsAsync
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     )
     {
-        var result = await base.UpdateCertainFieldsAsync(entity, query, setPropertyCalls);
+        var result = await base.UpdateCertainFieldsAsync(query, setPropertyCalls);
         RemoveListKeys();
         return result;
     }
-    public override bool Delete(TEntity entity)
+    public override void Delete(TEntity entity)
     {
-        var result = base.Delete(entity);
+        base.Delete(entity);
         RemoveListKeys();
-        return result;
     }
-    public override async Task<bool> DeleteAsync(TEntity entity)
-    {
-        var result = await base.DeleteAsync(entity);
-        RemoveListKeys();
-        return result;
-    }
-    public override bool DeleteCertainEntries(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public override int DeleteCertainEntries(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
         var result = base.DeleteCertainEntries(query);
         RemoveListKeys();
         return result;
     }
-    public override async Task<bool> DeleteCertainEntriesAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public override async Task<int> DeleteCertainEntriesAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
         var result = await base.DeleteCertainEntriesAsync(query);
         RemoveListKeys();
@@ -158,4 +141,15 @@ public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemor
     {
         return await base.ExistsAsync(query);
     }
+
+    public override int SaveChanges()
+    {
+        return base.SaveChanges();
+    } 
+
+    public override async Task<int> SaveChangesAsync()
+    {
+        return await base.SaveChangesAsync();
+    }
+
 }

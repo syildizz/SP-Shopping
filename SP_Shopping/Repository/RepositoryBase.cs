@@ -53,87 +53,56 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
     }
 
 
-    public virtual bool Create(TEntity entity)
+    public virtual void Create(TEntity entity)
     {
         _context.Set<TEntity>().Add(entity);
-        int numSaved = _context.SaveChanges();
-        return (numSaved > 0);
     }
 
-    public virtual async Task<bool> CreateAsync(TEntity entity)
+    public virtual async Task CreateAsync(TEntity entity)
     {
         await _context.Set<TEntity>().AddAsync(entity);
-        int numSaved = await _context.SaveChangesAsync();
-        return (numSaved > 0);
     }
 
-    public virtual bool Update(TEntity entity)
+    public virtual void Update(TEntity entity)
     {
         _context.Set<TEntity>().Update(entity);
-        int numSaved = _context.SaveChanges();
-        return (numSaved > 0);
     }
 
-    public virtual async Task<bool> UpdateAsync(TEntity entity)
-    {
-        _context.Set<TEntity>().Update(entity);
-        int numSaved = await _context.SaveChangesAsync();
-        return (numSaved > 0);
-    }
-    public virtual bool UpdateCertainFields
+    public virtual int UpdateCertainFields
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     )
     {
-        query(_context.Set<TEntity>())
+        return query(_context.Set<TEntity>())
             .ExecuteUpdate(setPropertyCalls);
-        int numSaved = _context.SaveChanges();
-        return (numSaved > 0);
     }
 
-    public virtual async Task<bool> UpdateCertainFieldsAsync
+    public virtual async Task<int> UpdateCertainFieldsAsync
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     )
     {
-        await query(_context.Set<TEntity>())
+        return await query(_context.Set<TEntity>())
             .ExecuteUpdateAsync(setPropertyCalls);
-        int numSaved = await _context.SaveChangesAsync();
-        return (numSaved > 0);
     }
 
-    public virtual bool Delete(TEntity entity)
+    public virtual void Delete(TEntity entity)
     {
         _context.Set<TEntity>().Remove(entity);
-        int numSaved = _context.SaveChanges();
-        return (numSaved > 0);
     }
 
-    public virtual async Task<bool> DeleteAsync(TEntity entity)
+    public virtual int DeleteCertainEntries(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
-        _context.Set<TEntity>().Remove(entity);
-        int numSaved = await _context.SaveChangesAsync();
-        return (numSaved > 0);
-    }
-
-    public virtual bool DeleteCertainEntries(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
-    {
-        query(_context.Set<TEntity>())
+        return query(_context.Set<TEntity>())
             .ExecuteDelete();
-        int numSaved = _context.SaveChanges();
-        return (numSaved > 0);
     }
 
-    public virtual async Task<bool> DeleteCertainEntriesAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public virtual async Task<int> DeleteCertainEntriesAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
-        await query(_context.Set<TEntity>())
+        return await query(_context.Set<TEntity>())
             .ExecuteDeleteAsync();
-        int numSaved = await _context.SaveChangesAsync();
-        return (numSaved > 0);
     }
 
     public virtual bool Exists(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
@@ -144,6 +113,16 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
     public virtual async Task<bool> ExistsAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
         return await query(_context.Set<TEntity>()).AnyAsync();
+    }
+
+    public virtual int SaveChanges()
+    {
+        return _context.SaveChanges();
+    }
+
+    public virtual async Task<int> SaveChangesAsync()
+    {
+        return await _context.SaveChangesAsync();
     }
 
 }

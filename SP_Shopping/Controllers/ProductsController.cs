@@ -148,6 +148,7 @@ public class ProductsController : Controller
                 //await _context.AddAsync(product);
                 //await _context.SaveChangesAsync();
                 await _productRepository.CreateAsync(product);
+                await _productRepository.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException)
@@ -285,7 +286,7 @@ public class ProductsController : Controller
         {
             //_context.Products.Remove(product);
             _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
-            await _productRepository.DeleteAsync(product);
+            await _productRepository.DeleteCertainEntriesAsync(q => q.Where(p => p.Id == id));
         }
 
         return RedirectToAction(nameof(Index));

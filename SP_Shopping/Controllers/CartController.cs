@@ -145,7 +145,7 @@ public class CartController
         string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         _logger.LogDebug("Checking if user with \"{UserId}\" exists in database.", userId);
         bool userExists = await _userRepository.ExistsAsync(q => q.Where(u => u.Id == userId));
-        _logger.LogDebug("Checking if procduct with \"{ProductId}\" exists in database.", userId);
+        _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", userId);
         bool productExists = await _productRepository.ExistsAsync(q => q.Where(p => p.Id == cartItem.ProductId));
         // Check that the keys are valid.
         if (string.IsNullOrWhiteSpace(userId) || !userExists || !productExists)
@@ -160,6 +160,7 @@ public class CartController
         {
             _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
             await _cartItemRepository.CreateAsync(cartItem);
+            await _cartItemRepository.SaveChangesAsync();
         }
         catch (DbUpdateException)
         { }
@@ -205,7 +206,7 @@ public class CartController
         var cartItem = _mapper.Map<CartItemCreateDto, CartItem>(cidto);
 
         _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-        await _cartItemRepository.UpdateCertainFieldsAsync(cartItem, 
+        await _cartItemRepository.UpdateCertainFieldsAsync(
             q => q
                 .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId), 
             s => s

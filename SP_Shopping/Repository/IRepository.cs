@@ -15,35 +15,33 @@ public interface IRepository<TEntity> where TEntity : class
     Task<TEntity?> GetByKeyAsync(params object?[]? keyValues);
     TEntity? GetSingle(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
     Task<TEntity?> GetSingleAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
-    bool Create(TEntity entity);
-    Task<bool> CreateAsync(TEntity entity);
-
-    bool Update(TEntity entity);
-    Task<bool> UpdateAsync(TEntity entity);
-    bool UpdateCertainFields
+    void Create(TEntity entity);
+    Task CreateAsync(TEntity entity);
+    void Update(TEntity entity);
+    int UpdateCertainFields
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     );
-    Task<bool> UpdateCertainFieldsAsync
+    Task<int> UpdateCertainFieldsAsync
     (
-        TEntity entity,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query,
         Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls
     );
 
-    bool Delete(TEntity entity);
-    Task<bool> DeleteAsync(TEntity entity);
-    public bool DeleteCertainEntries
+    void Delete(TEntity entity);
+    public int DeleteCertainEntries
     (
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     );
-    public Task<bool> DeleteCertainEntriesAsync
+    public Task<int> DeleteCertainEntriesAsync
     (
         Func<IQueryable<TEntity>, IQueryable<TEntity>> query
     );
     public bool Exists(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
     public Task<bool> ExistsAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
+
+    public int SaveChanges();
+    public Task<int> SaveChangesAsync();
 
 }
