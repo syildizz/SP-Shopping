@@ -9,16 +9,17 @@
 <div class="text-center">
     <h1 class="display-4">Welcome @UserName</h1>
     <p class="align-content-center">@(!string.IsNullOrWhiteSpace(UserId) ? $"{nameof(UserId)} is {UserId}" : "No user is logged in")</p>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: 0.5em;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: 0.5em; grid-auto-rows: 1fr;">
     @foreach (var product in Model)
     {
-        <div style=" border: solid gray 0.1875em; text-align: center; padding: 0.1875em;">
+        <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" style="text-decoration: none; color: inherit;">
+        <div style="border: solid gray 0.1875em; text-align: center; padding: 0.1875em; height:100%;">
             <div>@product.Name</div>    
             <div>@product.Price</div>    
             <div>@product.CategoryName</div>    
             <div>@product.SubmitterName</div>
         </div>
+        </a>
     }
     </div>
 </div>

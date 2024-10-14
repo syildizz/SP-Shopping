@@ -31,6 +31,7 @@ public class HomeController : Controller
             .Include(p => p.Category)
             .Select(p => new Product()
             {
+                Id = p.Id,
                 Name = p.Name,
                 Price = p.Price,
                 Submitter = new ApplicationUser()
