@@ -9,6 +9,11 @@
 <div class="text-center">
     <h1 class="display-4">Welcome @UserName</h1>
     <p class="align-content-center">@(!string.IsNullOrWhiteSpace(UserId) ? $"{nameof(UserId)} is {UserId}" : "No user is logged in")</p>
+    
+    <div class="my-4">
+        <partial name="_SearchFormPartial" model="@("Products", "Search", "query")"/>
+    </div>
+    
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: 0.5em; grid-auto-rows: 1fr;">
     @foreach (var product in Model)
     {

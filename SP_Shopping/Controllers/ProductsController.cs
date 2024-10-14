@@ -21,6 +21,7 @@ public class ProductsController : Controller
     private readonly IRepository<Category> _categoryRepository;
     private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IMemoryCache _memoryCache;
+    private readonly int paginationCount = 5;
 
     public ProductsController
     (
@@ -44,6 +45,7 @@ public class ProductsController : Controller
     public async Task<IActionResult> Index()
     {
         _logger.LogInformation("GET: Entering Products/Index.");
+        _logger.LogDebug("Fetching all product information.");
         var products = await _productRepository.GetAllAsync(q => q
             .Include(p => p.Submitter)
             .Select(p => new Product()
@@ -64,8 +66,43 @@ public class ProductsController : Controller
             })
         );
         var pdtoList = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>(products);
-        _logger.LogDebug("Fetching all product information.");
         return View(pdtoList);
+    }
+
+    public async Task<IActionResult> Search(string? query)
+    {
+        _logger.LogInformation("GET: Entering Products/Search.");
+
+        IEnumerable<ProductDetailsDto>? pdtoList = null;
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            _logger.LogDebug("Fetching product information matching search term.");
+            IEnumerable<Product> products = await _productRepository.GetAllAsync(q => q
+                .Where(p => p.Name.Contains(query))
+                .OrderByDescending(p => p.InsertionDate)
+                .ThenByDescending(p => p.ModificationDate)
+                .Take(paginationCount)
+                .Select(p => new Product()
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Price = p.Price,
+                    InsertionDate = p.InsertionDate,
+                    ModificationDate = p.ModificationDate,
+                    Category = new Category()
+                    {
+                        Name = p.Category.Name
+                    },
+                    Submitter = new ApplicationUser()
+                    {
+                        UserName = p.Submitter.UserName
+                    }
+                })
+            );
+            pdtoList = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>(products);
+        }
+        return View(pdtoList);
+        
     }
 
     // GET: Products/Details/5

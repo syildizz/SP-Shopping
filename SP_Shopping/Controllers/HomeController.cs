@@ -26,9 +26,12 @@ public class HomeController : Controller
     {
         ViewBag.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         ViewBag.UserName = User.FindFirstValue(ClaimTypes.Name);
-        var products = _productRepository.GetAll(q => q
-            .Include(p => p.Submitter)
-            .Include(p => p.Category)
+        IEnumerable<Product> products = _productRepository.GetAll(q => q
+            //.Include(p => p.Submitter)
+            //.Include(p => p.Category)
+            .OrderByDescending(p => p.InsertionDate)
+            .ThenByDescending(p => p.ModificationDate)
+            .Take(20)
             .Select(p => new Product()
             {
                 Id = p.Id,
@@ -43,7 +46,6 @@ public class HomeController : Controller
                     Name = p.Category.Name
                 }
             })
-            .Take(20)
         );
         var pdto = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>(products);
         return View(pdto);
