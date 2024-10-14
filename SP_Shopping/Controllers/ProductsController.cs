@@ -179,7 +179,7 @@ public class ProductsController : Controller
         if (id == null)
         {
             _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
-            return NotFound();
+            return BadRequest();
         }
 
         //var product = await _context.Products.FindAsync(id);
@@ -261,7 +261,7 @@ public class ProductsController : Controller
         if (id == null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
-            return NotFound();
+            return BadRequest();
         }
 
         //var product = await _context.Products

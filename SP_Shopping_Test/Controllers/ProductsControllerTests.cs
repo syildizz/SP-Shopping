@@ -115,7 +115,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_CreateGet_ReturnsSuccess()
+    public async Task ProductsController_CreateGet_Succeeds_WithViewResult()
     {
         // Arrange
         List<Category>? categories = A.CollectionOfFake<Category>(4) as List<Category>;
@@ -132,7 +132,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_CreatePost_ReturnsSuccess()
+    public async Task ProductsController_CreatePost_Succeeds_WithRedirectToActionResult()
     {
         // Arrange
         var sentWithPost = A.Fake<ProductCreateDto>();
@@ -144,7 +144,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_CreatePost_Fails_WhenModelStateIsNotValid_ReturnsViewResult()
+    public async Task ProductController_CreatePost_Fails_WhenModelStateIsNotValid_WithViewResult()
     {
         // Arrange
         var sentWithPost = A.Fake<ProductCreateDto>();
@@ -157,7 +157,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_CreatePost_Fails_WhenProductCannotBeCreated_ReturnsBadRequest()
+    public async Task ProductController_CreatePost_Fails_WhenProductCannotBeCreated_WithBadRequestResult()
     {
         // Arrange
         var sentWithPost = A.Fake<ProductCreateDto>();
@@ -170,7 +170,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_CreatePost_Fails_WhenSubmitterIsInvalid_ReturnsBadRequest()
+    public async Task ProductController_CreatePost_Fails_WhenSubmitterIsInvalid_WithBadRequestResult()
     {
         // Arrange
         var sentWithPost = A.Fake<ProductCreateDto>();
@@ -181,6 +181,47 @@ public class ProductsControllerTests
         // Assert
         Assert.IsTrue(new[] {typeof(BadRequestResult), typeof(BadRequestObjectResult)}.Contains(result.GetType()));
         A.CallTo(() => _userRepository.GetSingleAsync(A<Func<IQueryable<ApplicationUser>, IQueryable<ApplicationUser>>>._)).MustHaveHappenedOnceOrMore();
+    }
+
+    [TestMethod]
+    public async Task ProductController_EditGet_Succeeds_WithViewResult()
+    {
+        // Arrange
+        List<Category>? categories = A.CollectionOfFake<Category>(4) as List<Category>;
+        var product = A.Fake<Product>();
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(product);
+        A.CallTo(() => _categoryRepository.GetAllAsync()).Returns(Task.FromResult(categories)!);
+        // Act
+        IActionResult result = await _productsController.Edit(0);
+        // Assert
+        Assert.IsInstanceOfType<ViewResult>(result);
+        var viewResult = (ViewResult)result;
+        Assert.IsInstanceOfType<IEnumerable<SelectListItem>>(viewResult.ViewData["categorySelectList"]);
+        IEnumerable<SelectListItem> selectList = (IEnumerable<SelectListItem>)viewResult.ViewData["categorySelectList"]!;
+        Assert.IsTrue(selectList.Count() == categories!.Count);
+    }
+
+    [TestMethod]
+    public async Task ProductController_EditGet_Fails_WhenIdIsNull_WithBadRequestResult()
+    {
+        // Arrange
+        // Act
+        IActionResult result = await _productsController.Edit(null);
+        // Assert
+        Assert.IsTrue(new[] {typeof(BadRequestResult), typeof(BadRequestObjectResult)}.Contains(result.GetType()));
+    }
+
+    [TestMethod]
+    public async Task ProductsController_EditGet_Fails_WhenProductDoesntExist_WithNotFoundResult()
+    {
+        // Arrange 
+        Product? product = null;
+        A.CallTo(() => _productRepository!.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))!.Returns(Task.FromResult(product));
+        // Act
+        IActionResult result = await _productsController.Details(0);
+        // Assert
+        A.CallTo(() => _productRepository!.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))!.MustHaveHappenedOnceExactly();
+        Assert.IsTrue(new[] {typeof(NotFoundResult), typeof(NotFoundObjectResult)}.Contains(result.GetType()));
     }
 
 }
