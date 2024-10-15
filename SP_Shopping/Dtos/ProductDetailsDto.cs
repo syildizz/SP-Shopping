@@ -19,6 +19,7 @@ public class ProductDetailsDto
     public string? CategoryName { get; set; }
     [DisplayName("Poster")]
     public string SubmitterName { get; set; }
+    public string SubmitterId { get; set; }
     [DataType(DataType.DateTime)]
     [DisplayName("Publishing Date")]
     public DateTime InsertionDate { get; set; }

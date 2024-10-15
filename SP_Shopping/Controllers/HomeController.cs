@@ -37,6 +37,7 @@ public class HomeController : Controller
                 Id = p.Id,
                 Name = p.Name,
                 Price = p.Price,
+                SubmitterId = p.SubmitterId,
                 Submitter = new ApplicationUser()
                 {
                     UserName = p.Submitter!.UserName,

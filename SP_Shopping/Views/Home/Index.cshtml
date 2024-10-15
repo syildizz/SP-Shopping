@@ -17,14 +17,16 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: 0.5em; grid-auto-rows: 1fr;">
     @foreach (var product in Model)
     {
-        <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" style="text-decoration: none; color: inherit;">
         <div style="border: solid gray 0.1875em; text-align: center; padding: 0.1875em; height:100%;">
+            <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" style="text-decoration: none; color: inherit;">
             <div>@product.Name</div>    
             <div>@product.Price</div>    
             <div>@product.CategoryName</div>    
+            </a>
+            <a asp-controller="User" asp-action="Index" asp-route-Id="@product.SubmitterId">
             <div>@product.SubmitterName</div>
+            </a>
         </div>
-        </a>
     }
     </div>
 </div>
