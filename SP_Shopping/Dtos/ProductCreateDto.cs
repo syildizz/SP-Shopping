@@ -15,6 +15,7 @@ public class ProductCreateDto
     public decimal Price { get; set; }
     [DisplayName(nameof(Category))]
     public int CategoryId { get; set; }
+    public string? Description { get; set; }
     [DisplayName("Poster")]
     public string? SubmitterName { get; set; }
 }

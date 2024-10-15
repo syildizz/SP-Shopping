@@ -59,9 +59,10 @@ public class ProductsController : Controller
                 {
                     Name = p.Category.Name
                 },
+                Description = p.Description,
                 Submitter = new ApplicationUser()
                 {
-                    UserName = p.Submitter.UserName
+                    UserName = p.Submitter == null ? null : p.Submitter.UserName
                 }
             })
         );
@@ -128,17 +129,18 @@ public class ProductsController : Controller
                 Id = p.Id,
                 Name = p.Name,
                 Price = p.Price,
-                InsertionDate = p.InsertionDate,
-                ModificationDate = p.ModificationDate,
                 Category = new Category()
                 {
                     Name = p.Category.Name
                 },
+                Description = p.Description,
                 SubmitterId = p.SubmitterId,
                 Submitter = new ApplicationUser()
                 {
                     UserName = p.Submitter.UserName
-                }
+                },
+                InsertionDate = p.InsertionDate,
+                ModificationDate = p.ModificationDate,
             })
         );
         _logger.LogDebug("Fetching \"{Id}\" product information.", id);
@@ -256,6 +258,7 @@ public class ProductsController : Controller
                 Name = p.Name,
                 Price = p.Price,
                 Category = new Category() { Name = p.Category.Name },
+                Description = p.Description,
                 SubmitterId = p.SubmitterId,
                 Submitter = new ApplicationUser()
                 {
@@ -356,6 +359,7 @@ public class ProductsController : Controller
                         .SetProperty(p => p.Name, product.Name)
                         .SetProperty(p => p.Price, product.Price)
                         .SetProperty(p => p.CategoryId, product.CategoryId)
+                        .SetProperty(p => p.Description, product.Description)
                         .SetProperty(p => p.SubmitterId, submitterId)
                         .SetProperty(p => p.ModificationDate, DateTime.Now)
                 );

@@ -12,6 +12,9 @@
         <th>
             @Html.DisplayNameFor(model => model.CategoryName)
         </th>
+        <th class="mw-25">
+            @Html.DisplayNameFor(model => model.Description)
+        </th>
         <th>
             @Html.DisplayNameFor(model => model.SubmitterName)
         </th>
@@ -36,6 +39,7 @@
         <td>
             @Html.DisplayFor(modelItem => item.CategoryName) 
         </td>
+        <td style="white-space: pre-wrap">@Html.DisplayFor(modelItem => item.Description)</td>
         <td>
             @Html.DisplayFor(modelItem => item.SubmitterName) 
         </td>

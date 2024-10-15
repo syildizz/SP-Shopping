@@ -18,6 +18,8 @@ public class Product
     [ForeignKey(nameof(Category))]
     public int CategoryId { get; set; }
     public Category Category { get; set; }
+    [MaxLength(1000, ErrorMessage = "The description can be at maximum 1000 characters long")]
+    public string? Description { get; set; }
     [ForeignKey(nameof(ApplicationUser))]
     public string? SubmitterId { get; set; }
     public ApplicationUser? Submitter { get; set; }
