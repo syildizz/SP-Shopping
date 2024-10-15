@@ -9,6 +9,10 @@
 <p>Email = @Model.Email</p>
 
 <h2>Products</h2>
+@if (Model.Id == User.FindFirstValue(ClaimTypes.NameIdentifier))
+{
+    <a asp-controller="Products" asp-action="Create" class=" btn btn-primary my-3">Create New</a>
+}
 @if (Model.ProductDetails is not null)
 {
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: 0.5em; grid-auto-rows: 1fr;">
