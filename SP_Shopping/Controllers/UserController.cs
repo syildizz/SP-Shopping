@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 
@@ -39,26 +40,14 @@ public class UserController
             })
         );
 
-
-        /*
-        UserDetailsDto:
-            user.Id
-            user.UserName
-            user.Email
-            user.ProductDetails: List<UserProductDetailsDto>
-        UserProductDetailsDto:
-            product.Id
-            product.Name
-            product.Price
-            product.Category
-        */
-
         if (user is null)
         {
             _logger.LogError("The user with the id of \"{Id}\" does not exist", id);
             return NotFound("The user does not exist");
         }
 
-        return View(user);
+        var udto = _mapper.Map<ApplicationUser, UserPageDto>(user);
+
+        return View(udto);
     }
 }

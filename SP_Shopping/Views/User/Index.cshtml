@@ -1,4 +1,4 @@
-﻿@model ApplicationUser
+﻿@model UserPageDto
 
 @{
     ViewData["Title"] = "UserPage";
@@ -9,19 +9,19 @@
 <p>Email = @Model.Email</p>
 
 <h2>Products</h2>
-@if (Model.Products is not null)
+@if (Model.ProductDetails is not null)
 {
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: 0.5em; grid-auto-rows: 1fr;">
-    @foreach (Product product in Model.Products)
+    @foreach (var product in Model.ProductDetails)
     {
     <a asp-controller="Products" asp-action="Details" asp-route-Id="@product.Id" style="text-decoration: none; color: inherit;">
     <dl class="border border-primary p-2">
-        <dt>@Html.DisplayNameForInnerType((Product p) => p.Name)</dt>
+        <dt>@Html.DisplayNameForInnerType((UserPageDto.UserPageProductDto p) => p.Name)</dt>
         <dd>@product.Name</dd>
-        <dt>@Html.DisplayNameForInnerType((Product p) => p.Price)</dt>
+        <dt>@Html.DisplayNameForInnerType((UserPageDto.UserPageProductDto p) => p.Price)</dt>
         <dd>@product.Price</dd>
-        <dt>@* @Html.DisplayNameForInnerType((Product p) => p.Category.Name) *@Category Name</dt>
-        <dd>@product.Category.Name</dd>
+        <dt>@Html.DisplayNameForInnerType((UserPageDto.UserPageProductDto p) => p.CategoryName)</dt>
+        <dd>@product.CategoryName</dd>
     </dl>
     </a>
     }
