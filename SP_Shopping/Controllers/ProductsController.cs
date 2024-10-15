@@ -134,6 +134,7 @@ public class ProductsController : Controller
                 {
                     Name = p.Category.Name
                 },
+                SubmitterId = p.SubmitterId,
                 Submitter = new ApplicationUser()
                 {
                     UserName = p.Submitter.UserName
