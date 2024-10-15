@@ -35,6 +35,8 @@ public class Program
             options.Lockout.MaxFailedAccessAttempts = 1000;
             options.Lockout.AllowedForNewUsers = false;
 
+            options.User.RequireUniqueEmail = true;
+
         }
         );
 
