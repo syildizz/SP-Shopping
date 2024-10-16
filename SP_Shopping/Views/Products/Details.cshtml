@@ -21,5 +21,6 @@
     @if (Model.SubmitterId == User.FindFirstValue(ClaimTypes.NameIdentifier))
     {
         <a asp-action="Edit" asp-route-Id="@Model?.Id" class="btn btn-primary">Edit</a>
+        <a asp-action="Delete" asp-route-Id="@Model?.Id" class="btn btn-danger">Delete</a>
     }
 </div>
