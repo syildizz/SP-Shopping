@@ -153,7 +153,7 @@ public class CartController
     [HttpPost()]
     [Authorize]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CartItemCreateDto cidto, string? returnPath)
+    public async Task<IActionResult> Create(CartItemCreateDto cidto)
     {
         _logger.LogInformation("POST: Cart/Create.");
 
@@ -181,7 +181,7 @@ public class CartController
         catch (DbUpdateException)
         { }
 
-        return Redirect(returnPath ?? nameof(Index));
+        return Redirect(nameof(Index));
     }
 
     [HttpPost()]
