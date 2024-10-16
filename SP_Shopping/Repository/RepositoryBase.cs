@@ -46,13 +46,13 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
             .FindAsync(keyValues);
     }
 
-    public virtual TResult? GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class
+    public virtual TResult? GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
     {
         return query(_context.Set<TEntity>()).SingleOrDefault();
     }
 
 
-    public virtual async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class
+    public virtual async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
     {
         return await query(_context.Set<TEntity>()).SingleOrDefaultAsync();
     }

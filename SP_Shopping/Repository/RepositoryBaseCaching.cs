@@ -70,15 +70,6 @@ public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemor
         return await base.GetByKeyAsync(keyValues);
 
     }
-    public override TResult? GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class
-    {
-        var result = base.GetSingle(query);
-        return result;
-    }
-    public override async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult: class
-    {
-        return await base.GetSingleAsync(query);
-    }
     public override void Create(TEntity entity)
     {
         base.Create(entity);

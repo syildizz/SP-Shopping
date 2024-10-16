@@ -13,8 +13,8 @@ public interface IRepository<TEntity> where TEntity : class
     Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query);
     TEntity? GetByKey(params object?[]? keyValues);
     Task<TEntity?> GetByKeyAsync(params object?[]? keyValues);
-    TResult? GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class;
-    Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class;
+    TResult? GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query);
+    Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query);
     void Create(TEntity entity);
     Task CreateAsync(TEntity entity);
     void Update(TEntity entity);
