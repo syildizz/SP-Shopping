@@ -48,13 +48,13 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
 
     public virtual TResult? GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class
     {
-        return query(_context.Set<TEntity>()).FirstOrDefault();
+        return query(_context.Set<TEntity>()).SingleOrDefault();
     }
 
 
     public virtual async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class
     {
-        return await query(_context.Set<TEntity>()).FirstOrDefaultAsync();
+        return await query(_context.Set<TEntity>()).SingleOrDefaultAsync();
     }
 
 
