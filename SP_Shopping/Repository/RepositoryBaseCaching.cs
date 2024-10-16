@@ -37,7 +37,7 @@ public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemor
         return _memoryCacher.GetOrCreate(cacheKey, base.GetAll);
     }
 
-    public override List<TEntity> GetAll(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public override List<TResult> GetAll<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
     {
         var cacheKey = $"{nameof(TEntity)}List_{query.GetHashCode()}";
         ListCacheKeys.Add(cacheKey);
@@ -49,7 +49,7 @@ public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemor
         var cacheKey = $"{nameof(TEntity)}List";
         return await _memoryCacher.GetOrCreate(cacheKey, async () => await base.GetAllAsync());
     }
-    public override async Task<List<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public override async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
     {
         var cacheKey = $"{nameof(TEntity)}List_{query.GetHashCode()}";
         ListCacheKeys.Add(cacheKey);
@@ -70,11 +70,12 @@ public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemor
         return await base.GetByKeyAsync(keyValues);
 
     }
-    public override TEntity? GetSingle(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public override TResult? GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class
     {
-        return base.GetSingle(query);
+        var result = base.GetSingle(query);
+        return result;
     }
-    public override async Task<TEntity?> GetSingleAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public override async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult: class
     {
         return await base.GetSingleAsync(query);
     }

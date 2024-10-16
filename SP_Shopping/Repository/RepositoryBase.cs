@@ -9,12 +9,17 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
 {
     protected readonly ApplicationDbContext _context = context;
 
+    public virtual IQueryable<TEntity> Get()
+    {
+        return _context.Set<TEntity>().AsQueryable();
+    }
+
     public virtual List<TEntity> GetAll()
     {
         return _context.Set<TEntity>().ToList();
     }
 
-    public virtual List<TEntity> GetAll(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public virtual List<TResult> GetAll<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
     {
         return query(_context.Set<TEntity>()).ToList();
     }
@@ -24,7 +29,7 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
         return await _context.Set<TEntity>().ToListAsync();
     }
 
-    public virtual async Task<List<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public virtual async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
     {
         return await query(_context.Set<TEntity>()).ToListAsync();
     }
@@ -41,13 +46,13 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
             .FindAsync(keyValues);
     }
 
-    public virtual TEntity? GetSingle(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public virtual TResult? GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class
     {
         return query(_context.Set<TEntity>()).FirstOrDefault();
     }
 
 
-    public virtual async Task<TEntity?> GetSingleAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    public virtual async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class
     {
         return await query(_context.Set<TEntity>()).FirstOrDefaultAsync();
     }

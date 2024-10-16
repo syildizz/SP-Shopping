@@ -6,15 +6,15 @@ namespace SP_Shopping.Repository;
 
 public interface IRepository<TEntity> where TEntity : class
 {
-
+    IQueryable<TEntity> Get();
     List<TEntity> GetAll();
-    List<TEntity> GetAll(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
+    List<TResult> GetAll<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query);
     Task<List<TEntity>> GetAllAsync();
-    Task<List<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
+    Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query);
     TEntity? GetByKey(params object?[]? keyValues);
     Task<TEntity?> GetByKeyAsync(params object?[]? keyValues);
-    TEntity? GetSingle(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
-    Task<TEntity?> GetSingleAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query);
+    TResult? GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class;
+    Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query) where TResult : class;
     void Create(TEntity entity);
     Task CreateAsync(TEntity entity);
     void Update(TEntity entity);
