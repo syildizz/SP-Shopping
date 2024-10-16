@@ -117,6 +117,9 @@ namespace SP_Shopping.Areas.Identity.Pages.Account
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+                #region Mycode
+                user.InsertionDate = DateTime.Now;
+                #endregion Mycode
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
