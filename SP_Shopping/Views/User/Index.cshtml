@@ -5,8 +5,9 @@
 }
 
 <h1>User info:</h1>
-<p>Name = @Model.UserName</p>
-<p>Email = @Model.Email</p>
+<p>@Html.DisplayNameFor(u => u.UserName): @Model.UserName</p>
+<p>@Html.DisplayNameFor(u => u.Email): @Model.Email</p>
+<p>@Html.DisplayNameFor(u => u.InsertionDate): @Model.InsertionDate</p>
 
 <h2>Products</h2>
 @if (Model.Id == User.FindFirstValue(ClaimTypes.NameIdentifier))
