@@ -277,12 +277,6 @@ public class ProductsController : Controller
 
                 // Get user argument from session and edit if the user owns the product.
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == userId)))
-                {
-                    _logger.LogError("The user with id \"{Id}\" does not exist in the "
-                        + "database even through the view is authorized", userId);
-                    return BadRequest("UserId is invalid. Contact developer");
-                }
 
                 // Get the existing submitter id for the product from the database.
                 string? productExistingSubmitterId = await _productRepository.GetSingleAsync(q => q
@@ -326,6 +320,7 @@ public class ProductsController : Controller
     }
 
     // GET: Products/Delete/5
+    [Authorize]
     public async Task<IActionResult> Delete(int? id)
     {
         _logger.LogInformation($"GET: Entering Products/Delete.");
@@ -347,12 +342,21 @@ public class ProductsController : Controller
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
         }
+
+        if (pdto.SubmitterId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+        {
+            _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
+                + "belonging to user with id \"{ProductOwnerId}\"", pdto.SubmitterId, id);
+            return Unauthorized("Cannot delete a product that is not yours.");
+        }
+
         return View(pdto);
     }
 
     // POST: Products/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         _logger.LogInformation($"POST: Entering Products/Delete.");
@@ -367,6 +371,22 @@ public class ProductsController : Controller
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
         }
+
+        // Get user argument from session and edit if the user owns the product.
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // Get the existing submitter id for the product from the database.
+        string? productExistingSubmitterId = await _productRepository.GetSingleAsync(q => q
+            .Where(p => p.Id == id)
+            .Select(p => p.SubmitterId)
+        );
+        if (productExistingSubmitterId != userId)
+        {
+            _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
+                + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
+            return Unauthorized("Cannot delete a product that is not yours.");
+        }
+
         else
         {
             //_context.Products.Remove(product);
