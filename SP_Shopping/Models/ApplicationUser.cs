@@ -6,4 +6,5 @@ public class ApplicationUser : IdentityUser
 {
     public List<CartItem> CartItem { get; set; }
     public List<Product>? Products { get; set; }
+    public DateTime InsertionDate { get; set; } 
 }
