@@ -21,32 +21,17 @@ public class UserController
     {
 
         _logger.LogInformation("GET: Entering User/Index");
-        ApplicationUser? user = await _userRepository.GetSingleAsync(q => q
-            .Where(u => u.Id == id)
-            .Select(u => new ApplicationUser()
-            {
-                Id = u.Id,
-                UserName = u.UserName,
-                Email = u.Email,
-                Products = (u.Products == null)
-                    ? null 
-                    : (List<Product>)u.Products.Select(p => new Product
-                    {
-                        Id = p.Id,
-                        Name = p.Name,
-                        Price = p.Price,
-                        Category = new Category() { Name = p.Category.Name }
-                    })
-            })
+        UserPageDto? udto = await _userRepository.GetSingleAsync(q => 
+            _mapper.ProjectTo<UserPageDto>(q
+                .Where(u => u.Id == id)
+            )
         );
 
-        if (user is null)
+        if (udto is null)
         {
             _logger.LogError("The user with the id of \"{Id}\" does not exist", id);
             return NotFound("The user does not exist");
         }
-
-        var udto = _mapper.Map<ApplicationUser, UserPageDto>(user);
 
         return View(udto);
     }

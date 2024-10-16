@@ -22,33 +22,17 @@ public class HomeController : Controller
         _mapper = mapper;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         ViewBag.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         ViewBag.UserName = User.FindFirstValue(ClaimTypes.Name);
-        IEnumerable<Product> products = _productRepository.GetAll(q => q
-            //.Include(p => p.Submitter)
-            //.Include(p => p.Category)
-            .OrderByDescending(p => p.InsertionDate)
-            .ThenByDescending(p => p.ModificationDate)
-            .Take(20)
-            .Select(p => new Product()
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Price = p.Price,
-                SubmitterId = p.SubmitterId,
-                Submitter = new ApplicationUser()
-                {
-                    UserName = p.Submitter!.UserName,
-                },
-                Category = new Category()
-                {
-                    Name = p.Category.Name
-                }
-            })
+        IEnumerable<ProductDetailsDto> pdto = await _productRepository.GetAllAsync(q => 
+            _mapper.ProjectTo<ProductDetailsDto>(q
+                .OrderByDescending(p => p.InsertionDate)
+                .ThenByDescending(p => p.ModificationDate)
+                .Take(20)
+            )
         );
-        var pdto = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>(products);
         return View(pdto);
     }
 

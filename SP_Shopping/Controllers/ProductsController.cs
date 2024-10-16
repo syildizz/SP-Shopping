@@ -9,6 +9,7 @@ using SP_Shopping.Data;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
 
 namespace SP_Shopping.Controllers;
@@ -46,27 +47,7 @@ public class ProductsController : Controller
     {
         _logger.LogInformation("GET: Entering Products/Index.");
         _logger.LogDebug("Fetching all product information.");
-        var products = await _productRepository.GetAllAsync(q => q
-            .Include(p => p.Submitter)
-            .Select(p => new Product()
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Price = p.Price,
-                InsertionDate = p.InsertionDate,
-                ModificationDate = p.ModificationDate,
-                Category = new Category()
-                {
-                    Name = p.Category.Name
-                },
-                Description = p.Description,
-                Submitter = new ApplicationUser()
-                {
-                    UserName = p.Submitter == null ? null : p.Submitter.UserName
-                }
-            })
-        );
-        var pdtoList = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>(products);
+        IEnumerable<ProductDetailsDto> pdtoList = await _productRepository.GetAllAsync(q => _mapper.ProjectTo<ProductDetailsDto>(q));
         return View(pdtoList);
     }
 
@@ -78,29 +59,14 @@ public class ProductsController : Controller
         if (!string.IsNullOrWhiteSpace(query))
         {
             _logger.LogDebug("Fetching product information matching search term.");
-            IEnumerable<Product> products = await _productRepository.GetAllAsync(q => q
-                .Where(p => p.Name.Contains(query))
-                .OrderByDescending(p => p.InsertionDate)
-                .ThenByDescending(p => p.ModificationDate)
-                .Take(paginationCount)
-                .Select(p => new Product()
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Price = p.Price,
-                    InsertionDate = p.InsertionDate,
-                    ModificationDate = p.ModificationDate,
-                    Category = new Category()
-                    {
-                        Name = p.Category.Name
-                    },
-                    Submitter = new ApplicationUser()
-                    {
-                        UserName = p.Submitter.UserName
-                    }
-                })
+            pdtoList = await _productRepository.GetAllAsync(q =>
+                _mapper.ProjectTo<ProductDetailsDto>(q
+                    .Where(p => p.Name.Contains(query))
+                    .OrderByDescending(p => p.InsertionDate)
+                    .ThenByDescending(p => p.ModificationDate)
+                    .Take(paginationCount)
+                )
             );
-            pdtoList = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductDetailsDto>>(products);
         }
         return View(pdtoList);
         
@@ -116,41 +82,55 @@ public class ProductsController : Controller
             return BadRequest("Required parameter id not specified");
         }
 
-        //var product = await _context.Products
-        //    //.Include(p => p.Category)
-        //    .FirstOrDefaultAsync(m => m.Id == id);
-        var product = await _productRepository
-            .GetSingleAsync(q => q
-            .Include(p => p.Category)
-            .Include(p => p.Submitter)
-            .Where(p => p.Id == id)
-            .Select(p => new Product()
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Price = p.Price,
-                Category = new Category()
-                {
-                    Name = p.Category.Name
-                },
-                Description = p.Description,
-                SubmitterId = p.SubmitterId,
-                Submitter = new ApplicationUser()
-                {
-                    UserName = p.Submitter.UserName
-                },
-                InsertionDate = p.InsertionDate,
-                ModificationDate = p.ModificationDate,
-            })
-        );
+        //var product = await _productRepository
+        //    .GetSingleAsync(q => q
+        //    .Include(p => p.Category)
+        //    .Include(p => p.Submitter)
+        //    .Where(p => p.Id == id)
+        //    .Select(p => new Product()
+        //    {
+        //        Id = p.Id,
+        //        Name = p.Name,
+        //        Price = p.Price,
+        //        Category = new Category()
+        //        {
+        //            Name = p.Category.Name
+        //        },
+        //        Description = p.Description,
+        //        SubmitterId = p.SubmitterId,
+        //        Submitter = new ApplicationUser()
+        //        {
+        //            UserName = p.Submitter.UserName
+        //        },
+        //        InsertionDate = p.InsertionDate,
+        //        ModificationDate = p.ModificationDate,
+        //    })
+        //);
+        //_logger.LogDebug("Fetching \"{Id}\" product information.", id);
+        //if (product == null)
+        //{
+        //    _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
+        //    return NotFound("Product with id does not exist");
+        //}
+
+        //ProductDetailsDto pdto = _mapper.Map<Product, ProductDetailsDto>(product);
+
         _logger.LogDebug("Fetching \"{Id}\" product information.", id);
-        if (product == null)
+        //ProductDetailsDto? pdto = await _mapper.ProjectTo<ProductDetailsDto>(
+        //    _productRepository.Get()
+        //        .Where(p => p.Id == id)
+        //).SingleOrDefaultAsync();
+        ProductDetailsDto? pdto = await _productRepository.GetSingleAsync(q => 
+            _mapper.ProjectTo<ProductDetailsDto>(q
+                .Where(p => p.Id == id)
+            )
+        );
+
+        if (pdto == null)
         {
             _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
             return NotFound("Product with id does not exist");
         }
-
-        ProductDetailsDto pdto = _mapper.Map<Product, ProductDetailsDto>(product);
 
         return View(pdto);
     }
@@ -192,18 +172,15 @@ public class ProductsController : Controller
                 // if user is admin
                 if (userIsAdmin)
                 {
-                    var productSubmitter = await _userRepository.GetSingleAsync(q => q
+                    string? productSubmitterId = await _userRepository.GetSingleAsync(q => q
                             .Where(u => u.UserName == product.Submitter.UserName)
-                            .Select(u => new ApplicationUser()
-                            {
-                                Id = u.Id
-                            })
+                            .Select(u => u.Id)
                     );
-                    if (productSubmitter is null)
+                    if (productSubmitterId is null)
                     {
                         return BadRequest("User with name does not exist.");
                     }
-                    submitterId = productSubmitter.Id;
+                    submitterId = productSubmitterId;
                 }
                 else
                 {
@@ -250,35 +227,23 @@ public class ProductsController : Controller
 
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var product = await _productRepository.GetSingleAsync(q => q
-            .Where(p => p.Id == id)
-            .Include(p => p.Submitter)
-            .Select(p => new Product()
-            {
-                Name = p.Name,
-                Price = p.Price,
-                Category = new Category() { Name = p.Category.Name },
-                Description = p.Description,
-                SubmitterId = p.SubmitterId,
-                Submitter = new ApplicationUser()
-                {
-                    UserName = p.Submitter.UserName
-                }
-            })
+        var pdto = await _productRepository.GetSingleAsync(q =>
+            _mapper.ProjectTo<ProductCreateDto>(q
+                .Where(p => p.Id == id)
+            )
         );
-        if (product == null)
+        if (pdto == null)
         {
             _logger.LogError("Could not fetch product for id \"{Id}\".", id);
-            return NotFound();
+            return NotFound($"Product with id {id} does not exist.");
         }
-        if (product.SubmitterId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+        if (pdto.SubmitterId != User.FindFirstValue(ClaimTypes.NameIdentifier))
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
-                + "belonging to user with id \"{ProductOwnerId}\"", product.SubmitterId, id);
+                + "belonging to user with id \"{ProductOwnerId}\"", pdto.SubmitterId, id);
             return Unauthorized("Cannot edit a product that is not yours.");
         }
 
-        var pdto = _mapper.Map<Product, ProductCreateDto>(product);
         _logger.LogDebug($"Fetching all categories.");
         var categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
@@ -310,50 +275,30 @@ public class ProductsController : Controller
 
                 string submitterId;
 
-                bool userIsAdmin = false;
-                if (userIsAdmin)
+                // Get user argument from session and edit if the user owns the product.
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == userId)))
                 {
-                    _logger.LogDebug("User is admin");
-                    // Get user argument from the form and use the user there.
-                    var productSubmitter = await _userRepository.GetSingleAsync(q => q.Where(u => u.UserName == product.Submitter.UserName));
-                    if (productSubmitter is null)
-                    {
-                        _logger.LogError("The user supplied in the form with username \"{Username}\" does not exist", product.Submitter.UserName);
-                        return BadRequest("User with name does not exist.");
-                    }
-                    submitterId = productSubmitter.Id;
+                    _logger.LogError("The user with id \"{Id}\" does not exist in the "
+                        + "database even through the view is authorized", userId);
+                    return BadRequest("UserId is invalid. Contact developer");
                 }
-                else
-                {
-                    // Get user argument from session and edit if the user owns the product.
-                    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == userId)))
-                    {
-                        _logger.LogError("The user with id \"{Id}\" does not exist in the "
-                            + "database even through the view is authorized", userId);
-                        return BadRequest("UserId is invalid. Contact developer");
-                    }
 
-                    // Get the existing submitter id for the product from the database.
-                    var productExistingSubmitterId = (await _productRepository.GetSingleAsync(q => q
-                        .Where(p => p.Id == id)
-                        .Select(p => new Product()
-                        {
-                            SubmitterId = p.SubmitterId
-                        })
-                    ))!.SubmitterId;
-                    if (productExistingSubmitterId != userId)
-                    {
-                        _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
-                            + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
-                        return Unauthorized("Cannot edit a product that is not yours.");
-                    }
-                    submitterId = userId!;
+                // Get the existing submitter id for the product from the database.
+                string? productExistingSubmitterId = await _productRepository.GetSingleAsync(q => q
+                    .Where(p => p.Id == id)
+                    .Select(p => p.SubmitterId)
+                );
+                if (productExistingSubmitterId != userId)
+                {
+                    _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
+                        + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
+                    return Unauthorized("Cannot edit a product that is not yours.");
                 }
+                submitterId = userId!;
                 
                 _logger.LogDebug("Updating product.");
-                _productRepository.UpdateCertainFields(
-                    q => q
+                await _productRepository.UpdateCertainFieldsAsync(q => q
                     .Where(p => p.Id == id),
                     setPropertyCalls: s => s
                         .SetProperty(p => p.Name, product.Name)
@@ -390,18 +335,18 @@ public class ProductsController : Controller
             return BadRequest();
         }
 
-        //var product = await _context.Products
-        //    .Include(p => p.Category)
-        //    .FirstOrDefaultAsync(m => m.Id == id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var product = await _productRepository.GetSingleAsync(q => q.Where(p => p.Id == id));
-        if (product == null)
+        var pdto = await _productRepository.GetSingleAsync(q =>
+            _mapper.ProjectTo<ProductDetailsDto>(q
+                .Where(p => p.Id == id)
+            )
+        );
+
+        if (pdto == null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
         }
-
-        var pdto = _mapper.Map<Product, ProductDetailsDto>(product);
         return View(pdto);
     }
 
@@ -413,7 +358,11 @@ public class ProductsController : Controller
         _logger.LogInformation($"POST: Entering Products/Delete.");
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var product = await _productRepository.GetByKeyAsync(id);
+        int? product = await _productRepository.GetSingleAsync(q => q
+            .Where(q => q.Id == id)
+            .Select(p => p.Id)
+
+        );
         if (product == null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
@@ -437,10 +386,9 @@ public class ProductsController : Controller
             _logger.LogDebug("Cache miss for categoryList");
             entry.SetAbsoluteExpiration(TimeSpan.FromHours(6));
             entry.SetSlidingExpiration(TimeSpan.FromMinutes(1));
-            return (await _categoryRepository
-                .GetAllAsync())
+            return await _categoryRepository.GetAllAsync(q => q
                 .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
-                .ToList();
+            );
         });
 
         //categoryList = (await _categoryRepository.GetAllAsync())

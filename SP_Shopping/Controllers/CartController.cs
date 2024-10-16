@@ -48,27 +48,13 @@ public class CartController
             return View("Error");
         }
 
-        IEnumerable<CartItem> cartItems = await _cartItemRepository.GetAllAsync(q => q
-           .Where(c => c.UserId == userId)
-           .Include(c => c.Product)
-           .ThenInclude(p => p.Submitter)
-           .Select(c => new CartItem()
-           {
-               ProductId = c.ProductId,
-               UserId = c.User.Id,
-               Count = c.Count,
-               Product = new Product()
-               {
-                   Name = c.Product.Name,
-                   Submitter = new ApplicationUser()
-                   {
-                       UserName = c.Product.Submitter.UserName
-                   }
-               }
-           })
+        IEnumerable<CartItemDetailsDto> cidtos = await _cartItemRepository.GetAllAsync(q => 
+            _mapper.ProjectTo<CartItemDetailsDto>(q
+               .Where(c => c.UserId == userId)
+               .Include(c => c.Product)
+               .ThenInclude(p => p.Submitter)
+            )
        );
-
-        var cidtos = _mapper.Map<IEnumerable<CartItem>,IEnumerable<CartItemDetailsDto>>(cartItems);
 
         return View(cidtos);
     }
@@ -87,67 +73,36 @@ public class CartController
             return NotFound("The user was not found");
         }
 
-        IEnumerable<CartItem> cartItems = await _cartItemRepository.GetAllAsync(q => q
+        IEnumerable<CartItemDetailsDto> cidtos = await _cartItemRepository.GetAllAsync(q =>
+            _mapper.ProjectTo<CartItemDetailsDto>(q
                 .Where(c => c.UserId == id)
                 .Include(c => c.Product)
                 .ThenInclude(p => p.Submitter)
-                .Select(c => new CartItem()
-                {
-                    ProductId = c.ProductId,
-                    UserId = c.User.Id,
-                    Count = c.Count,
-                    Product = new Product()
-                    {
-                        Name = c.Product.Name,
-                        Submitter = new ApplicationUser
-                        {
-                            UserName = c.Product.Submitter.UserName
-                        }
-                       
-                    }
-                })
-            );
+            )
+        );
 
-        IEnumerable<CartItemDetailsDto> cidto = _mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDetailsDto>>(cartItems);
 
         ViewBag.Message = $"The shopping cart of {(await _userRepository.GetByKeyAsync(id))?.UserName ?? "User not found"}";
 
-        return View(cidto);
+        return View(cidtos);
     }
 
     public async Task<IActionResult> Details()
     {
         _logger.LogInformation("GET: Cart/Details.");
 
-        IEnumerable<CartItem> cartItems = await _cartItemRepository.GetAllAsync(q => q
+        IEnumerable<CartItemDetailsDto> cidtos = await _cartItemRepository.GetAllAsync(q => 
+            _mapper.ProjectTo<CartItemDetailsDto>(q
+
                 .Include(c => c.Product)
                 .ThenInclude(p => p.Submitter)
                 .Include(c => c.User)
-                .Select(c => new CartItem()
-                {
-                    ProductId = c.ProductId,
-                    UserId = c.User.Id,
-                    Count = c.Count,
-                    Product = new Product()
-                    {
-                        Name = c.Product.Name,
-                        Submitter = new ApplicationUser
-                        {
-                            UserName = c.Product.Submitter.UserName
-                        }
-                    },
-                    User = new ApplicationUser()
-                    {
-                        UserName = c.User.UserName
-                    }
-                })
-            );
-
-        IEnumerable<CartItemDetailsDto> cidto = _mapper.Map<IEnumerable<CartItem>, IEnumerable<CartItemDetailsDto>>(cartItems);
+            )
+        );
 
         ViewBag.Message = $"The shopping carts of all users";
 
-        return View(cidto);
+        return View(cidtos);
     }
 
     [HttpPost()]
