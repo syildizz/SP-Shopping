@@ -232,15 +232,22 @@ public class ProductsController : Controller
                 .Where(p => p.Id == id)
             )
         );
+
         if (pdto == null)
         {
             _logger.LogError("Could not fetch product for id \"{Id}\".", id);
             return NotFound($"Product with id {id} does not exist.");
         }
-        if (pdto.SubmitterId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+
+        string? productSubmitterId = await _productRepository.GetSingleAsync(q => q
+            .Where(p => p.Id == id)
+            .Select(p => p.SubmitterId)
+        );
+
+        if (productSubmitterId != User.FindFirstValue(ClaimTypes.NameIdentifier))
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
-                + "belonging to user with id \"{ProductOwnerId}\"", pdto.SubmitterId, id);
+                + "belonging to user with id \"{ProductOwnerId}\"", productSubmitterId, id);
             return Unauthorized("Cannot edit a product that is not yours.");
         }
 

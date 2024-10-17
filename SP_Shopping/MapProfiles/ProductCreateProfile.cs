@@ -9,7 +9,6 @@ public class ProductCreateProfile : Profile
     public ProductCreateProfile()
     {
         CreateMap<Product, ProductCreateDto>()
-            .ForMember(p => p.SubmitterName, opt => opt.MapFrom(pp => pp.Submitter!.UserName))
             .ReverseMap();
     }
 }
