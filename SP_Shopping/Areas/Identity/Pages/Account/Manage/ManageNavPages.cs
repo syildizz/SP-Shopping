@@ -20,6 +20,11 @@ namespace  SP_Shopping.Areas.Identity.Pages.Account.Manage
         public static string Index => "Index";
 
         /// <summary>
+        /// My code that I added to ASP.NET Core Identity Scaffold.
+        /// </summary>
+        public static string PhoneNumber => "PhoneNumber";
+
+        /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
@@ -66,6 +71,11 @@ namespace  SP_Shopping.Areas.Identity.Pages.Account.Manage
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public static string IndexNavClass(ViewContext viewContext) => PageNavClass(viewContext, Index);
+
+        /// <summary>
+        /// My code that I added to ASP.NET Core Identity Scaffold.
+        /// </summary>
+        public static string PhoneNumberNavClass(ViewContext viewContext) => PageNavClass(viewContext, PhoneNumber);
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
