@@ -406,23 +406,8 @@ public class ProductsController : Controller
 
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
     {
-        //if (_memoryCache.TryGetValue($"{nameof(Category)}List", out List<SelectListItem> categoryList)) return categoryList;
-        _logger.LogDebug("Attempting from cache getting categoryList");
-        List<SelectListItem>? categoryList = await _memoryCache.GetOrCreateAsync($"{nameof(Category)}List", async entry =>
-        {
-            _logger.LogDebug("Cache miss for categoryList");
-            entry.SetAbsoluteExpiration(TimeSpan.FromHours(6));
-            entry.SetSlidingExpiration(TimeSpan.FromMinutes(1));
-            return await _categoryRepository.GetAllAsync(q => q
-                .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
-            );
-        });
-
-        //categoryList = (await _categoryRepository.GetAllAsync())
-        //    .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() }).ToList();
-
-        //_memoryCache.Set("CategoryList", categoryList, TimeSpan.FromSeconds(20));
-
-        return categoryList;
+        return await _categoryRepository.GetAllAsync(q => q
+            .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
+        );
     }
 }

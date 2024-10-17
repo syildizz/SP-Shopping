@@ -11,13 +11,11 @@ public class CategoriesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IRepository<Category> _categoryRepository;
-    private readonly IMemoryCache _memoryCache;
 
-    public CategoriesController(ApplicationDbContext context, IRepository<Category> categoryRepository, IMemoryCache memoryCache)
+    public CategoriesController(ApplicationDbContext context, IRepository<Category> categoryRepository)
     {
         _context = context;
         _categoryRepository = categoryRepository;
-        _memoryCache = memoryCache;
     }
 
     // GET: Categories
@@ -103,7 +101,6 @@ public class CategoriesController : Controller
                 //_context.Update(category);
                 _categoryRepository.Update(category);
                 await _categoryRepository.SaveChangesAsync();
-                _memoryCache.Remove($"{nameof(Category)}List");
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -152,7 +149,6 @@ public class CategoriesController : Controller
             //_context.Categories.Remove(category);
             _categoryRepository.Delete(category);
             await _categoryRepository.SaveChangesAsync();
-            _memoryCache.Remove($"{nameof(Category)}List");
         }
 
         //await _context.SaveChangesAsync();
