@@ -46,6 +46,7 @@ public class Program
         builder.Services.AddScoped<IRepository<Category>, RepositoryBase<Category>>();
         builder.Services.AddScoped<IRepository<ApplicationUser>, RepositoryBase<ApplicationUser>>();
         builder.Services.AddScoped<IRepository<CartItem>, RepositoryBase<CartItem>>();
+        builder.Services.AddSingleton<CacheStorage>();
 
 
         var app = builder.Build();

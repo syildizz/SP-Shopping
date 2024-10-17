@@ -1,90 +1,110 @@
 ﻿using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Identity.Client;
 using SP_Shopping.Data;
-using SP_Shopping.Models;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace SP_Shopping.Repository;
 
-public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemoryCache memoryCache) : RepositoryBase<TEntity>(context), IRepository<TEntity> where TEntity : class
+public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemoryCache memoryCache, ILogger<RepositoryBaseCaching<TEntity>> logger, CacheStorage cacheStorage) : RepositoryBase<TEntity>(context), IRepository<TEntity> where TEntity : class
 {
     private readonly MemoryCacher _memoryCacher = new MemoryCacher(memoryCache);
-    private readonly HashSet<string> ListCacheKeys = [];
-    private readonly Dictionary<string, HashSet<string>> KeyCacheKeys = [];
-    private readonly Dictionary<string, HashSet<string>> SingleCacheKeys = [];
+    private readonly ILogger<RepositoryBaseCaching<TEntity>> _logger = logger;
+    private readonly CacheStorage _cacheStorage = cacheStorage;
 
-    private void RemoveListKeys()
+    private void RemoveKeys()
     {
-        foreach (var value in ListCacheKeys)
+        foreach (var key in _cacheStorage.CacheKeys)
         {
-            _memoryCacher.Remove(value);
+            _memoryCacher.Remove(key);
+            _cacheStorage.CacheKeys.Remove(key);
+            _logger.LogInformation("Removing key {key}", key);
         }
-    }
-
-    private void AddToKeyCacheKeys(string cacheKey, object?[]? keyValues)
-    {
-        if (!SingleCacheKeys.ContainsKey(keyValues.ToString()!))
-        {
-            SingleCacheKeys.Add(keyValues.ToString()!, new HashSet<string>());
-        }
-        SingleCacheKeys[keyValues.ToString()!].Add(cacheKey);
     }
 
     public override List<TEntity> GetAll()
     {
-        var cacheKey = $"{nameof(TEntity)}List";
+        var cacheKey = $"{typeof(TEntity).FullName}_{nameof(GetAll)}";
+        _cacheStorage.CacheKeys.Add(cacheKey);
+        _logger.LogInformation("Added key {key}", cacheKey);
         return _memoryCacher.GetOrCreate(cacheKey, base.GetAll);
     }
 
     public override List<TResult> GetAll<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
     {
-        var cacheKey = $"{nameof(TEntity)}List_{query.GetHashCode()}";
-        ListCacheKeys.Add(cacheKey);
+        var cacheKey = $"{typeof(TEntity).FullName}_{nameof(GetAll)}_{query.GetMethodInfo()}_{nameof(TResult)}";
+        _cacheStorage.CacheKeys.Add(cacheKey);
+        _logger.LogInformation("Added key {key}", cacheKey);
         return _memoryCacher.GetOrCreate(cacheKey, () => base.GetAll(query));
     }
 
     public override async Task<List<TEntity>> GetAllAsync()
     {
-        var cacheKey = $"{nameof(TEntity)}List";
+        var cacheKey = $"{typeof(TEntity).FullName}_{nameof(GetAll)}";
+        _cacheStorage.CacheKeys.Add(cacheKey);
+        _logger.LogInformation("Added key {key}", cacheKey);
         return await _memoryCacher.GetOrCreate(cacheKey, async () => await base.GetAllAsync());
     }
+
     public override async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
     {
-        var cacheKey = $"{nameof(TEntity)}List_{query.GetHashCode()}";
-        ListCacheKeys.Add(cacheKey);
+        var cacheKey = $"{typeof(TEntity).FullName}_{nameof(GetAll)}_{query.GetMethodInfo()}_{nameof(TResult)}";
+        _cacheStorage.CacheKeys.Add(cacheKey);
+        _logger.LogInformation("Added key {key}", cacheKey);
         return await _memoryCacher.GetOrCreate(cacheKey, async () => await base.GetAllAsync(query));
     }
+
     public override TEntity? GetByKey(params object?[]? keyValues)
     {
-        //if (keyValues == null) return base.GetByKey(keyValues);
-        //var cacheKey = $"{nameof(TEntity)}Key_{keyValues!.ToString()}";
-        //AddToKeyCacheKeys(cacheKey, keyValues);
+        // DOESN'T WORK: KeyValues just prints "Object[]"
+        //var cacheKey = $"{typeof(TEntity).FullName}_{nameof(GetByKey)}_{keyValues}";
+        //_cacheStorage.CacheKeys.Add(cacheKey);
+        //return _memoryCacher.GetOrCreate(cacheKey, () => base.GetByKey(keyValues));
         return base.GetByKey(keyValues);
     }
+
     public override async Task<TEntity?> GetByKeyAsync(params object?[]? keyValues)
     {
-        //if (keyValues == null) return await base.GetByKeyAsync(keyValues);
-        //var cacheKey = $"{nameof(TEntity)}Key_{keyValues!.ToString()}";
-        //AddToKeyCacheKeys(cacheKey, keyValues);
+        // DOESN'T WORK: KeyValues just prints "Object[]"
+        //var cacheKey = $"{typeof(TEntity).FullName}_{nameof(GetByKey)}_{keyValues}";
+        //Console.WriteLine($"{keyValues} + {keyValues}");
+        //_cacheStorage.CacheKeys.Add(cacheKey);
+        //return await _memoryCacher.GetOrCreate(cacheKey, async () => await base.GetByKeyAsync(keyValues));
         return await base.GetByKeyAsync(keyValues);
-
     }
+
+#nullable disable
+    public override TResult GetSingle<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
+    {
+        var cacheKey = $"{typeof(TEntity).FullName}_{nameof(GetSingle)}_{query.GetMethodInfo()}_{nameof(TResult)}";
+        _cacheStorage.CacheKeys.Add(cacheKey);
+        _logger.LogInformation("Added key {key}", cacheKey);
+        return _memoryCacher.GetOrCreate(cacheKey, () => base.GetSingle(query));
+    }
+    public override async Task<TResult> GetSingleAsync<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> query)
+    {
+        var cacheKey = $"{typeof(TEntity).FullName}_{nameof(GetSingle)}_{query.GetMethodInfo()}_{nameof(TResult)}";
+        _cacheStorage.CacheKeys.Add(cacheKey);
+        _logger.LogInformation("Added key {key}", cacheKey);
+        return await _memoryCacher.GetOrCreate(cacheKey, () => base.GetSingleAsync(query));
+    }
+#nullable enable
+
     public override void Create(TEntity entity)
     {
         base.Create(entity);
-        RemoveListKeys();
+        RemoveKeys();
     }
 
     public override async Task CreateAsync(TEntity entity)
     {
         await base.CreateAsync(entity);
-        RemoveListKeys();
+        RemoveKeys();
     }
     public override void Update(TEntity entity)
     {
         base.Update(entity);
-        RemoveListKeys();
+        RemoveKeys();
     }
     
     public override int UpdateCertainFields
@@ -94,7 +114,7 @@ public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemor
     )
     {
         var result = base.UpdateCertainFields(query, setPropertyCalls);
-        RemoveListKeys();
+        RemoveKeys();
         return result;
     }
 
@@ -105,33 +125,42 @@ public class RepositoryBaseCaching<TEntity>(ApplicationDbContext context, IMemor
     )
     {
         var result = await base.UpdateCertainFieldsAsync(query, setPropertyCalls);
-        RemoveListKeys();
+        RemoveKeys();
         return result;
     }
+
     public override void Delete(TEntity entity)
     {
         base.Delete(entity);
-        RemoveListKeys();
+        RemoveKeys();
     }
+
     public override int DeleteCertainEntries(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
         var result = base.DeleteCertainEntries(query);
-        RemoveListKeys();
+        RemoveKeys();
         return result;
     }
+    
     public override async Task<int> DeleteCertainEntriesAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
         var result = await base.DeleteCertainEntriesAsync(query);
-        RemoveListKeys();
+        RemoveKeys();
         return result;
     }
+
     public override bool Exists(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
-        return base.Exists(query);
+        var cacheKey = $"{typeof(TEntity).FullName}_{nameof(Exists)}_{query.GetMethodInfo()}";
+        _cacheStorage.CacheKeys.Add(cacheKey);
+        return _memoryCacher.GetOrCreate(cacheKey, () => base.Exists(query));
     }
+
     public override async Task<bool> ExistsAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
     {
-        return await base.ExistsAsync(query);
+        var cacheKey = $"{typeof(TEntity).FullName}_{nameof(Exists)}_{query.GetMethodInfo()}";
+        _cacheStorage.CacheKeys.Add(cacheKey);
+        return await _memoryCacher.GetOrCreate(cacheKey, () => base.ExistsAsync(query));
     }
 
     public override int SaveChanges()
