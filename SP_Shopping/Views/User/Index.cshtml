@@ -1,13 +1,17 @@
-﻿@model UserPageDto
+﻿@using Microsoft.AspNetCore.Identity
+@model UserPageDto
+@inject UserManager<ApplicationUser> _userManager
 
 @{
     ViewData["Title"] = "UserPage";
 }
 
 <h1>User info:</h1>
-<p>@Html.DisplayNameFor(u => u.UserName): @Model.UserName</p>
-<p>@Html.DisplayNameFor(u => u.Email): @Model.Email</p>
-<p>@Html.DisplayNameFor(u => u.InsertionDate): @Model.InsertionDate</p>
+<p>@Html.DisplayNameFor(u => u.UserName): @Html.DisplayFor(u => u.UserName)</p>
+<p>@Html.DisplayNameFor(u => u.Email): @Html.DisplayFor(u => u.Email)</p>
+<p style="white-space: pre-wrap;">@Html.DisplayNameFor(u => u.Description): 
+@Html.DisplayFor(u => u.Description)</p>
+<p>@Html.DisplayNameFor(u => u.InsertionDate): @Html.DisplayFor(u => u.InsertionDate)</p>
 
 <h2>Products</h2>
 @if (Model.Id == User.FindFirstValue(ClaimTypes.NameIdentifier))
