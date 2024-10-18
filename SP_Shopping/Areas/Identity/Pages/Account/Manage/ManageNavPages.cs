@@ -31,6 +31,11 @@ namespace  SP_Shopping.Areas.Identity.Pages.Account.Manage
         public static string Email => "Email";
 
         /// <summary>
+        /// My code that I added to ASP.NET Core Identity Scaffold.
+        /// </summary>
+        public static string Description => "Description";
+
+        /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
@@ -82,6 +87,11 @@ namespace  SP_Shopping.Areas.Identity.Pages.Account.Manage
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public static string EmailNavClass(ViewContext viewContext) => PageNavClass(viewContext, Email);
+
+        /// <summary>
+        /// My code that I added to ASP.NET Core Identity Scaffold.
+        /// </summary>
+        public static string DescriptionNavClass(ViewContext viewContext) => PageNavClass(viewContext, Description);
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
