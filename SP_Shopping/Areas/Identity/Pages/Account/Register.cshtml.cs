@@ -91,6 +91,13 @@ namespace SP_Shopping.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
             /// <summary>
+            ///     My code that I added to ASP.NET Core Identity Scaffold.
+            /// </summary>
+            [StringLength(1000, ErrorMessage = "The description can be at maximum 1000 characters long")]
+            [Display(Name = "Description")]
+            public string Description { get; set; }
+
+            /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
@@ -130,6 +137,7 @@ namespace SP_Shopping.Areas.Identity.Pages.Account
                 #region MyCode
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 user.InsertionDate = DateTime.Now;
+                user.Description = Input.Description;
                 #endregion MyCode
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
