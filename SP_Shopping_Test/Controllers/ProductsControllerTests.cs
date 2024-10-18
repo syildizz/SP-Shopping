@@ -25,7 +25,7 @@ public class ProductsControllerTests
 {
 
     private readonly IRepository<Product> _productRepository;
-    private readonly IRepository<Category> _categoryRepository;
+    private readonly IRepositoryCaching<Category> _categoryRepository;
     private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IMemoryCache _memoryCache;
     private readonly IMapper _mapper;
@@ -43,7 +43,7 @@ public class ProductsControllerTests
         var serviceProvider = services.BuildServiceProvider();
 
         _productRepository = A.Fake<IRepository<Product>>();
-        _categoryRepository = A.Fake<IRepository<Category>>();
+        _categoryRepository = A.Fake<IRepositoryCaching<Category>>();
         _userRepository = A.Fake<IRepository<ApplicationUser>>();
         _memoryCache = A.Fake<IMemoryCache>();
         _mapper = serviceProvider.GetRequiredService<IMapper>();
@@ -55,7 +55,7 @@ public class ProductsControllerTests
             logger: _logger,
             mapper: _mapper,
             productRepository: _productRepository,
-            categoryRepository:  _categoryRepository,
+            categoryRepository: _categoryRepository,
             userRepository: _userRepository,
             memoryCache: _memoryCache
         );

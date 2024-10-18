@@ -10,9 +10,9 @@ namespace SP_Shopping.Controllers;
 public class CategoriesController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly IRepository<Category> _categoryRepository;
+    private readonly IRepositoryCaching<Category> _categoryRepository;
 
-    public CategoriesController(ApplicationDbContext context, IRepository<Category> categoryRepository)
+    public CategoriesController(ApplicationDbContext context, IRepositoryCaching<Category> categoryRepository)
     {
         _context = context;
         _categoryRepository = categoryRepository;
@@ -32,7 +32,7 @@ public class CategoriesController : Controller
             return NotFound();
         }
 
-        var category = await _categoryRepository.GetByKeyAsync((int)id);
+        var category = await _categoryRepository.GetByKeyAsync(HttpContext.Request.Path, (int)id);
         if (category == null)
         {
             return NotFound();
@@ -74,7 +74,7 @@ public class CategoriesController : Controller
         }
 
         //var category = await _context.Categories.FindAsync(id);
-        var category = await _categoryRepository.GetByKeyAsync((int)id);
+        var category = await _categoryRepository.GetByKeyAsync(HttpContext.Request.Path, (int)id);
         if (category == null)
         {
             return NotFound();
@@ -104,7 +104,7 @@ public class CategoriesController : Controller
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (await _categoryRepository.ExistsAsync(q => q.Where(c => c.Id == category.Id)))
+                if (await _categoryRepository.ExistsAsync(HttpContext.Request.Path, q => q.Where(c => c.Id == category.Id)))
                 {
                     return NotFound();
                 }
@@ -128,7 +128,7 @@ public class CategoriesController : Controller
 
         //var category = await _context.Categories
         //    .FirstOrDefaultAsync(m => m.Id == id);
-        var category = await _categoryRepository.GetByKeyAsync((int)id);
+        var category = await _categoryRepository.GetByKeyAsync(HttpContext.Request.Path, (int)id);
         if (category == null)
         {
             return NotFound();
@@ -143,7 +143,7 @@ public class CategoriesController : Controller
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         //var category = await _context.Categories.FindAsync(id);
-        var category = await _categoryRepository.GetByKeyAsync(id);
+        var category = await _categoryRepository.GetByKeyAsync("All", id);
         if (category != null)
         {
             //_context.Categories.Remove(category);

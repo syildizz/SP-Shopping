@@ -19,7 +19,7 @@ public class ProductsController : Controller
     private readonly ILogger<ProductsController> _logger;
     private readonly IMapper _mapper;
     private readonly IRepository<Product> _productRepository;
-    private readonly IRepository<Category> _categoryRepository;
+    private readonly IRepositoryCaching<Category> _categoryRepository;
     private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IMemoryCache _memoryCache;
     private readonly int paginationCount = 5;
@@ -29,7 +29,7 @@ public class ProductsController : Controller
         ILogger<ProductsController> logger,
         IMapper mapper,
         IRepository<Product> productRepository,
-        IRepository<Category> categoryRepository,
+        IRepositoryCaching<Category> categoryRepository,
         IRepository<ApplicationUser> userRepository,
         IMemoryCache memoryCache
     )
@@ -406,7 +406,7 @@ public class ProductsController : Controller
 
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
     {
-        return await _categoryRepository.GetAllAsync(q => q
+        return await _categoryRepository.GetAllAsync(nameof(GetCategoriesSelectListAsync), q => q
             .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
         );
     }
