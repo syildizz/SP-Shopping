@@ -4,6 +4,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SP_Shopping.Models;
@@ -99,7 +100,6 @@ public class PhoneNumberModel : PageModel
             }
         }
 
-        await _signInManager.RefreshSignInAsync(user);
         StatusMessage = "Your phone number has been updated";
         return RedirectToPage();
     }
