@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using SP_Shopping.Attributes;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace SP_Shopping.Dtos;
@@ -13,6 +14,7 @@ public class ProductDetailsDto
     public string Name { get; set; }
     [DataType(DataType.Currency)]
     [Required]
+    [PrecisionAndScale(18, 2)]
     [DisplayName("Price")]
     public decimal Price { get; set; }
     [DisplayName("Category")]

@@ -14,6 +14,7 @@ public class Product
     public string Name { get; set; }
     [DataType(DataType.Currency)]
     [Required]
+    [Precision(18, 2)]
     public decimal Price { get; set; }
     [ForeignKey(nameof(Category))]
     public int CategoryId { get; set; }

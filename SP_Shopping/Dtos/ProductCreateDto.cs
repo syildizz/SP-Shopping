@@ -1,4 +1,5 @@
-﻿using SP_Shopping.Models;
+﻿using SP_Shopping.Attributes;
+using SP_Shopping.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -12,6 +13,7 @@ public class ProductCreateDto
     public string Name { get; set; }
     [DataType(DataType.Currency)]
     [Required]
+    [PrecisionAndScale(18, 2)]
     public decimal Price { get; set; }
     [DisplayName(nameof(Category))]
     public int CategoryId { get; set; }
