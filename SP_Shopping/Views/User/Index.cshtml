@@ -22,11 +22,11 @@
     <a asp-controller="Products" asp-action="Details" asp-route-Id="@product.Id" style="text-decoration: none; color: inherit;">
     <dl class="border border-primary p-2">
         <dt>@Html.DisplayNameForInnerType((UserPageDto.UserPageProductDto p) => p.Name)</dt>
-        <dd>@product.Name</dd>
+        <dd>@Html.DisplayFor(p => product.Name)</dd>
         <dt>@Html.DisplayNameForInnerType((UserPageDto.UserPageProductDto p) => p.Price)</dt>
-        <dd>@product.Price</dd>
+        <dd>@Html.DisplayFor(p => product.Price)</dd>
         <dt>@Html.DisplayNameForInnerType((UserPageDto.UserPageProductDto p) => p.CategoryName)</dt>
-        <dd>@product.CategoryName</dd>
+        <dd>@Html.DisplayFor(p => product.CategoryName)</dd>
     </dl>
     </a>
     }

@@ -19,12 +19,12 @@
     {
         <div style="border: solid gray 0.1875em; text-align: center; padding: 0.1875em; height:100%;">
             <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" style="text-decoration: none; color: inherit;">
-            <div>@product.Name</div>    
-            <div>@product.Price</div>    
-            <div>@product.CategoryName</div>    
+            <div>@Html.DisplayFor(model => product.Name)</div>    
+            <div>@Html.DisplayFor(model => product.Price)</div>    
+            <div>@Html.DisplayFor(model => product.CategoryName)</div>    
             </a>
             <a asp-controller="User" asp-action="Index" asp-route-Id="@product.SubmitterId">
-            <div>@product.SubmitterName</div>
+            <div>@Html.DisplayFor(model => product.SubmitterName)</div>
             </a>
         </div>
     }

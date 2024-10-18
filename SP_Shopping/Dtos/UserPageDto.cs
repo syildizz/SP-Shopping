@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace SP_Shopping.Dtos;
 
@@ -10,8 +11,9 @@ public class UserPageDto
     {
         public string Id { get; set; }
         public string Name { get; set; }
+        [DataType(DataType.Currency)]
         public decimal Price { get; set; }
-        [DisplayName("Category Name")]
+        [DisplayName("Category")]
         public string CategoryName { get; set; }
     }
 
