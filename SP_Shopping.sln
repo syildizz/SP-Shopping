@@ -5,7 +5,7 @@ VisualStudioVersion = 17.11.35303.130
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SP_Shopping", "SP_Shopping\SP_Shopping.csproj", "{4BB44251-FB22-4718-8064-4413AF7C1716}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SP_Shopping.Test", "SP_Shopping_Test\SP_Shopping.Test.csproj", "{ADBF5C4F-9F0C-48CB-A348-18702AF6858A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SP_Shopping.Test", "SP_Shopping_Test\SP_Shopping.Test.csproj", "{ADBF5C4F-9F0C-48CB-A348-18702AF6858A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

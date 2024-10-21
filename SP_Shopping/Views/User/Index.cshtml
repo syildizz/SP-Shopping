@@ -1,12 +1,17 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using SP_Shopping.Utilities
 @model UserPageDto
 @inject UserManager<ApplicationUser> _userManager
+@inject IUserImageHandler _userImageHandler
 
 @{
     ViewData["Title"] = "UserPage";
 }
 
 <h1>User info:</h1>
+
+<img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_userImageHandler.GenerateDefaultProfilePictureURL()" />
+
 <p>@Html.DisplayNameFor(u => u.UserName): @Html.DisplayFor(u => u.UserName)</p>
 <p>@Html.DisplayNameFor(u => u.Email): @Html.DisplayFor(u => u.Email)</p>
 <p style="white-space: pre-wrap;">@Html.DisplayNameFor(u => u.Description): 
