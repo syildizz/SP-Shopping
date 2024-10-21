@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using SP_Shopping.Utilities
+@inject IUserImageHandler _userImageHandler
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -33,11 +36,19 @@
                         </li>
                         @if (User.Identity?.IsAuthenticated ?? false)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="Index">Cart</a>
-                            </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="Index">Cart</a>
+                        </li>
                         }
                     </ul>
+                    @if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                    <ul class="navbar-nav p-2">
+                        <li class="d-inline-flex">
+                            <img class="img-fluid" style="height: calc(var(--bs-body-line-height) * 1em); aspect-ratio: 1/1" src="@(_userImageHandler.GenerateDefaultProfilePictureURL())" />
+                        </li>
+                    </ul>
+                    }
                     <partial name="_LoginPartial" />
                 </div>
             </div>

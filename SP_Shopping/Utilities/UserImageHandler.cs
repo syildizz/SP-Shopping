@@ -36,12 +36,12 @@ public class UserImageHandler : IUserImageHandler
 
     public string GenerateProfilePictureURL(IdentityUser user)
     {
-        return $"~/img-content/{GenerateProfilePictureFileName(user)}";
+        return $"/img-content/{GenerateProfilePictureFileName(user)}";
     }
 
     public string GenerateDefaultProfilePictureURL()
     {
-        return $"~/img/{GenerateProfilePictureFileName(new IdentityUser() { Id = "default" })}";
+        return $"/img/{GenerateProfilePictureFileName(new IdentityUser() { Id = "default" })}";
     }
 
     public bool ProfilePictureExists(IdentityUser user)
