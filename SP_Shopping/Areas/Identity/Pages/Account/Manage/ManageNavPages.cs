@@ -22,6 +22,11 @@ namespace  SP_Shopping.Areas.Identity.Pages.Account.Manage
         /// <summary>
         /// My code that I added to ASP.NET Core Identity Scaffold.
         /// </summary>
+        public static string ProfilePicture => "ProfilePicture";
+
+        /// <summary>
+        /// My code that I added to ASP.NET Core Identity Scaffold.
+        /// </summary>
         public static string PhoneNumber => "PhoneNumber";
 
         /// <summary>
@@ -76,6 +81,11 @@ namespace  SP_Shopping.Areas.Identity.Pages.Account.Manage
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public static string IndexNavClass(ViewContext viewContext) => PageNavClass(viewContext, Index);
+
+        /// <summary>
+        /// My code that I added to ASP.NET Core Identity Scaffold.
+        /// </summary>
+        public static string ProfilePictureNavClass(ViewContext viewContext) => PageNavClass(viewContext, ProfilePicture);
 
         /// <summary>
         /// My code that I added to ASP.NET Core Identity Scaffold.

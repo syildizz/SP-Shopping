@@ -3,6 +3,7 @@
 namespace SP_Shopping.Utilities;
 public interface IUserImageHandler
 {
+    void DeleteProfilePicture(IdentityUser user);
     string GenerateDefaultProfilePictureURL();
     string GenerateProfilePictureURL(IdentityUser user);
     byte[] GetDefaultProfilePicture();

@@ -77,5 +77,10 @@ public class UserImageHandler : IUserImageHandler
         await File.WriteAllBytesAsync(GenerateProfilePicturePath(user), image);
     }
 
+    public void DeleteProfilePicture(IdentityUser user)
+    {
+        File.Delete(GenerateProfilePicturePath(user));
+    }
+
 
 }

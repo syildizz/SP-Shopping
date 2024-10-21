@@ -1,0 +1,29 @@
+﻿@page
+@using SP_Shopping.Utilities
+@model ProfilePictureModel
+@inject IUserImageHandler _userImageHandler
+@{
+    ViewData["Title"] = "Manage Profile Picture";
+    ViewData["ActivePage"] = ManageNavPages.ProfilePicture;
+}
+
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" for="StatusMessage" />
+<div class="row">
+    <div class="col-md-6">
+        <img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_userImageHandler.GenerateDefaultProfilePictureURL()" />
+        <form id="profile-picture-form" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.NewProfilePicture" class="form-control" autocomplete="profile picture" aria-required="true" placeholder="Please enter profile picture." />
+                <label asp-for="Input.NewProfilePicture" class="form-label"></label>
+                <span asp-validation-for="Input.NewProfilePicture" class="text-danger"></span>
+            </div>
+            <button id="change-profile-picture-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
