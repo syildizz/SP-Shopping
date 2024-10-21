@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities;
 
 namespace SP_Shopping;
 
 public class Program
 {
+
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +50,8 @@ public class Program
         builder.Services.AddScoped<IRepository<CartItem>, RepositoryBase<CartItem>>();
         builder.Services.AddSingleton<IMemoryCacher<string>, MemoryCacher<string>>();
 
+        builder.Services.AddSingleton<IUserImageHandler>(new UserImageHandler(builder.Environment.WebRootPath));
+
 
         var app = builder.Build();
 
@@ -76,6 +80,7 @@ public class Program
             name: "default",
             pattern: "{controller=Home}/{action=Index}/{id?}");
         app.MapRazorPages();
+
 
         app.Run();
     }
