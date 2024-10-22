@@ -6,6 +6,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Webp;
 using SP_Shopping.Models;
 using SP_Shopping.Utilities;
 using static SP_Shopping.Utilities.FileSignatureResolver;
@@ -70,7 +72,6 @@ public class ProfilePictureModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
@@ -101,17 +102,15 @@ public class ProfilePictureModel : PageModel
             return BadRequest($"Cannot upload images larger than {MAX_FILESIZE_BYTE} bytes to the database.");   
         }
 
-        var formImageData = new byte[Input.NewProfilePicture.Length];
         var imageStream = Input.NewProfilePicture.OpenReadStream();
+        var formImageData = new byte[Input.NewProfilePicture.Length];
         var readBytes = await imageStream.ReadAsync(formImageData, 0, (int)Input.NewProfilePicture.Length);
 
-        if (new FileSignatureResolver().GetTypeFromFile(formImageData) != FileFormat.PNG)
+        if (!await _userImageHandler.SetProfilePictureAsync(user, formImageData))
         {
-            StatusMessage = "Only PNG images are supported for now.";
-            return BadRequest("Only PNG images are supported for now.");
+            StatusMessage = "Image is not of valid format.";
+            return BadRequest("Image is not of valid format.");
         }
-
-        await _userImageHandler.SetProfilePictureAsync(user, formImageData);
 
         StatusMessage = "Your account description has been updated.";
         return RedirectToPage();

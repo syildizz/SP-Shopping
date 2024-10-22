@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Identity.Client;
 
 namespace SP_Shopping.Utilities;
 
@@ -8,11 +7,6 @@ public class UserImageHandler : IUserImageHandler
     private readonly string _profilePictureIdentifier = "pfp";
     private readonly string _imgExtension = ".png";
     private readonly string _folderPath;
-
-    public UserImageHandler(IWebHostEnvironment henv)
-    {
-        _folderPath = henv.WebRootPath;
-    }
 
     public UserImageHandler(string folderPath)
     {
@@ -66,20 +60,103 @@ public class UserImageHandler : IUserImageHandler
         return image;
     }
 
+    public Stream GetProfilePictureStream(IdentityUser user)
+    {
+        return new FileStream(GenerateProfilePicturePath(user), FileMode.OpenOrCreate, FileAccess.Read);
+    }
+
     public byte[] GetDefaultProfilePicture()
     {
         byte[] image = File.ReadAllBytes(GenerateDefaultProfilePicturePath());
         return image;
     }
 
-    public void SetProfilePicture(IdentityUser user, byte[] image)
+    public Stream GetDefaultProfilePictureStream()
     {
-        File.WriteAllBytes(GenerateProfilePicturePath(user), image);
+        return new FileStream(GenerateDefaultProfilePicturePath(), FileMode.Open, FileAccess.Read);
     }
 
-    public async Task SetProfilePictureAsync(IdentityUser user, byte[] image)
+    private void ProcessImageData(Image image)
     {
-        await File.WriteAllBytesAsync(GenerateProfilePicturePath(user), image);
+        image.Mutate(o => o
+            .Resize(480, 480)
+        );
+    }
+
+    public bool SetProfilePicture(IdentityUser user, byte[] imageData)
+    {
+        try
+        {
+            using Image image = Image.Load(imageData);
+            ProcessImageData(image);
+            image.SaveAsPng(GenerateProfilePicturePath(user));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (ex is UnknownImageFormatException or OverflowException)
+            {
+                return false;
+            }
+            throw;
+        }
+    }
+
+    public bool SetProfilePicture(IdentityUser user, Stream stream)
+    {
+        try
+        {
+            Image image = Image.Load(stream);
+            ProcessImageData(image);
+            image.SaveAsPng(GenerateProfilePicturePath(user));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (ex is UnknownImageFormatException or OverflowException)
+            {
+                return false;
+            }
+            throw;
+        }
+    }
+
+    public async Task<bool> SetProfilePictureAsync(IdentityUser user, byte[] imageData)
+    {
+        try
+        {
+            using Image image = Image.Load(imageData);
+            ProcessImageData(image);
+            await image.SaveAsPngAsync(GenerateProfilePicturePath(user));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (ex is UnknownImageFormatException or OverflowException)
+            {
+                return false;
+            }
+            throw;
+        }
+    }
+
+    public async Task<bool> SetProfilePictureAsync(IdentityUser user, Stream stream)
+    {
+        try
+        {
+            using Image image = await Image.LoadAsync(stream);
+            ProcessImageData(image);
+            await image.SaveAsPngAsync(GenerateProfilePicturePath(user));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (ex is UnknownImageFormatException or OverflowException)
+            {
+                return false;
+            }
+            throw;
+        }
     }
 
     public void DeleteProfilePicture(IdentityUser user)
