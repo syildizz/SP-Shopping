@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Dtos;
@@ -15,9 +16,9 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> _logger;
     private readonly IRepository<Product> _productRepository;
     private readonly IMapper _mapper;
-    private readonly IUserImageHandler _userImageHandler;
+    private readonly IDefaultingImageHandler<IdentityUser> _userImageHandler;
 
-    public HomeController(ILogger<HomeController> logger, IRepository<Product> productRepository, IMapper mapper, IUserImageHandler userImageHandler)
+    public HomeController(ILogger<HomeController> logger, IRepository<Product> productRepository, IMapper mapper, IDefaultingImageHandler<IdentityUser> userImageHandler)
     {
         _logger = logger;
         _productRepository = productRepository;

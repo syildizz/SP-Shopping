@@ -1,5 +1,6 @@
-﻿@using SP_Shopping.Utilities
-@inject IUserImageHandler _userImageHandler
+﻿@using Microsoft.AspNetCore.Identity
+@using SP_Shopping.Utilities
+@inject IDefaultingImageHandler<IdentityUser> _userImageHandler
 
 <!DOCTYPE html>
 <html lang="en">
@@ -51,7 +52,7 @@
                                     height: calc(var(--bs-body-line-height) * 1em); 
                                     aspect-ratio: 1/1;" 
                                 src="@(_userImageHandler
-                                    .GetProfilePictureOrDefaultURL
+                                    .GetImageOrDefaultURL
                                     (
                                         new ApplicationUser() 
                                         {

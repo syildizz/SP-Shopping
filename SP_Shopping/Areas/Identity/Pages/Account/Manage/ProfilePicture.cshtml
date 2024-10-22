@@ -1,7 +1,7 @@
 ﻿@page
 @using SP_Shopping.Utilities
 @model ProfilePictureModel
-@inject IUserImageHandler _userImageHandler
+@inject IDefaultingImageHandler<IdentityUser> _userImageHandler
 @{
     ViewData["Title"] = "Manage Profile Picture";
     ViewData["ActivePage"] = ManageNavPages.ProfilePicture;
@@ -11,7 +11,7 @@
 <partial name="_StatusMessage" for="StatusMessage" />
 <div class="row">
     <div class="col-md-6">
-        <img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_userImageHandler.GetProfilePictureOrDefaultURL(new ApplicationUser() { Id=User.FindFirstValue(ClaimTypes.NameIdentifier) })" />
+        <img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_userImageHandler.GetImageOrDefaultURL(new ApplicationUser() { Id=User.FindFirstValue(ClaimTypes.NameIdentifier) })" />
         <form id="profile-picture-form" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="All" class="text-danger" role="alert"></div>
             <div class="form-floating mb-3">

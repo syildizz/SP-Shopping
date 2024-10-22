@@ -52,7 +52,7 @@ public class Program
         builder.Services.AddScoped<IRepository<CartItem>, RepositoryBase<CartItem>>();
         builder.Services.AddSingleton<IMemoryCacher<string>, MemoryCacher<string>>();
 
-        builder.Services.AddSingleton<IUserImageHandler>(new UserImageHandler(builder.Environment.WebRootPath));
+        builder.Services.AddSingleton<IDefaultingImageHandler<IdentityUser>>(new UserProfileImageHandler(builder.Environment.WebRootPath));
 
         builder.Services.AddImageSharp(options =>
         {

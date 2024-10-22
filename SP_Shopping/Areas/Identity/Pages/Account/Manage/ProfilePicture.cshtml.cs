@@ -17,13 +17,13 @@ namespace SP_Shopping.Areas.Identity.Pages.Account.Manage;
 public class ProfilePictureModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IUserImageHandler _userImageHandler;
+    private readonly IDefaultingImageHandler<IdentityUser> _userImageHandler;
     private const int MAX_FILESIZE_BYTE = 1_500_000;
 
     public ProfilePictureModel
     (
         UserManager<ApplicationUser> userManager,
-        IUserImageHandler userImageHandler
+        IDefaultingImageHandler<IdentityUser> userImageHandler
     )
     {
         _userManager = userManager;
@@ -85,7 +85,7 @@ public class ProfilePictureModel : PageModel
 
         if (Input.NewProfilePicture is null)
         {
-            _userImageHandler.DeleteProfilePicture(user);
+            _userImageHandler.DeleteImage(user);
             StatusMessage = "Your profile picture has been reset to the default.";
             return RedirectToPage();
         }
@@ -104,7 +104,7 @@ public class ProfilePictureModel : PageModel
 
         using var imageStream = Input.NewProfilePicture.OpenReadStream();
 
-        if (!await _userImageHandler.SetProfilePictureAsync(user, imageStream))
+        if (!await _userImageHandler.SetImageAsync(user, imageStream))
         {
             StatusMessage = "Image is not of valid format.";
             return BadRequest("Image is not of valid format.");
