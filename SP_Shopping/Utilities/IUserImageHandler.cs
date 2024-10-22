@@ -9,6 +9,7 @@ public interface IUserImageHandler
     byte[] GetDefaultProfilePicture();
     byte[] GetProfilePicture(IdentityUser user);
     Task<byte[]> GetProfilePictureAsync(IdentityUser user);
+    string GetProfilePictureOrDefaultURL(IdentityUser user);
     bool ProfilePictureExists(IdentityUser user);
     void SetProfilePicture(IdentityUser user, byte[] image);
     Task SetProfilePictureAsync(IdentityUser user, byte[] image);

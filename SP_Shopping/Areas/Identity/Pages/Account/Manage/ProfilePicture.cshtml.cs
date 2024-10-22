@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SP_Shopping.Models;
 using SP_Shopping.Utilities;
+using static SP_Shopping.Utilities.FileSignatureResolver;
 
 namespace SP_Shopping.Areas.Identity.Pages.Account.Manage;
 
@@ -41,6 +42,7 @@ public class ProfilePictureModel : PageModel
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
+    [RequestSizeLimit(MAX_FILESIZE_BYTE)]
     public class InputModel
     {
         /// <summary>
@@ -87,14 +89,27 @@ public class ProfilePictureModel : PageModel
             return RedirectToPage();
         }
 
+        if (!Input.NewProfilePicture.ContentType.Contains("image"))
+        {
+            StatusMessage = "File has to be an image.";
+            return BadRequest("File has to be an image.");
+        }
+
         if (Input.NewProfilePicture.Length > MAX_FILESIZE_BYTE)
         {
+            StatusMessage = "Cannot upload images larger than {MAX_FILESIZE_BYTE} bytes to the database.";
             return BadRequest($"Cannot upload images larger than {MAX_FILESIZE_BYTE} bytes to the database.");   
         }
 
         var formImageData = new byte[Input.NewProfilePicture.Length];
         var imageStream = Input.NewProfilePicture.OpenReadStream();
         var readBytes = await imageStream.ReadAsync(formImageData, 0, (int)Input.NewProfilePicture.Length);
+
+        if (new FileSignatureResolver().GetTypeFromFile(formImageData) != FileFormat.PNG)
+        {
+            StatusMessage = "Only PNG images are supported for now.";
+            return BadRequest("Only PNG images are supported for now.");
+        }
 
         await _userImageHandler.SetProfilePictureAsync(user, formImageData);
 

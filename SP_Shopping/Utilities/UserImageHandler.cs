@@ -44,6 +44,11 @@ public class UserImageHandler : IUserImageHandler
         return $"/img/{GenerateProfilePictureFileName(new IdentityUser() { Id = "default" })}";
     }
 
+    public string GetProfilePictureOrDefaultURL(IdentityUser user)
+    {
+        return ProfilePictureExists(user) ? GenerateProfilePictureURL(user) : GenerateDefaultProfilePictureURL();
+    }
+
     public bool ProfilePictureExists(IdentityUser user)
     {
         return File.Exists(GenerateProfilePicturePath(user));
@@ -81,6 +86,5 @@ public class UserImageHandler : IUserImageHandler
     {
         File.Delete(GenerateProfilePicturePath(user));
     }
-
 
 }

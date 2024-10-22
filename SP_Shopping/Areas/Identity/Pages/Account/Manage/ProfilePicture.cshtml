@@ -11,11 +11,18 @@
 <partial name="_StatusMessage" for="StatusMessage" />
 <div class="row">
     <div class="col-md-6">
-        <img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_userImageHandler.GenerateDefaultProfilePictureURL()" />
+        <img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_userImageHandler.GetProfilePictureOrDefaultURL(new ApplicationUser() { Id=User.FindFirstValue(ClaimTypes.NameIdentifier) })" />
         <form id="profile-picture-form" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="All" class="text-danger" role="alert"></div>
             <div class="form-floating mb-3">
-                <input asp-for="Input.NewProfilePicture" class="form-control" autocomplete="profile picture" aria-required="true" placeholder="Please enter profile picture." />
+                <input 
+                    asp-for="Input.NewProfilePicture" 
+                    class="form-control" 
+                    autocomplete="profile picture" 
+                    aria-required="true" 
+                    placeholder="Please enter profile picture."
+                    accept="image/*"
+                />
                 <label asp-for="Input.NewProfilePicture" class="form-label"></label>
                 <span asp-validation-for="Input.NewProfilePicture" class="text-danger"></span>
             </div>
