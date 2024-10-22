@@ -97,7 +97,7 @@ public class ProfilePictureModel : PageModel
 
         if (Input.NewProfilePicture.Length > MAX_FILESIZE_BYTE)
         {
-            StatusMessage = "Cannot upload images larger than {MAX_FILESIZE_BYTE} bytes to the database.";
+            StatusMessage = $"Cannot upload images larger than {MAX_FILESIZE_BYTE} bytes to the database.";
             return BadRequest($"Cannot upload images larger than {MAX_FILESIZE_BYTE} bytes to the database.");   
         }
 

@@ -362,3 +362,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /SP_Shopping/MOCK_DATA.json
+/SP_Shopping/wwwroot/img-content
