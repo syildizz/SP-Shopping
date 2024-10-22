@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /SP_Shopping/MOCK_DATA.json
 **/wwwroot/img-content
+**/wwwroot/is-cache

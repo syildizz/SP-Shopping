@@ -102,11 +102,9 @@ public class ProfilePictureModel : PageModel
             return BadRequest($"Cannot upload images larger than {MAX_FILESIZE_BYTE} bytes to the database.");   
         }
 
-        var imageStream = Input.NewProfilePicture.OpenReadStream();
-        var formImageData = new byte[Input.NewProfilePicture.Length];
-        var readBytes = await imageStream.ReadAsync(formImageData, 0, (int)Input.NewProfilePicture.Length);
+        using var imageStream = Input.NewProfilePicture.OpenReadStream();
 
-        if (!await _userImageHandler.SetProfilePictureAsync(user, formImageData))
+        if (!await _userImageHandler.SetProfilePictureAsync(user, imageStream))
         {
             StatusMessage = "Image is not of valid format.";
             return BadRequest("Image is not of valid format.");

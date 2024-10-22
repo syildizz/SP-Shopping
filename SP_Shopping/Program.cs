@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp.Web.Commands;
+using SixLabors.ImageSharp.Web.DependencyInjection;
+using SixLabors.ImageSharp.Web.Processors;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -38,7 +41,6 @@ public class Program
             options.Lockout.AllowedForNewUsers = false;
 
             options.User.RequireUniqueEmail = true;
-
         }
         );
 
@@ -51,6 +53,35 @@ public class Program
         builder.Services.AddSingleton<IMemoryCacher<string>, MemoryCacher<string>>();
 
         builder.Services.AddSingleton<IUserImageHandler>(new UserImageHandler(builder.Environment.WebRootPath));
+
+        builder.Services.AddImageSharp(options =>
+        {
+            options.OnParseCommandsAsync = c =>
+            {
+                if (c.Commands.Count == 0)
+                {
+                    return Task.CompletedTask;
+                }
+
+                // It's a good idea to have this to provide very basic security.
+                // We can safely use the static resize processor properties.
+                uint width = c.Parser.ParseValue<uint>(
+                    c.Commands.GetValueOrDefault(ResizeWebProcessor.Width),
+                    c.Culture);
+
+                uint height = c.Parser.ParseValue<uint>(
+                    c.Commands.GetValueOrDefault(ResizeWebProcessor.Height),
+                    c.Culture);
+
+                if (width > 4000 || height > 4000)
+                {
+                    c.Commands.Remove(ResizeWebProcessor.Width);
+                    c.Commands.Remove(ResizeWebProcessor.Height);
+                }
+
+                return Task.CompletedTask;
+            };
+        });
 
 
         var app = builder.Build();
@@ -68,6 +99,8 @@ public class Program
             // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
+
+        app.UseImageSharp();
 
         app.UseHttpsRedirection();
         app.UseStaticFiles();
