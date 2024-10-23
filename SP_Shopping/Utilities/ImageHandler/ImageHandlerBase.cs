@@ -13,7 +13,7 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
         return $"{Identifier(key)}.{ImgExtension}";
     }
 
-    protected string GenerateProfilePicturePath(TKey key)
+    protected string GenerateImagePath(TKey key)
     {
         return Path.Combine(FolderPath, "img-content", KeyName, GenerateImageFileName(key));
     }
@@ -25,24 +25,24 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
 
     public byte[] GetImageData(TKey key)
     {
-        byte[] image = File.ReadAllBytes(GenerateProfilePicturePath(key));
+        byte[] image = File.ReadAllBytes(GenerateImagePath(key));
         return image;
     }
 
     public async Task<byte[]> GetImageDataAsync(TKey key)
     {
-        byte[] image = await File.ReadAllBytesAsync(GenerateProfilePicturePath(key));
+        byte[] image = await File.ReadAllBytesAsync(GenerateImagePath(key));
         return image;
     }
 
     public Stream GetImageStream(TKey key)
     {
-        return new FileStream(GenerateProfilePicturePath(key), FileMode.OpenOrCreate, FileAccess.Read);
+        return new FileStream(GenerateImagePath(key), FileMode.OpenOrCreate, FileAccess.Read);
     }
 
     public bool ImageExists(TKey key)
     {
-        return File.Exists(GenerateProfilePicturePath(key));
+        return File.Exists(GenerateImagePath(key));
     }
 
     protected virtual void ProcessImageData(Image image)
@@ -58,7 +58,7 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
         {
             using Image image = Image.Load(imageData);
             ProcessImageData(image);
-            image.Save(GenerateProfilePicturePath(key));
+            image.Save(GenerateImagePath(key));
             return true;
         }
         catch (Exception ex)
@@ -77,7 +77,7 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
         {
             Image image = Image.Load(stream);
             ProcessImageData(image);
-            image.Save(GenerateProfilePicturePath(key));
+            image.Save(GenerateImagePath(key));
             return true;
         }
         catch (Exception ex)
@@ -96,7 +96,7 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
         {
             using Image image = Image.Load(imageData);
             ProcessImageData(image);
-            await image.SaveAsync(GenerateProfilePicturePath(key));
+            await image.SaveAsync(GenerateImagePath(key));
             return true;
         }
         catch (Exception ex)
@@ -115,7 +115,7 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
         {
             using Image image = await Image.LoadAsync(stream);
             ProcessImageData(image);
-            await image.SaveAsync(GenerateProfilePicturePath(key));
+            await image.SaveAsync(GenerateImagePath(key));
             return true;
         }
         catch (Exception ex)
@@ -130,7 +130,21 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
 
     public void DeleteImage(TKey key)
     {
-        File.Delete(GenerateProfilePicturePath(key));
+        var imagePath = GenerateImagePath(key);
+        try
+        {
+            File.Delete(imagePath);
+        }
+        catch(DirectoryNotFoundException)
+        {
+            if (Directory.GetParent(imagePath)?.FullName is string parentDirectory) {
+                Directory.CreateDirectory(parentDirectory);
+            } 
+            else
+            {
+                throw;
+            }
+        }
     }
 
 }

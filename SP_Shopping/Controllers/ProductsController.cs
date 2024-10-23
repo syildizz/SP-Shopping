@@ -9,6 +9,8 @@ using SP_Shopping.Data;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities.ImageHandler;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
 
@@ -22,6 +24,7 @@ public class ProductsController : Controller
     private readonly IRepositoryCaching<Category> _categoryRepository;
     private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IMemoryCache _memoryCache;
+    private readonly ProductImageHandler _productImageHandler;
     private readonly int paginationCount = 5;
 
     public ProductsController
@@ -31,7 +34,8 @@ public class ProductsController : Controller
         IRepository<Product> productRepository,
         IRepositoryCaching<Category> categoryRepository,
         IRepository<ApplicationUser> userRepository,
-        IMemoryCache memoryCache
+        IMemoryCache memoryCache,
+        ProductImageHandler productImageHandler
     )
     {
         _logger = logger;
@@ -40,6 +44,7 @@ public class ProductsController : Controller
         _categoryRepository = categoryRepository;
         _userRepository = userRepository;
         _memoryCache = memoryCache;
+        _productImageHandler = productImageHandler;
     }
 
     // GET: Products
@@ -165,7 +170,6 @@ public class ProductsController : Controller
                 Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
                 product.InsertionDate = DateTime.Now;
 
-
                 bool userIsAdmin = false;
 
                 string submitterId;
@@ -191,6 +195,7 @@ public class ProductsController : Controller
                     }
                     submitterId = UserId!;
                 }
+
                 // Set submitter to null and manually set Submitter foreign key
                 // to avoid generating new ApplicationUser with auto-generated id.
                 product.Submitter = null;
@@ -200,6 +205,7 @@ public class ProductsController : Controller
                 //await _context.SaveChangesAsync();
                 await _productRepository.CreateAsync(product);
                 await _productRepository.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException)
@@ -310,6 +316,28 @@ public class ProductsController : Controller
                         .SetProperty(p => p.ModificationDate, DateTime.Now)
                 );
                 //_context.Update(product);
+
+                // Adding image
+                if (pdto.ProductImage is not null) {
+                    if (!pdto.ProductImage.ContentType.StartsWith("image"))
+                    {
+                        return BadRequest("The file must be an image.");
+                    }
+                    if (pdto.ProductImage.Length > 1_500_000)
+                    {
+                        return BadRequest($"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size.");
+                    }
+                    using var ImageStream = pdto.ProductImage.OpenReadStream();
+                    if (!await _productImageHandler.SetImageAsync(new Product { Id = id }, ImageStream))
+                    {
+                        return BadRequest("Image is not of valid format");
+                    }
+                }
+                else
+                {
+                    _productImageHandler.DeleteImage(new Product { Id = id });
+                }
+
             }
             catch (DbUpdateConcurrencyException dbuce)
             {

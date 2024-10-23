@@ -87,7 +87,7 @@ public class ProfilePictureModel : PageModel
             return RedirectToPage();
         }
 
-        if (!Input.NewProfilePicture.ContentType.Contains("image"))
+        if (!Input.NewProfilePicture.ContentType.StartsWith("image"))
         {
             StatusMessage = "File has to be an image.";
             return BadRequest("File has to be an image.");

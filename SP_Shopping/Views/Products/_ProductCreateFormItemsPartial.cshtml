@@ -1,10 +1,17 @@
-﻿
+﻿@using SP_Shopping.Utilities.ImageHandler
 @{
     IEnumerable<SelectListItem> categorySelectList = ViewBag.categorySelectList;
 }
+@inject ProductImageHandler _productImageHandler
 
 @model ProductCreateDto
 
+<img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_productImageHandler.GetImageOrDefaultURL(new Product() {Id=Model.Id})" />
+<div class="form-group">
+    <label asp-for="@Model.ProductImage" class="control-label"></label>
+    <input asp-for="@Model.ProductImage" class="form-control" />
+    <span asp-validation-for="@Model.ProductImage" class="text-danger"></span>
+</div>
 <div class="form-group">
     <label asp-for="@Model.Name" class="control-label"></label>
     <input asp-for="@Model.Name" class="form-control" />
