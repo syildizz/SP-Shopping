@@ -6,7 +6,7 @@ using SixLabors.ImageSharp.Web.Processors;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
-using SP_Shopping.Utilities;
+using SP_Shopping.Utilities.ImageHandler;
 
 namespace SP_Shopping;
 
@@ -52,7 +52,7 @@ public class Program
         builder.Services.AddScoped<IRepository<CartItem>, RepositoryBase<CartItem>>();
         builder.Services.AddSingleton<IMemoryCacher<string>, MemoryCacher<string>>();
 
-        builder.Services.AddSingleton<IDefaultingImageHandler<IdentityUser>>(new UserProfileImageHandler(builder.Environment.WebRootPath));
+        builder.Services.AddSingleton(p => new UserProfileImageHandler(folderPath: builder.Environment.WebRootPath));
 
         builder.Services.AddImageSharp(options =>
         {

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
-using SP_Shopping.Utilities;
+using SP_Shopping.Utilities.ImageHandler;
 using System.Diagnostics;
 using System.Security.Claims;
 
@@ -16,14 +16,12 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> _logger;
     private readonly IRepository<Product> _productRepository;
     private readonly IMapper _mapper;
-    private readonly IDefaultingImageHandler<IdentityUser> _userImageHandler;
 
-    public HomeController(ILogger<HomeController> logger, IRepository<Product> productRepository, IMapper mapper, IDefaultingImageHandler<IdentityUser> userImageHandler)
+    public HomeController(ILogger<HomeController> logger, IRepository<Product> productRepository, IMapper mapper, UserProfileImageHandler userProfileImageHandler)
     {
         _logger = logger;
         _productRepository = productRepository;
         _mapper = mapper;
-        _userImageHandler = userImageHandler;
     }
 
     public async Task<IActionResult> Index()

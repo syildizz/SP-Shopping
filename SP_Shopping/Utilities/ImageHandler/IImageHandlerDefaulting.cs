@@ -1,6 +1,6 @@
-﻿namespace SP_Shopping.Utilities;
+﻿namespace SP_Shopping.Utilities.ImageHandler;
 
-public interface IDefaultingImageHandler<TKey> : IImageHandler<TKey>
+public interface IImageHandlerDefaulting<TKey> : IImageHandler<TKey>
 {
     string GenerateDefaultImageURL();
     string GetImageOrDefaultURL(TKey key);

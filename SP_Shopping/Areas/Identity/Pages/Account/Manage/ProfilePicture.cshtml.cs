@@ -6,28 +6,25 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Webp;
 using SP_Shopping.Models;
-using SP_Shopping.Utilities;
-using static SP_Shopping.Utilities.FileSignatureResolver;
+using SP_Shopping.Utilities.ImageHandler;
 
 namespace SP_Shopping.Areas.Identity.Pages.Account.Manage;
 
 public class ProfilePictureModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IDefaultingImageHandler<IdentityUser> _userImageHandler;
+    private readonly UserProfileImageHandler _userProfileImageHandler;
     private const int MAX_FILESIZE_BYTE = 1_500_000;
 
     public ProfilePictureModel
     (
         UserManager<ApplicationUser> userManager,
-        IDefaultingImageHandler<IdentityUser> userImageHandler
+        UserProfileImageHandler userProfileImageHandler
     )
     {
         _userManager = userManager;
-        _userImageHandler = userImageHandler;
+        _userProfileImageHandler = userProfileImageHandler;
     }
 
     [TempData]
@@ -85,7 +82,7 @@ public class ProfilePictureModel : PageModel
 
         if (Input.NewProfilePicture is null)
         {
-            _userImageHandler.DeleteImage(user);
+            _userProfileImageHandler.DeleteImage(user);
             StatusMessage = "Your profile picture has been reset to the default.";
             return RedirectToPage();
         }
@@ -104,7 +101,7 @@ public class ProfilePictureModel : PageModel
 
         using var imageStream = Input.NewProfilePicture.OpenReadStream();
 
-        if (!await _userImageHandler.SetImageAsync(user, imageStream))
+        if (!await _userProfileImageHandler.SetImageAsync(user, imageStream))
         {
             StatusMessage = "Image is not of valid format.";
             return BadRequest("Image is not of valid format.");

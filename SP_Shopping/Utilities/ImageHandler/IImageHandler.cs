@@ -1,4 +1,4 @@
-﻿namespace SP_Shopping.Utilities;
+﻿namespace SP_Shopping.Utilities.ImageHandler;
 
 public interface IImageHandler<TKey>
 {
