@@ -53,6 +53,7 @@ public class Program
         builder.Services.AddSingleton<IMemoryCacher<string>, MemoryCacher<string>>();
 
         builder.Services.AddSingleton(p => new UserProfileImageHandler(folderPath: builder.Environment.WebRootPath));
+        builder.Services.AddSingleton(p => new ProductImageHandler(folderPath: builder.Environment.WebRootPath));
 
         builder.Services.AddImageSharp(options =>
         {
