@@ -46,10 +46,8 @@ public class Program
 
         builder.Services.AddControllersWithViews();
 
-        builder.Services.AddScoped<IRepository<Product>, RepositoryBase<Product>>();
-        builder.Services.AddScoped<IRepositoryCaching<Category>, RepositoryBaseCaching<Category>>();
-        builder.Services.AddScoped<IRepository<ApplicationUser>, RepositoryBase<ApplicationUser>>();
-        builder.Services.AddScoped<IRepository<CartItem>, RepositoryBase<CartItem>>();
+        builder.Services.AddScoped(typeof(IRepository<>), typeof(RepositoryBase<>));
+        builder.Services.AddScoped(typeof(IRepositoryCaching<>), typeof(RepositoryBaseCaching<>));
         builder.Services.AddSingleton<IMemoryCacher<string>, MemoryCacher<string>>();
 
         builder.Services.AddSingleton(p => new UserProfileImageHandler(folderPath: builder.Environment.WebRootPath));
