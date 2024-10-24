@@ -86,7 +86,7 @@ public class ProductsController : Controller
 
         //var product = await _productRepository
         //    .GetSingleAsync(q => q
-        //    .Include(p => p.Category)
+        //    .Include(p => p.Category
         //    .Include(p => p.Submitter)
         //    .Where(p => p.Id == id)
         //    .Select(p => new Product()
@@ -214,7 +214,7 @@ public class ProductsController : Controller
                     }
                 }
 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Details), new { id = product.Id });
             }
             catch (DbUpdateException)
             {
@@ -339,10 +339,6 @@ public class ProductsController : Controller
                         return BadRequest("Image is not of valid format");
                     }
                 }
-                else
-                {
-                    _productImageHandler.DeleteImage(new Product { Id = id });
-                }
 
             }
             catch (DbUpdateConcurrencyException dbuce)
@@ -350,7 +346,7 @@ public class ProductsController : Controller
                 _logger.LogError(dbuce, "The product with the id of \"{Id}\" could not be updated.", id);
                 throw;
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details), new { id });
         }
         _logger.LogDebug($"Fetching all categories.");
         var categorySelectList = await GetCategoriesSelectListAsync();
@@ -402,9 +398,9 @@ public class ProductsController : Controller
         _logger.LogInformation($"POST: Entering Products/Delete.");
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        int? product = await _productRepository.GetSingleAsync(q => q
+        Product? product = await _productRepository.GetSingleAsync(q => q
             .Where(q => q.Id == id)
-            .Select(p => p.Id)
+            .Select(p => new Product() { Id = p.Id, SubmitterId = p.SubmitterId })
         );
         if (product == null)
         {
@@ -416,24 +412,22 @@ public class ProductsController : Controller
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         // Get the existing submitter id for the product from the database.
-        string? productExistingSubmitterId = await _productRepository.GetSingleAsync(q => q
-            .Where(p => p.Id == id)
-            .Select(p => p.SubmitterId)
-        );
-        if (productExistingSubmitterId != userId)
+        if (product.SubmitterId != userId)
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
-                + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
+                + "belonging to user with id \"{ProductOwnerId}\"", userId, product.SubmitterId);
             return Unauthorized("Cannot delete a product that is not yours.");
         }
 
         //_context.Products.Remove(product);
         _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
-        await _productRepository.DeleteCertainEntriesAsync(q => q.Where(p => p.Id == id));
+        _productRepository.Delete(product);
+        if (await _productRepository.SaveChangesAsync() > 0)
+        {
+            _productImageHandler.DeleteImage(new Product() { Id = id });
+        }
 
-        _productImageHandler.DeleteImage(new Product() { Id = id });
-
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction("Index", "User", new { Id = userId });
     }
 
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
