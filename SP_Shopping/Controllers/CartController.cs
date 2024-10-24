@@ -51,8 +51,6 @@ public class CartController
         IEnumerable<CartItemDetailsDto> cidtos = await _cartItemRepository.GetAllAsync(q => 
             _mapper.ProjectTo<CartItemDetailsDto>(q
                .Where(c => c.UserId == userId)
-               .Include(c => c.Product)
-               .ThenInclude(p => p.Submitter)
             )
        );
 
@@ -76,8 +74,6 @@ public class CartController
         IEnumerable<CartItemDetailsDto> cidtos = await _cartItemRepository.GetAllAsync(q =>
             _mapper.ProjectTo<CartItemDetailsDto>(q
                 .Where(c => c.UserId == id)
-                .Include(c => c.Product)
-                .ThenInclude(p => p.Submitter)
             )
         );
 
