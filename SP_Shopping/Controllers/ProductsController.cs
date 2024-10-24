@@ -146,7 +146,6 @@ public class ProductsController : Controller
         _logger.LogDebug($"Fetching all categories.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
-        ViewBag.isAdmin = false;
         return View(pdto);
     }
 
@@ -185,31 +184,13 @@ public class ProductsController : Controller
                 Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
                 product.InsertionDate = DateTime.Now;
 
-                bool userIsAdmin = false;
-
                 string submitterId;
-                // if user is admin
-                if (userIsAdmin)
+                var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == UserId)))
                 {
-                    string? productSubmitterId = await _userRepository.GetSingleAsync(q => q
-                            .Where(u => u.UserName == product.Submitter.UserName)
-                            .Select(u => u.Id)
-                    );
-                    if (productSubmitterId is null)
-                    {
-                        return BadRequest("User with name does not exist.");
-                    }
-                    submitterId = productSubmitterId;
+                    return BadRequest("UserId is invalid. Contact developer");
                 }
-                else
-                {
-                    var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == UserId)))
-                    {
-                        return BadRequest("UserId is invalid. Contact developer");
-                    }
-                    submitterId = UserId!;
-                }
+                submitterId = UserId!;
 
                 // Set submitter to null and manually set Submitter foreign key
                 // to avoid generating new ApplicationUser with auto-generated id.
@@ -243,7 +224,6 @@ public class ProductsController : Controller
         }
         _logger.LogError("ModelState is not valid.");
         ViewBag.categorySelectList = await GetCategoriesSelectListAsync();
-        ViewBag.isAdmin = false;
         return View(pdto);
     }
 
@@ -287,7 +267,6 @@ public class ProductsController : Controller
         _logger.LogDebug($"Fetching all categories.");
         var categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
-        ViewBag.isAdmin = false;
 
         return View(pdto);
     }
@@ -376,7 +355,6 @@ public class ProductsController : Controller
         _logger.LogDebug($"Fetching all categories.");
         var categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.CategorySelectList = categorySelectList;
-        ViewBag.isAdmin = false;
         
         return View(pdto);
     }
