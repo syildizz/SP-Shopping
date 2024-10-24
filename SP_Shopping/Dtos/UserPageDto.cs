@@ -9,7 +9,7 @@ public class UserPageDto
 
     public class UserPageProductDto
     {
-        public string Id { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; }
         [DataType(DataType.Currency)]
         public decimal Price { get; set; }

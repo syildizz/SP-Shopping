@@ -31,19 +31,5 @@ else
 }
 @if (Model.ProductDetails is not null)
 {
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: 0.5em; grid-auto-rows: 1fr;">
-    @foreach (var product in Model.ProductDetails)
-    {
-    <a asp-controller="Products" asp-action="Details" asp-route-Id="@product.Id" style="text-decoration: none; color: inherit;">
-    <dl class="border border-primary p-2">
-        <dt>@Html.DisplayNameForInnerType((UserPageDto.UserPageProductDto p) => p.Name)</dt>
-        <dd>@Html.DisplayFor(p => product.Name)</dd>
-        <dt>@Html.DisplayNameForInnerType((UserPageDto.UserPageProductDto p) => p.Price)</dt>
-        <dd>@Html.DisplayFor(p => product.Price)</dd>
-        <dt>@Html.DisplayNameForInnerType((UserPageDto.UserPageProductDto p) => p.CategoryName)</dt>
-        <dd>@Html.DisplayFor(p => product.CategoryName)</dd>
-    </dl>
-    </a>
-    }
-    </div>
+     <partial name="_ProductsGridPartial" model="Model.ProductDetails.Select(pd => new ProductDetailsDto() {Id = pd.Id, Name=pd.Name, Price=pd.Price, CategoryName=pd.CategoryName})"/>
 }

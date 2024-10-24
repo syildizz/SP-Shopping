@@ -16,8 +16,11 @@
         <div class="card-text card-text-fixer">@Html.DisplayFor(model => model.Price)</div>    
         <div class="card-text card-text-fixer">@Html.DisplayFor(model => model.CategoryName)</div>    
         </a>
-        <a asp-controller="User" asp-action="Index" asp-route-Id="@Model.SubmitterId">
-        <div class="card-text card-text-fixer">@Html.DisplayFor(model => model.SubmitterName)</div>
-        </a>
+        @if (Model.SubmitterId is not null)
+        {
+            <a asp-controller="User" asp-action="Index" asp-route-Id="@Model.SubmitterId">
+            <div class="card-text card-text-fixer">@Html.DisplayFor(model => model.SubmitterName)</div>
+            </a>
+        }
     </div>
 </div>
