@@ -65,6 +65,7 @@ public class CartController
             _logger.LogInformation("Redirecting to main Index since id is {Id}.", id);
             return Redirect($"/Cart/{nameof(Index)}");
         }
+
         if (string.IsNullOrWhiteSpace(id) || !await _userRepository.ExistsAsync(q => q.Where(u => u.Id == id)))
         {
             _logger.LogError("UserId does not exist for user with given id of \"{Id}\".", id);
@@ -160,6 +161,8 @@ public class CartController
     }
 
     [HttpPost()]
+    [Authorize]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(CartItemCreateDto cidto)
     {
         _logger.LogInformation("POST: Cart/Delete.");
