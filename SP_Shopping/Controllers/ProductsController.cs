@@ -23,7 +23,6 @@ public class ProductsController : Controller
     private readonly IRepository<Product> _productRepository;
     private readonly IRepositoryCaching<Category> _categoryRepository;
     private readonly IRepository<ApplicationUser> _userRepository;
-    private readonly IMemoryCache _memoryCache;
     private readonly ProductImageHandler _productImageHandler;
     private readonly int paginationCount = 5;
 
@@ -34,7 +33,6 @@ public class ProductsController : Controller
         IRepository<Product> productRepository,
         IRepositoryCaching<Category> categoryRepository,
         IRepository<ApplicationUser> userRepository,
-        IMemoryCache memoryCache,
         ProductImageHandler productImageHandler
     )
     {
@@ -43,7 +41,6 @@ public class ProductsController : Controller
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
         _userRepository = userRepository;
-        _memoryCache = memoryCache;
         _productImageHandler = productImageHandler;
     }
 
@@ -166,6 +163,24 @@ public class ProductsController : Controller
         {
             try
             {
+
+                // Validate image
+                if (pdto.ProductImage is not null) {
+                    if (!pdto.ProductImage.ContentType.StartsWith("image"))
+                    {
+                        return BadRequest("The file must be an image.");
+                    }
+                    if (pdto.ProductImage.Length > 1_500_000)
+                    {
+                        return BadRequest($"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size.");
+                    }
+                    using var stream = pdto.ProductImage.OpenReadStream();
+                    if (!await _productImageHandler.ValidateImageAsync(stream))
+                    {
+                        return BadRequest("The Image format is invalid.");
+                    }
+                }
+
                 _logger.LogDebug($"Creating product.");
                 Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
                 product.InsertionDate = DateTime.Now;
@@ -203,8 +218,20 @@ public class ProductsController : Controller
 
                 //await _context.AddAsync(product);
                 //await _context.SaveChangesAsync();
+                
                 await _productRepository.CreateAsync(product);
                 await _productRepository.SaveChangesAsync();
+
+                if (pdto.ProductImage is not null)
+                {
+                    using var ImageStream = pdto.ProductImage.OpenReadStream();
+                    if (!await _productImageHandler.SetImageAsync(new Product { Id = product.Id }, ImageStream))
+                    {
+                        _productRepository.Delete(product);
+                        await _productRepository.SaveChangesAsync();
+                        return BadRequest("The Image format is invalid.");
+                    }
+                }
 
                 return RedirectToAction(nameof(Index));
             }
@@ -400,11 +427,11 @@ public class ProductsController : Controller
         int? product = await _productRepository.GetSingleAsync(q => q
             .Where(q => q.Id == id)
             .Select(p => p.Id)
-
         );
         if (product == null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
+            return NotFound($"The product with the passed id of \"{id}\" does not exist.");
         }
 
         // Get user argument from session and edit if the user owns the product.
@@ -422,12 +449,11 @@ public class ProductsController : Controller
             return Unauthorized("Cannot delete a product that is not yours.");
         }
 
-        else
-        {
-            //_context.Products.Remove(product);
-            _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
-            await _productRepository.DeleteCertainEntriesAsync(q => q.Where(p => p.Id == id));
-        }
+        //_context.Products.Remove(product);
+        _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
+        await _productRepository.DeleteCertainEntriesAsync(q => q.Where(p => p.Id == id));
+
+        _productImageHandler.DeleteImage(new Product() { Id = id });
 
         return RedirectToAction(nameof(Index));
     }

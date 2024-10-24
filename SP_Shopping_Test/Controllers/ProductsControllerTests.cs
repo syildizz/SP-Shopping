@@ -12,6 +12,7 @@ using SP_Shopping.Controllers;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities.ImageHandler;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,9 +28,9 @@ public class ProductsControllerTests
     private readonly IRepository<Product> _productRepository;
     private readonly IRepositoryCaching<Category> _categoryRepository;
     private readonly IRepository<ApplicationUser> _userRepository;
-    private readonly IMemoryCache _memoryCache;
     private readonly IMapper _mapper;
     private readonly ILogger<ProductsController> _logger;
+    private readonly ProductImageHandler _productImageHandler;
     private readonly ProductsController _productsController;
 
     public ProductsControllerTests()
@@ -45,9 +46,9 @@ public class ProductsControllerTests
         _productRepository = A.Fake<IRepository<Product>>();
         _categoryRepository = A.Fake<IRepositoryCaching<Category>>();
         _userRepository = A.Fake<IRepository<ApplicationUser>>();
-        _memoryCache = A.Fake<IMemoryCache>();
         _mapper = serviceProvider.GetRequiredService<IMapper>();
         _logger = A.Fake<ILogger<ProductsController>>();
+        _productImageHandler = A.Fake<ProductImageHandler>();
 
         // SUT
         _productsController = new ProductsController
@@ -57,7 +58,7 @@ public class ProductsControllerTests
             productRepository: _productRepository,
             categoryRepository: _categoryRepository,
             userRepository: _userRepository,
-            memoryCache: _memoryCache
+            productImageHandler: _productImageHandler
         );
     }
 
@@ -119,7 +120,6 @@ public class ProductsControllerTests
     {
         // Arrange
         List<Category>? categories = A.CollectionOfFake<Category>(4) as List<Category>;
-        A.CallTo(() => _memoryCache.CreateEntry(A<string>._)).Returns(A.Fake<ICacheEntry>());
         A.CallTo(() => _categoryRepository.GetAllAsync()).Returns(Task.FromResult(categories)!);
         // Act
         IActionResult result = await _productsController.Create();

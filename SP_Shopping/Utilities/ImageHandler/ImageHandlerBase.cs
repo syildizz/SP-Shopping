@@ -128,6 +128,57 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
         }
     }
 
+    public bool ValidateImage(byte[] imageData)
+    {
+        try
+        {
+            using Image image = Image.Load(imageData);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (ex is UnknownImageFormatException or OverflowException)
+            {
+                return false;
+            }
+            throw;
+        }
+    }
+
+    public bool ValidateImage(Stream stream)
+    {
+        try
+        {
+            using Image image = Image.Load(stream);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (ex is UnknownImageFormatException or OverflowException)
+            {
+                return false;
+            }
+            throw;
+        }
+    }
+
+    public async Task<bool> ValidateImageAsync(Stream stream)
+    {
+        try
+        {
+            using Image image = await Image.LoadAsync(stream);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (ex is UnknownImageFormatException or OverflowException)
+            {
+                return false;
+            }
+            throw;
+        }
+    }
+
     public void DeleteImage(TKey key)
     {
         var imagePath = GenerateImagePath(key);

@@ -10,7 +10,7 @@ namespace SP_Shopping.Dtos;
 [RequestSizeLimit(2_000_000)]
 public class ProductCreateDto
 {
-    public int Id { get; set; }
+    public int? Id { get; set; }
     [Required]
     [MaxLength(50, ErrorMessage = "A genre name cannot be longer than 50 characters.")]
     public string Name { get; set; }

@@ -11,5 +11,8 @@ public interface IImageHandler<TKey>
     bool SetImage(TKey key, Stream stream);
     Task<bool> SetImageAsync(TKey key, byte[] imageData);
     Task<bool> SetImageAsync(TKey key, Stream stream);
+    public bool ValidateImage(byte[] imageData);
+    public bool ValidateImage(Stream stream);
+    public Task<bool> ValidateImageAsync(Stream stream);
     void DeleteImage(TKey key);
 }
