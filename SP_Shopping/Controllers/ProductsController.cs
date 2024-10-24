@@ -218,7 +218,7 @@ public class ProductsController : Controller
             }
             catch (DbUpdateException)
             {
-                _logger.LogError($"Couldn't create product with name of \"{pdto.Name}\".");
+                _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
                 return BadRequest();
             }
         }
