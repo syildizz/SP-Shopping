@@ -1,0 +1,6 @@
+﻿
+.card-text-fixer {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

@@ -6,11 +6,10 @@
 
 <h1>Search</h1>
 
-<partial name="_SearchFormPartial" model=@("Products", "Search", "query")/>
+<div class="my-4">
+    <partial name="_SearchFormPartial" model="@("Products", "Search", "query")"/>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
 @if (Model is null)
 {
     <p>Please enter a non-empty search term.</p>
@@ -21,7 +20,9 @@ else if (Model.Count() <= 0)
 }
 else
 {
-    <table class="table">
+@*     <table class="table">
         <partial name="_ProductIndexTableItemsPartial" />
-    </table>
+    </table> 
+*@
+    <partial name="_ProductsGridPartial" model="Model" />
 }
