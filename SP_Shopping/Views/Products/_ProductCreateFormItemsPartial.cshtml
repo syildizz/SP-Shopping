@@ -1,12 +1,13 @@
 ﻿@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
 @{
     IEnumerable<SelectListItem> categorySelectList = ViewBag.categorySelectList;
 }
-@inject ProductImageHandler _productImageHandler
+@inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
 
 @model ProductCreateDto
 
-<img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@(Model.Id is null ? _productImageHandler.GenerateDefaultImageURL() : _productImageHandler.GetImageOrDefaultURL(new Product() {Id=(int)Model.Id }))" />
+<img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@(Model.Id is null ? _productImageHandler.GenerateDefaultImageURL() : _productImageHandler.GetImageOrDefaultURL(new((int)Model.Id)))" />
 <div class="form-group">
     <label asp-for="@Model.ProductImage" class="control-label"></label>
     <input asp-for="@Model.ProductImage" class="form-control" />

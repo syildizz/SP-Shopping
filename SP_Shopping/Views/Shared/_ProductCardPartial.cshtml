@@ -1,11 +1,12 @@
 ﻿@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
 @model ProductDetailsDto
-@inject ProductImageHandler _productImageHandler
+@inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
 
 <div class="card" style="">
     <a asp-controller="Products" asp-action="Details" asp-route-id="@Model.Id" style="text-decoration: none; color: inherit;">
     <img 
-        src="@_productImageHandler.GetImageOrDefaultURL(new Product { Id = Model.Id })"
+        src="@_productImageHandler.GetImageOrDefaultURL(new(Model.Id))"
         class="card-img-top"
         alt="Image for product"
     />

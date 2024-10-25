@@ -1,6 +1,7 @@
 ﻿@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
 @model ProductDetailsDto
-@inject ProductImageHandler _productImageHandler
+@inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
 
 @{
     ViewData["Title"] = "Details";
@@ -11,7 +12,7 @@
 <div>
     <h4>Product</h4>
     <hr />
-    <img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_productImageHandler.GetImageOrDefaultURL(new Product() {Id=Model.Id})" />
+    <img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_productImageHandler.GetImageOrDefaultURL(new(Model.Id))" />
     <dl class="row">
         <partial name="_ProductDetailsDescriptionListItemsPartial" model="Model"/>
     </dl>

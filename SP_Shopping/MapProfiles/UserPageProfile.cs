@@ -14,6 +14,10 @@ public class UserPageProfile : Profile
 
         CreateMap<Product, UserPageDto.UserPageProductDto>()
             .ReverseMap();
+        
+        CreateMap<ProductDetailsDto, UserPageDto.UserPageProductDto>()
+            .ReverseMap();
+
     }
         
 }

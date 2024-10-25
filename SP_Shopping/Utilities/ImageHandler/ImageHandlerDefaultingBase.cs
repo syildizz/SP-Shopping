@@ -1,7 +1,9 @@
 ﻿
+using SP_Shopping.Utilities.ImageHandlerKeys;
+
 namespace SP_Shopping.Utilities.ImageHandler;
 
-public abstract class ImageHandlerDefaultingBase<TKey>(string folderPath) : ImageHandlerBase<TKey>(folderPath), IImageHandlerDefaulting<TKey>
+public abstract class ImageHandlerDefaultingBase<TKey>(string folderPath) : ImageHandlerBase<TKey>(folderPath), IImageHandlerDefaulting<TKey> where TKey : IImageHandlerKey
 {
     protected abstract string DefaultProp { get; }
 

@@ -17,7 +17,7 @@ public class HomeController : Controller
     private readonly IRepository<Product> _productRepository;
     private readonly IMapper _mapper;
 
-    public HomeController(ILogger<HomeController> logger, IRepository<Product> productRepository, IMapper mapper, UserProfileImageHandler userProfileImageHandler)
+    public HomeController(ILogger<HomeController> logger, IRepository<Product> productRepository, IMapper mapper)
     {
         _logger = logger;
         _productRepository = productRepository;

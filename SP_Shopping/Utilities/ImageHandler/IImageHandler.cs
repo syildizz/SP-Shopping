@@ -1,6 +1,9 @@
-﻿namespace SP_Shopping.Utilities.ImageHandler;
+﻿
+using SP_Shopping.Utilities.ImageHandlerKeys;
 
-public interface IImageHandler<TKey>
+namespace SP_Shopping.Utilities.ImageHandler;
+
+public interface IImageHandler<TKey> where TKey : IImageHandlerKey
 {
     string GenerateImageURL(TKey key);
     byte[] GetImageData(TKey key);

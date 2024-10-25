@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using SP_Shopping.Utilities.ImageHandler
-@inject UserProfileImageHandler _userProfileImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
+@inject IImageHandlerDefaulting<UserProfileImageKey> _userProfileImageHandler
 
 <!DOCTYPE html>
 <html lang="en">
@@ -44,22 +45,16 @@
                     </ul>
                     @if (User.Identity?.IsAuthenticated ?? false)
                     {
-                    <ul class="navbar-nav p-2">
-                        <li class="d-inline-flex">
+                        <ul class="navbar-nav p-2">
+                            <li class="d-inline-flex">
                             <img 
                                 class="img-fluid" 
                                 style="
                                     height: calc(var(--bs-body-line-height) * 1em); 
                                     aspect-ratio: 1/1;" 
                                 src="@(_userProfileImageHandler
-                                    .GetImageOrDefaultURL
-                                    (
-                                        new ApplicationUser() 
-                                        {
-                                            Id=User.FindFirstValue(ClaimTypes.NameIdentifier)!
-                                        }
-                                    )
-                                    )?width=32&height=32" 
+                                        .GetImageOrDefaultURL(new(User.FindFirstValue(ClaimTypes.NameIdentifier)!))
+                                     )?width=32&height=32" 
                                 />
                         </li>
                     </ul>

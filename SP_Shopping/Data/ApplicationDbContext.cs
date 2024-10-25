@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using SP_Shopping.Models;
 using SP_Shopping.Utilities.ImageHandler;
+using SP_Shopping.Utilities.ImageHandlerKeys;
 
 namespace SP_Shopping.Data;
 
@@ -11,8 +12,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public ApplicationDbContext
     (
         DbContextOptions<ApplicationDbContext> options, 
-        UserProfileImageHandler userImageHandler, 
-        ProductImageHandler productImageHandler
+        IImageHandlerDefaulting<UserProfileImageKey> userImageHandler, 
+        IImageHandlerDefaulting<ProductImageKey> productImageHandler
     )
         : base(options)
     {
@@ -23,8 +24,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Category> Categories { get; set; } = default!;
     public DbSet<CartItem> CartItems { get; set; } = default!;
 
-    private readonly UserProfileImageHandler _userImageHandler;
-    private readonly ProductImageHandler _productImageHandler;
+    private readonly IImageHandlerDefaulting<UserProfileImageKey> _userImageHandler;
+    private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -49,11 +50,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             if (entity is ApplicationUser user)
             {
-                _userImageHandler.DeleteImage(user);
+                _userImageHandler.DeleteImage(new(user.Id));
             }
             else if (entity is Product product)
             {
-                _productImageHandler.DeleteImage(product);
+                _productImageHandler.DeleteImage(new(product.Id));
             }
         }
         return base.SaveChanges();

@@ -1,6 +1,7 @@
 ﻿@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
 @model IEnumerable<ProductDetailsDto>
-@inject ProductImageHandler _productImageHandler
+@inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
 @{
     ViewData["Title"] = "Home Page";
     string? UserId = (string?)ViewBag.UserId;

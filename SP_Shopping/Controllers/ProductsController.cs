@@ -10,6 +10,7 @@ using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
+using SP_Shopping.Utilities.ImageHandlerKeys;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
@@ -23,7 +24,7 @@ public class ProductsController : Controller
     private readonly IRepository<Product> _productRepository;
     private readonly IRepositoryCaching<Category> _categoryRepository;
     private readonly IRepository<ApplicationUser> _userRepository;
-    private readonly ProductImageHandler _productImageHandler;
+    private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
     private readonly int paginationCount = 5;
 
     public ProductsController
@@ -33,7 +34,7 @@ public class ProductsController : Controller
         IRepository<Product> productRepository,
         IRepositoryCaching<Category> categoryRepository,
         IRepository<ApplicationUser> userRepository,
-        ProductImageHandler productImageHandler
+        IImageHandlerDefaulting<ProductImageKey> productImageHandler
     )
     {
         _logger = logger;
@@ -206,7 +207,7 @@ public class ProductsController : Controller
                 if (pdto.ProductImage is not null)
                 {
                     using var ImageStream = pdto.ProductImage.OpenReadStream();
-                    if (!await _productImageHandler.SetImageAsync(new Product { Id = product.Id }, ImageStream))
+                    if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
                     {
                         _productRepository.Delete(product);
                         await _productRepository.SaveChangesAsync();
@@ -334,7 +335,7 @@ public class ProductsController : Controller
                         return BadRequest($"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size.");
                     }
                     using var ImageStream = pdto.ProductImage.OpenReadStream();
-                    if (!await _productImageHandler.SetImageAsync(new Product { Id = id }, ImageStream))
+                    if (!await _productImageHandler.SetImageAsync(new(id), ImageStream))
                     {
                         return BadRequest("Image is not of valid format");
                     }
@@ -424,7 +425,7 @@ public class ProductsController : Controller
         _productRepository.Delete(product);
         if (await _productRepository.SaveChangesAsync() > 0)
         {
-            _productImageHandler.DeleteImage(new Product() { Id = id });
+            _productImageHandler.DeleteImage(new(id));
         }
 
         return RedirectToAction("Index", "User", new { Id = userId });

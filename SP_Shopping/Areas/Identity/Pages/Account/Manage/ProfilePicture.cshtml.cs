@@ -8,19 +8,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SP_Shopping.Models;
 using SP_Shopping.Utilities.ImageHandler;
+using SP_Shopping.Utilities.ImageHandlerKeys;
 
 namespace SP_Shopping.Areas.Identity.Pages.Account.Manage;
 
 public class ProfilePictureModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly UserProfileImageHandler _userProfileImageHandler;
+    private readonly IImageHandlerDefaulting<UserProfileImageKey> _userProfileImageHandler;
     private const int MAX_FILESIZE_BYTE = 1_500_000;
 
     public ProfilePictureModel
     (
         UserManager<ApplicationUser> userManager,
-        UserProfileImageHandler userProfileImageHandler
+        IImageHandlerDefaulting<UserProfileImageKey> userProfileImageHandler
     )
     {
         _userManager = userManager;
@@ -82,7 +83,7 @@ public class ProfilePictureModel : PageModel
 
         if (Input.NewProfilePicture is null)
         {
-            _userProfileImageHandler.DeleteImage(user);
+            _userProfileImageHandler.DeleteImage(new(user.Id));
             StatusMessage = "Your profile picture has been reset to the default.";
             return RedirectToPage();
         }
@@ -101,7 +102,7 @@ public class ProfilePictureModel : PageModel
 
         using var imageStream = Input.NewProfilePicture.OpenReadStream();
 
-        if (!await _userProfileImageHandler.SetImageAsync(user, imageStream))
+        if (!await _userProfileImageHandler.SetImageAsync(new(user.Id), imageStream))
         {
             StatusMessage = "Image is not of valid format.";
             return BadRequest("Image is not of valid format.");

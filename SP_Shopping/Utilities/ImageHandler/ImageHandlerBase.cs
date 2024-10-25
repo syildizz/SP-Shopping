@@ -1,16 +1,17 @@
 ﻿
+using SP_Shopping.Utilities.ImageHandlerKeys;
+
 namespace SP_Shopping.Utilities.ImageHandler;
 
-public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<TKey>
+public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<TKey> where TKey : IImageHandlerKey
 {
     protected abstract string KeyName { get; }
-    protected abstract string Identifier(TKey key);
     protected string FolderPath => folderPath;
     protected virtual string ImgExtension => "png";
 
     protected string GenerateImageFileName(TKey key)
     {
-        return $"{Identifier(key)}.{ImgExtension}";
+        return $"{key.Identifier()}.{ImgExtension}";
     }
 
     protected string GenerateImagePath(TKey key)

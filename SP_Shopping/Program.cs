@@ -7,6 +7,7 @@ using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
+using SP_Shopping.Utilities.ImageHandlerKeys;
 
 namespace SP_Shopping;
 
@@ -50,8 +51,24 @@ public class Program
         builder.Services.AddScoped(typeof(IRepositoryCaching<>), typeof(RepositoryBaseCaching<>));
         builder.Services.AddSingleton<IMemoryCacher<string>, MemoryCacher<string>>();
 
-        builder.Services.AddSingleton(p => new UserProfileImageHandler(folderPath: builder.Environment.WebRootPath));
-        builder.Services.AddSingleton(p => new ProductImageHandler(folderPath: builder.Environment.WebRootPath));
+        builder.Services.AddSingleton<IImageHandlerDefaulting<UserProfileImageKey>>(
+            new ImageHandlerDefaulting<UserProfileImageKey>
+            (
+                folderPath: builder.Environment.WebRootPath,
+                defaultProp: "default_pfp",
+                keyName: "user-pfp",
+                imgExtension: "png"
+            )
+        );
+        builder.Services.AddSingleton<IImageHandlerDefaulting<ProductImageKey>>(
+            new ImageHandlerDefaulting<ProductImageKey>
+            (
+                folderPath: builder.Environment.WebRootPath,
+                defaultProp: "default_product",
+                keyName: "product",
+                imgExtension: "png"
+            )
+        );
 
         builder.Services.AddImageSharp(options =>
         {
