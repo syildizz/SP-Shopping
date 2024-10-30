@@ -20,3 +20,12 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* Generic grid  */
+.my-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15em, 1fr));
+    gap: 0.5em;
+    grid-auto-rows: 1fr;
+    justify-content: space-around;
+}

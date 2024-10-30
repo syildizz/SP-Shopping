@@ -1,8 +1,0 @@
-﻿
-.my-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, 15em);
-    gap: 0.5em;
-    grid-auto-rows: 1fr;
-    justify-content: center;
-}

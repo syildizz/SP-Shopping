@@ -20,9 +20,5 @@ else if (Model.Count() <= 0)
 }
 else
 {
-@*     <table class="table">
-        <partial name="_ProductIndexTableItemsPartial" />
-    </table> 
-*@
-    <partial name="_ProductsGridPartial" model="Model" />
+    <partial name="_ProductCardsPartial" model="Model" />
 }

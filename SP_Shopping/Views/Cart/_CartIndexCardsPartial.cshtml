@@ -1,0 +1,46 @@
+﻿@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
+@model IEnumerable<CartItemDetailsDto>
+@inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
+
+<div class="d-md-flex flex-md-column gap-2 justify-content-start">
+    @foreach (var item in Model)
+    {
+    <div class="card" style="width: 100%;">
+        <div class="row g-0 align-items-center">
+        <div class="col-sm-3 d-flex card-body justify-content-center" style="height: 10em">
+        <img 
+            src="@_productImageHandler.GetImageOrDefaultURL(new(item.ProductId))"
+            class="img-fluid mh-100 ratio-1x1"
+            alt="Image for product"
+        />
+        </div>
+        <div class="col-sm-2 card-body d-flex flex-column card-body justify-content-center align-items-center">
+            <div class="card-title card-text-fixer"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>    
+            <div class="card-text card-text-fixer">@Html.DisplayFor(model => item.ProductName)</div>
+        </div>
+        <div class="col-sm-3 card-body d-flex card-body justify-content-center">
+            <div class="card-text card-text-fixer">
+            <form asp-action="Edit">
+                <input type="hidden" name="@nameof(CartItemDetailsDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
+                <input type="hidden" name="@nameof(CartItemDetailsDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
+                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" style="width: 4em;" />
+                <span asp-validation-for="@item.Count" class="text-danger"></span>
+                <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+            </form>
+            </div>
+        </div>
+        <div class="col-sm-2 card-body d-flex card-body justify-content-center">
+            <div class="card-text">
+            <form asp-action="Delete">
+                <input type="hidden" name="@nameof(CartItemDetailsDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
+                <input type="hidden" name="@nameof(CartItemDetailsDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
+                <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto">Remove from cart</button>
+            </form>
+            </div>
+        </div>
+        </div>
+    </div>
+    }
+</div>
+
