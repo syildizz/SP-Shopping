@@ -68,7 +68,7 @@ public class ProfilePictureModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync()
+    public async Task<IActionResult> OnPostAsync(string button)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -81,10 +81,15 @@ public class ProfilePictureModel : PageModel
             return Page();
         }
 
-        if (Input.NewProfilePicture is null)
+        if (button == "Reset")
         {
             _userProfileImageHandler.DeleteImage(new(user.Id));
             StatusMessage = "Your profile picture has been reset to the default.";
+            return RedirectToPage();
+        }
+
+        if (Input.NewProfilePicture is null)
+        {
             return RedirectToPage();
         }
 

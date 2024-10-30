@@ -12,7 +12,7 @@
         <form id="email-form" method="post">
             <div asp-validation-summary="All" class="text-danger" role="alert"></div>
             <div class="form-floating mb-3">
-                <textarea asp-for="Input.Description" class="form-control" autocomplete="description" aria-required="true" placeholder="Please enter account description."></textarea>
+                <textarea asp-for="Input.Description" class="form-control" style="height: 12.5em;" autocomplete="description" aria-required="true" placeholder="Please enter account description."></textarea>
                 <label asp-for="Input.Description" class="form-label"></label>
                 <span asp-validation-for="Input.Description" class="text-danger"></span>
             </div>

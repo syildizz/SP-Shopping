@@ -13,7 +13,7 @@
 
 <h1>User info:</h1>
 
-<img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_userProfileImageHandler.GetImageOrDefaultURL(new(Model.Id))" />
+<img class="img-fluid ratio-1x1" style="width: 10em;" src="@_userProfileImageHandler.GetImageOrDefaultURL(new(Model.Id))" />
 
 <p>@Html.DisplayNameFor(u => u.UserName): @Html.DisplayFor(u => u.UserName)</p>
 <p>@Html.DisplayNameFor(u => u.Email): @Html.DisplayFor(u => u.Email)</p>

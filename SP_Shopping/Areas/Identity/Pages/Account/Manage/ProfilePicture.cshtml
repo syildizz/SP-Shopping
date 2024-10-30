@@ -11,23 +11,27 @@
 <h3>@ViewData["Title"]</h3>
 <partial name="_StatusMessage" for="StatusMessage" />
 <div class="row">
-    <div class="col-md-6">k
-    <img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_userProfileImageHandler.GetImageOrDefaultURL(new UserProfileImageKey(User.FindFirstValue(ClaimTypes.NameIdentifier)!))" />
+    <div class="col-md-6">
+    <img class="img-fluid ratio-1x1" style="width: 10em;" src="@_userProfileImageHandler.GetImageOrDefaultURL(new UserProfileImageKey(User.FindFirstValue(ClaimTypes.NameIdentifier)!))" />
+    @if (_userProfileImageHandler.ImageExists(new((string)User.FindFirstValue(ClaimTypes.NameIdentifier)!)))
+    {
+        <button id="reset-profile-picture-button" name="button" type="submit" class="btn-close position-absolute translate-middle badge rounded-pill bg-danger" value="Reset" form="profile-picture-form"> </button>
+    }
         <form id="profile-picture-form" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="All" class="text-danger" role="alert"></div>
             <div class="form-floating mb-3">
                 <input 
                     asp-for="Input.NewProfilePicture" 
-                    class="form-control" 
+                    class="form-control form-control-sm" 
                     autocomplete="profile picture" 
                     aria-required="true" 
                     placeholder="Please enter profile picture."
                     accept="image/*"
                 />
-                <label asp-for="Input.NewProfilePicture" class="form-label"></label>
+                <label asp-for="Input.NewProfilePicture" class="form-label d-inline-block"></label>
                 <span asp-validation-for="Input.NewProfilePicture" class="text-danger"></span>
             </div>
-            <button id="change-profile-picture-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+            <button id="change-profile-picture-button" name="button" type="submit" class="w-100 btn btn-lg btn-primary" value="Save">Save</button>
         </form>
     </div>
 </div>

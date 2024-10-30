@@ -10,7 +10,7 @@
             <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" style="text-decoration: none; color: inherit;">
             <img 
                 src="@_productImageHandler.GetImageOrDefaultURL(new(product.Id))"
-                class="card-img-top"
+                class="card-img-top ratio-1x1"
                 alt="Image for product"
             />
             </a>
