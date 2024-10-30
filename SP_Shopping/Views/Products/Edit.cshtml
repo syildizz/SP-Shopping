@@ -15,49 +15,48 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-            <form id=reset-image-form asp-action="ResetImage">
+        @if (Model.Id is not null)
+        {
+            <form id=reset-image-form asp-action="ResetImage" asp-route-Id="@Model.Id">
                 <img 
                     class="img-fluid" 
                     style="
                         width: 10em; 
                         aspect-ratio: 1/1;"
-                    src="@(
-                        Model.Id is null 
-                            ? _productImageHandler.GenerateDefaultImageURL() 
-                            : _productImageHandler.GetImageOrDefaultURL(new((int)Model.Id))
-                        )" 
+                    src="@( _productImageHandler.GetImageOrDefaultURL(new((int)Model.Id)) )" 
                 />
                 <button type="submit" class="btn-close position-absolute translate-middle badge rounded-pill bg-danger"> </button>
             </form>
-            <form asp-action="Edit" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="@Model.ProductImage" class="control-label"></label>
-                <input asp-for="@Model.ProductImage" class="form-control" />
-                <span asp-validation-for="@Model.ProductImage" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="@Model.Name" class="control-label"></label>
-                <input asp-for="@Model.Name" class="form-control" />
-                <span asp-validation-for="@Model.Name" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="@Model.Price" class="control-label"></label>
-                <input asp-for="@Model.Price" class="form-control" />
-                <span asp-validation-for="@Model.Price" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="@Model.CategoryId" class="control-label"></label>
-                <select asp-for="@Model.CategoryId" asp-items="@categorySelectList" class="form-select sm"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="@Model.Description" class="control-label"></label>
-                <textarea asp-for="@Model.Description" class="form-control"></textarea>
-                <span asp-validation-for="@Model.Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">Save</button>
-            </div>
+        }
+        <form asp-action="Edit" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-group">
+            <label asp-for="@Model.ProductImage" class="control-label"></label>
+            <input asp-for="@Model.ProductImage" class="form-control" />
+            <span asp-validation-for="@Model.ProductImage" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="@Model.Name" class="control-label"></label>
+            <input asp-for="@Model.Name" class="form-control" />
+            <span asp-validation-for="@Model.Name" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="@Model.Price" class="control-label"></label>
+            <input asp-for="@Model.Price" class="form-control" />
+            <span asp-validation-for="@Model.Price" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="@Model.CategoryId" class="control-label"></label>
+            <select asp-for="@Model.CategoryId" asp-items="@categorySelectList" class="form-select sm"></select>
+        </div>
+        <div class="form-group">
+            <label asp-for="@Model.Description" class="control-label"></label>
+            <textarea asp-for="@Model.Description" class="form-control"></textarea>
+            <span asp-validation-for="@Model.Description" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
         </form>
     </div>
 </div>

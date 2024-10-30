@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Identity.Client;
 using SP_Shopping.Data;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
@@ -429,6 +431,42 @@ public class ProductsController : Controller
         }
 
         return RedirectToAction("Index", "User", new { Id = userId });
+    }
+
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    [HttpPost]
+    public async Task<IActionResult> ResetImage(int id)
+    {
+        _logger.LogInformation($"POST: Entering Products/Delete.");
+        _logger.LogDebug("Fetching product for id \"{Id}\".", id);
+        var productInfo = await _productRepository.GetSingleAsync(q => q
+            .Where(p => p.Id == id)
+            .Select(p => new 
+            {
+                p.SubmitterId
+            })
+        );
+
+        if (productInfo is null)
+        {
+            _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
+            return NotFound($"The product with the passed id of \"{id}\" does not exist.");
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (productInfo.SubmitterId != userId)
+        {
+            _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
+                + "belonging to user with id \"{ProductOwnerId}\"", userId, productInfo.SubmitterId);
+            return Unauthorized("Cannot delete a product that is not yours.");
+        }
+
+        _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);
+        _productImageHandler.DeleteImage(new(id));
+
+        return Redirect(Url.Action(nameof(Edit), new { id }) ?? @"/");
+        
     }
 
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
