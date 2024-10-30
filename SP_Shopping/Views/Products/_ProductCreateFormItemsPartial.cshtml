@@ -7,28 +7,3 @@
 
 @model ProductCreateDto
 
-<img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@(Model.Id is null ? _productImageHandler.GenerateDefaultImageURL() : _productImageHandler.GetImageOrDefaultURL(new((int)Model.Id)))" />
-<div class="form-group">
-    <label asp-for="@Model.ProductImage" class="control-label"></label>
-    <input asp-for="@Model.ProductImage" class="form-control" />
-    <span asp-validation-for="@Model.ProductImage" class="text-danger"></span>
-</div>
-<div class="form-group">
-    <label asp-for="@Model.Name" class="control-label"></label>
-    <input asp-for="@Model.Name" class="form-control" />
-    <span asp-validation-for="@Model.Name" class="text-danger"></span>
-</div>
-<div class="form-group">
-    <label asp-for="@Model.Price" class="control-label"></label>
-    <input asp-for="@Model.Price" class="form-control" />
-    <span asp-validation-for="@Model.Price" class="text-danger"></span>
-</div>
-<div class="form-group">
-    <label asp-for="@Model.CategoryId" class="control-label"></label>
-    <select asp-for="@Model.CategoryId" asp-items="@categorySelectList" class="form-select sm"></select>
-</div>
-<div class="form-group">
-    <label asp-for="@Model.Description" class="control-label"></label>
-    <textarea asp-for="@Model.Description" class="form-control"></textarea>
-    <span asp-validation-for="@Model.Description" class="text-danger"></span>
-</div>

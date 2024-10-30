@@ -34,5 +34,5 @@ else
 }
 @if (Model.ProductDetails is not null)
 {
-     <partial name="_ProductsGridPartial" model="mapper.Map<IEnumerable<ProductDetailsDto>>(Model.ProductDetails)"/>
+     <partial name="_ProductCardsPartial" model="mapper.Map<IEnumerable<ProductDetailsDto>>(Model.ProductDetails)"/>
 }

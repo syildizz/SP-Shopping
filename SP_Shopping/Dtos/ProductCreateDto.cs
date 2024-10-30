@@ -21,7 +21,7 @@ public class ProductCreateDto
     [DisplayName(nameof(Category))]
     public int CategoryId { get; set; }
     public string? Description { get; set; }
-    [Display(Name = "New Profile Picture")]
+    [Display(Name = "Product Picture")]
     [DataType(DataType.Upload)]
     public IFormFile? ProductImage { get; set; }
 }

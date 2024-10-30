@@ -1,5 +1,4 @@
 ﻿@model ProductCreateDto
-
 @{
     ViewData["Title"] = "Create";
     IEnumerable<SelectListItem> categorySelectList = ViewBag.categorySelectList;
@@ -13,9 +12,32 @@
     <div class="col-md-4">
         <form asp-action="Create" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <partial name="_ProductCreateFormItemsPartial" model="Model" />
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary my-2" />
+                <label asp-for="@Model.ProductImage" class="control-label"></label>
+                <input asp-for="@Model.ProductImage" class="form-control" />
+                <span asp-validation-for="@Model.ProductImage" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="@Model.Name" class="control-label"></label>
+                <input asp-for="@Model.Name" class="form-control" />
+                <span asp-validation-for="@Model.Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="@Model.Price" class="control-label"></label>
+                <input asp-for="@Model.Price" class="form-control" />
+                <span asp-validation-for="@Model.Price" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="@Model.CategoryId" class="control-label"></label>
+                <select asp-for="@Model.CategoryId" asp-items="@categorySelectList" class="form-select sm"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="@Model.Description" class="control-label"></label>
+                <textarea asp-for="@Model.Description" class="form-control"></textarea>
+                <span asp-validation-for="@Model.Description" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary my-2">Create</button>
             </div>
         </form>
     </div>
