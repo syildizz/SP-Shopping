@@ -14,7 +14,14 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="@Model.ProductImage" class="control-label"></label>
-                <input asp-for="@Model.ProductImage" class="form-control" />
+                <input 
+                    asp-for="@Model.ProductImage" 
+                    class="form-control"
+                    autocomplete="profile picture" 
+                    aria-required="true" 
+                    placeholder="Please enter product picture."
+                    accept="image/*"
+                />
                 <span asp-validation-for="@Model.ProductImage" class="text-danger"></span>
             </div>
             <div class="form-group">
