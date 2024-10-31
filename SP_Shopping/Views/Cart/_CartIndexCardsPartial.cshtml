@@ -8,25 +8,35 @@
     {
     <div class="card" style="width: 100%;">
         <div class="row g-0 align-items-center">
-        <div class="col-sm-3 d-flex card-body justify-content-center" style="height: 10em">
+        <div class="col-sm-3 d-flex card-body justify-content-center">
         <img 
             src="@_productImageHandler.GetImageOrDefaultURL(new(item.ProductId))"
-            class="img-fluid mh-100 ratio-1x1"
+            class="img-fluid mh-100 ratio-1x1 w-75 d-none d-sm-block"
+            alt="Image for product"
+        />
+        <img 
+            src="@_productImageHandler.GetImageOrDefaultURL(new(item.ProductId))"
+            class="img-fluid mh-100 ratio-1x1 w-50 d-block d-sm-none"
             alt="Image for product"
         />
         </div>
         <div class="col-sm-2 card-body d-flex flex-column card-body justify-content-center align-items-center">
-            <div class="card-title card-text-fixer"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>    
-            <div class="card-text card-text-fixer">@Html.DisplayFor(model => item.ProductName)</div>
+            <div class="card-title d-none d-sm-block fs-5"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>    
+            <div class="card-title d-block d-sm-none fs-2"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>    
+            <div class="card-text d-none d-sm-block fs-5">@Html.DisplayFor(model => item.ProductName)</div>
+            <div class="card-text d-block d-sm-none fs-2">@Html.DisplayFor(model => item.ProductName)</div>
         </div>
         <div class="col-sm-3 card-body d-flex card-body justify-content-center">
             <div class="card-text card-text-fixer">
-            <form asp-action="Edit">
+            <form asp-action="Edit" class="d-flex flex-row justify-content-center gap-2">
                 <input type="hidden" name="@nameof(CartItemDetailsDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
                 <input type="hidden" name="@nameof(CartItemDetailsDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
-                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" style="width: 4em;" />
-                <span asp-validation-for="@item.Count" class="text-danger"></span>
-                <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" class="d-none d-sm-block fs-6" style="width: 4em;" />
+                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" class="d-block d-sm-none fs-2" style="width: 4em;" />
+                <span asp-validation-for="@item.Count" class="text-danger d-none d-sm-block fs-6"></span>
+                <span asp-validation-for="@item.Count" class="text-danger d-block d-sm-none fs-2"></span>
+                <button type="submit" class="btn btn-secondary btn-sm d-none d-sm-block fs-6">Update</button>
+                <button type="submit" class="btn btn-secondary btn-sm d-block d-sm-none fs-2">Update</button>
             </form>
             </div>
         </div>
@@ -35,7 +45,8 @@
             <form asp-action="Delete">
                 <input type="hidden" name="@nameof(CartItemDetailsDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
                 <input type="hidden" name="@nameof(CartItemDetailsDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
-                <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto">Remove from cart</button>
+                <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto d-none d-sm-block fs-6">Remove from cart</button>
+                <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto d-block d-sm-none fs-2">Remove from cart</button>
             </form>
             </div>
         </div>
