@@ -11,6 +11,10 @@
 <div class="text-center">
     <h1 class="display-4">Welcome @UserName</h1>
     <p class="align-content-center">@(!string.IsNullOrWhiteSpace(UserId) ? $"{nameof(UserId)} is {UserId}" : "No user is logged in")</p>
+    @if (User.IsInRole("Admin"))
+    {
+        <p class="align-content-center">"You are admin"</p>
+    }
     
     <div class="my-4">
         <partial name="_SearchFormPartial" model="@("Products", "Search", "query")"/>

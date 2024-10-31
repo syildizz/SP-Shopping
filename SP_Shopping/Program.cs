@@ -8,13 +8,15 @@ using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
+using System.Runtime.InteropServices;
+using System.Security.Claims;
 
 namespace SP_Shopping;
 
 public class Program
 {
 
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +27,17 @@ public class Program
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
         builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>();
+
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("IsAdmin", policy =>
+            {
+                policy
+                    .RequireAuthenticatedUser()
+                    .RequireRole("Admin")
+                ;
+            });
 
         builder.Services.AddAutoMapper(typeof(Program));
         builder.Services.AddMemoryCache();
@@ -44,6 +56,7 @@ public class Program
             options.User.RequireUniqueEmail = true;
         }
         );
+
 
         builder.Services.AddControllersWithViews();
 
@@ -100,6 +113,7 @@ public class Program
         });
 
 
+
         var app = builder.Build();
 
         app.UseRequestLocalization("tr-TR");
@@ -130,7 +144,42 @@ public class Program
             pattern: "{controller=Home}/{action=Index}/{id?}");
         app.MapRazorPages();
 
+        await AddRoles(app.Services);
 
-        app.Run();
+        //app.Run();
     }
+
+    // https://stackoverflow.com/a/73410638
+    private static async Task AddRoles(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var roles = GetRoleNames();
+        if (roles is null) return;
+        foreach (string role in roles)
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                var result = await roleManager.CreateAsync(new IdentityRole(role));
+                if (!result.Succeeded)
+                {
+                    logger.LogError("Failed to create role for role \"{Role}\"", role);
+                    return;
+                }
+            }
+        }
+    }
+
+    private static List<string>? GetRoleNames()
+    {
+        //var roles = configuration.GetSection("Roles").Get<List<string>>();
+        List<string> roles = 
+        [
+            "Admin"
+        ];
+        return roles;
+    }
+
 }
