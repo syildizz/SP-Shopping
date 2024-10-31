@@ -6,7 +6,7 @@
 <div class="my-grid">
     @foreach (var product in Model)
     {
-        <div class="card" style="">
+        <div class="card">
             <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" style="text-decoration: none; color: inherit;">
             <img 
                 src="@_productImageHandler.GetImageOrDefaultURL(new(product.Id))"
