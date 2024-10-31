@@ -146,7 +146,7 @@ public class Program
 
         await AddRoles(app.Services);
 
-        //app.Run();
+        app.Run();
     }
 
     // https://stackoverflow.com/a/73410638
