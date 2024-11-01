@@ -8,8 +8,7 @@ using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
-using System.Runtime.InteropServices;
-using System.Security.Claims;
+using SP_Shopping.Utilities.Message;
 
 namespace SP_Shopping;
 
@@ -82,6 +81,8 @@ public class Program
                 imgExtension: "png"
             )
         );
+
+        builder.Services.AddScoped<Utilities.Message.IMessageHandler, MessageHandler>();
 
         builder.Services.AddImageSharp(options =>
         {
