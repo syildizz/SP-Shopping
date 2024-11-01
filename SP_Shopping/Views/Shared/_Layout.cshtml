@@ -6,7 +6,7 @@
 @inject IMessageHandler _messageHandler
 
 @{
-    IEnumerable<Message>? messages = _messageHandler.GetMessages(TempData);
+    IEnumerable<Message>? messages = _messageHandler.Get(TempData);
 }
 
 <!DOCTYPE html>

@@ -14,8 +14,6 @@ using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.Message;
-using System.Globalization;
-using System.Runtime.InteropServices;
 using System.Security.Claims;
 
 namespace SP_Shopping.Controllers;
@@ -173,27 +171,18 @@ public class ProductsController : Controller
                 if (pdto.ProductImage is not null) {
                     if (!pdto.ProductImage.ContentType.StartsWith("image"))
                     {
-                        _messageHandler.AddMessages(TempData,
-                        [
-                            new Message { Type = Message.MessageType.Warning, Content = "The file must be an image"}
-                        ]);
+                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The file must be an image" });
                         return RedirectToAction(nameof(Create));
                     }
                     if (pdto.ProductImage.Length > 1_500_000)
                     {
-                        _messageHandler.AddMessages(TempData,
-                        [
-                            new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size."}
-                        ]);
+                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size." });
                         return RedirectToAction(nameof(Create));
                     }
                     using var stream = pdto.ProductImage.OpenReadStream();
                     if (!await _productImageHandler.ValidateImageAsync(stream))
                     {
-                        _messageHandler.AddMessages(TempData,
-                        [
-                            new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid."}
-                        ]);
+                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
                         return RedirectToAction(nameof(Create));
                     }
                 }
@@ -228,10 +217,7 @@ public class ProductsController : Controller
                     {
                         _productRepository.Delete(product);
                         await _productRepository.SaveChangesAsync();
-                        _messageHandler.AddMessages(TempData,
-                        [
-                            new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid."}
-                        ]);
+                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
                         return RedirectToAction(nameof(Create));
                     }
                 }
@@ -241,14 +227,12 @@ public class ProductsController : Controller
             catch (DbUpdateException)
             {
                 _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
-                _messageHandler.AddMessages(TempData,
-                [
-                    new Message { Type = Message.MessageType.Error, Content = "Couldn't create product"}
-                ]);
+                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't create product" });
                 return RedirectToAction(nameof(Create));
             }
         }
         _logger.LogError("ModelState is not valid.");
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid. Please try again" });
         ViewBag.categorySelectList = await GetCategoriesSelectListAsync();
         return View(pdto);
     }
@@ -288,8 +272,7 @@ public class ProductsController : Controller
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
                 + "belonging to user with id \"{ProductOwnerId}\"", productSubmitterId, id);
-            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot edit product that is not yours" }]);
-            return RedirectToAction(nameof(Details), new { id });
+            return Unauthorized("Cannot edit product that is not yours");
         }
 
         _logger.LogDebug($"Fetching all categories.");
@@ -334,8 +317,7 @@ public class ProductsController : Controller
                 {
                     _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
                         + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
-                    _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot edit product that is not yours" }]);
-                    return RedirectToAction(nameof(Details), new { id });
+                    return Unauthorized("Cannot edit product that is not yours");
                 }
                 submitterId = userId!;
                 
@@ -356,27 +338,18 @@ public class ProductsController : Controller
                 if (pdto.ProductImage is not null) {
                     if (!pdto.ProductImage.ContentType.StartsWith("image"))
                     {
-                        _messageHandler.AddMessages(TempData,
-                        [
-                            new Message { Type = Message.MessageType.Warning, Content = "The file must be an image"}
-                        ]);
+                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The file must be an image" });
                         return RedirectToAction(nameof(Create));
                     }
                     if (pdto.ProductImage.Length > 1_500_000)
                     {
-                        _messageHandler.AddMessages(TempData,
-                        [
-                            new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size."}
-                        ]);
+                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size." });
                         return RedirectToAction(nameof(Create));
                     }
                     using var ImageStream = pdto.ProductImage.OpenReadStream();
                     if (!await _productImageHandler.SetImageAsync(new(id), ImageStream))
                     {
-                        _messageHandler.AddMessages(TempData,
-                        [
-                            new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid."}
-                        ]);
+                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
                         return RedirectToAction(nameof(Create));
                     }
                 }
@@ -385,10 +358,7 @@ public class ProductsController : Controller
             catch (DbUpdateConcurrencyException dbuce)
             {
                 _logger.LogError(dbuce, "The product with the id of \"{Id}\" could not be updated.", id);
-                _messageHandler.AddMessages(TempData,
-                [
-                    new Message { Type = Message.MessageType.Error, Content = "Couldn't update product"}
-                ]);
+                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't update product" });
                 return RedirectToAction(nameof(Details), new { id });
             }
         }
@@ -424,8 +394,7 @@ public class ProductsController : Controller
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
                 + "belonging to user with id \"{ProductOwnerId}\"", pdto.SubmitterId, id);
-            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot delete product that is not yours" }]);
-            return RedirectToAction(nameof(Details), new { id });
+            return Unauthorized("Cannot delete product that is not yours");
         }
 
         return View(pdto);
@@ -458,8 +427,7 @@ public class ProductsController : Controller
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
                 + "belonging to user with id \"{ProductOwnerId}\"", userId, product.SubmitterId);
-            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot delete product that is not yours" }]);
-            return RedirectToAction(nameof(Details), new { id });
+            return Unauthorized("Cannot delete product that is not yours");
         }
 
         //_context.Products.Remove(product);
@@ -500,8 +468,7 @@ public class ProductsController : Controller
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to reset the image of product"
                 + "belonging to user with id \"{ProductOwnerId}\"", userId, productInfo.SubmitterId);
-            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot delete the image of a product that is not yours" }]);
-            return RedirectToAction(nameof(Details), new { id });
+            return Unauthorized("Cannot delete the image of a product that is not yours");
         }
 
         _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);

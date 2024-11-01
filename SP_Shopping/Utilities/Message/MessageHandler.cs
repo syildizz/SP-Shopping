@@ -8,7 +8,12 @@ public class MessageHandler : IMessageHandler
 {
     public readonly string _messageKey = "Messages";
 
-    public void AddMessages(ITempDataDictionary tempData, IEnumerable<Message> messages)
+    public void Add(ITempDataDictionary tempData, Message message)
+    {
+        Add(tempData, [message]);
+    }
+
+    public void Add(ITempDataDictionary tempData, IEnumerable<Message> messages)
     {
         if (tempData.TryGetValue(_messageKey, out object? _messages) && _messages is not null and string)
         {
@@ -21,16 +26,22 @@ public class MessageHandler : IMessageHandler
         }
     }
 
-    public IEnumerable<Message>? GetMessages(ITempDataDictionary tempData)
+    public IEnumerable<Message>? Get(ITempDataDictionary tempData)
     {
-        if (tempData.TryGetValue(_messageKey, out object? messages) && messages is not null and string)
+        if (tempData.TryGetValue(_messageKey, out object? messages))
         {
-            return ((string)messages).FromJson<IEnumerable<Message>>();
+            return (messages as string)?.FromJson<IEnumerable<Message>>();
         }
         else
         {
             return null;
         }
+    }
+
+    public IEnumerable<Message>? Peek(ITempDataDictionary tempData)
+    {
+        var messages = tempData.Peek(_messageKey);
+        return (messages as string)?.FromJson<IEnumerable<Message>>();
     }
 
 }

@@ -55,7 +55,7 @@ public class UserController
         if (user is null) return NotFound("User is not found");
         if (await _userManager.IsInRoleAsync(user, "Admin"))
         {
-            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Info, Content = "User is already admin" }]);
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Info, Content = "User is already admin" });
             return RedirectToAction(nameof(Index), new { id });
         }
 
@@ -63,7 +63,7 @@ public class UserController
 
         if (!result.Succeeded)
         {
-            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Failed to make user admin" }]);
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to make user admin" });
             return RedirectToAction(nameof(Index), new { id });
         }
 
@@ -72,7 +72,7 @@ public class UserController
             await _signInManager.RefreshSignInAsync(user);
         }
 
-        _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Success, Content = "Succesfully adminized" }]);
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Success, Content = "Succesfully adminized" });
 
         return RedirectToAction(nameof(Index), new { id });
 
@@ -88,7 +88,7 @@ public class UserController
         if (user is null) return NotFound("User is not found");
         if (!await _userManager.IsInRoleAsync(user, "Admin"))
         {
-            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Info, Content = "User is already not admin" }]);
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Info, Content = "User is already not admin" });
             return RedirectToAction(nameof(Index), new { id });
         }
 
@@ -96,7 +96,7 @@ public class UserController
 
         if (!result.Succeeded)
         {
-            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Failed to make user not admin" }]);
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to make user not admin" });
             return RedirectToAction(nameof(Index), new { id });
         }
 
@@ -105,7 +105,7 @@ public class UserController
             await _signInManager.RefreshSignInAsync(user);
         }
 
-        _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Success, Content = "Succesfully unadminized" }]);
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Success, Content = "Succesfully unadminized" });
         return RedirectToAction(nameof(Index), new { id });
     }
 

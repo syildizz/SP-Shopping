@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities.Message;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 
@@ -16,7 +17,9 @@ public class CartController
     IMapper mapper,
     IRepository<CartItem> cartItemRepository,
     IRepository<ApplicationUser> userRepository,
-    IRepository<Product> productRepository
+    IRepository<Product> productRepository,
+    IMessageHandler messageHandler
+
 ) : Controller
 {
 
@@ -25,27 +28,19 @@ public class CartController
     private readonly IRepository<CartItem> _cartItemRepository = cartItemRepository;
     private readonly IRepository<ApplicationUser> _userRepository = userRepository;
     private readonly IRepository<Product> _productRepository = productRepository;
+    private readonly IMessageHandler _messageHandler = messageHandler;
 
     [Authorize]
     public async Task<IActionResult> Index()
     {
         _logger.LogInformation("GET: Cart/Index");
-        string? userName = User.FindFirstValue(ClaimTypes.Name);
-        if (userName == null)
-        {
-            _logger.LogError("Anonymous user logged in.");
-            ViewBag.Message = "You need to log in to see your cart";
-        }
-        else
-        {
-            ViewBag.Message = $"Welcome {userName}";
-        }
 
         string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId))
         {
             _logger.LogError("UserId does not exist i.e. no user is logged in.");
-            return View("Error");
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "You need to log in to see your cart" });
+            return RedirectToAction("Index", "Home");
         }
 
         IEnumerable<CartItemDetailsDto> cidtos = await _cartItemRepository.GetAllAsync(q => 
@@ -111,15 +106,22 @@ public class CartController
 
         CartItem cartItem = _mapper.Map<CartItemCreateDto, CartItem>(cidto);
         string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        _logger.LogDebug("Checking if user with \"{UserId}\" exists in database.", userId);
-        bool userExists = await _userRepository.ExistsAsync(q => q.Where(u => u.Id == userId));
+
+        // Check that the keys are valid.
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _logger.LogError("The user id of \"{UserId}\" does not exist in the database.", userId);
+            return BadRequest("Invalid user id specified.");
+        }
+
         _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", userId);
         bool productExists = await _productRepository.ExistsAsync(q => q.Where(p => p.Id == cartItem.ProductId));
-        // Check that the keys are valid.
-        if (string.IsNullOrWhiteSpace(userId) || !userExists || !productExists)
+
+        if (!productExists)
         {
-            _logger.LogError("The product id of \"{ProductId}\" and user Id of \"{UserId}\" do not exist in the database.", userId, cartItem.ProductId);
-            return NotFound("Product and user specified does not exist..");
+            _logger.LogError("The product id of \"{ProductId}\" does not exist in the database.", cartItem.ProductId);
+            return BadRequest("Invalid product id specified.");
         }
 
         cartItem.UserId = userId;
@@ -131,7 +133,14 @@ public class CartController
             await _cartItemRepository.SaveChangesAsync();
         }
         catch (DbUpdateException)
-        { }
+        {
+            // Exception occurs when adding same product to same users cart.
+            // This is a desired effect, therefore the below codoe is commented out.
+            // TODO: Analyze update exception for the above mentioned exception and throw 
+            //     otherwise
+            //_logger.LogError("Failed to create CartItem in the database for user of id \"{UserId}\" and for product of \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+            //_messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Error when adding product to cart" }]);
+        }
 
         return Redirect(nameof(Index));
     }
@@ -147,7 +156,7 @@ public class CartController
         if (cidto.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
         {
             _logger.LogError("The user is not allowed to log from other user's cart.");
-            return Unauthorized("You cannot only delete products from your own shopping cart");
+            return Unauthorized("You can only delete products from your own shopping cart");
         }
 
         var cartItem = _mapper.Map<CartItemDetailsDto, CartItem>(cidto);
