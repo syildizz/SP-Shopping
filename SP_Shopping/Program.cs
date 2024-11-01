@@ -82,7 +82,7 @@ public class Program
             )
         );
 
-        builder.Services.AddScoped<Utilities.Message.IMessageHandler, MessageHandler>();
+        builder.Services.AddScoped<IMessageHandler, MessageHandler>();
 
         builder.Services.AddImageSharp(options =>
         {

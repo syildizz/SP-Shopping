@@ -13,6 +13,7 @@ using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
+using SP_Shopping.Utilities.Message;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
@@ -27,6 +28,7 @@ public class ProductsController : Controller
     private readonly IRepositoryCaching<Category> _categoryRepository;
     private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
+    private readonly IMessageHandler _messageHandler;
     private readonly int paginationCount = 5;
 
     public ProductsController
@@ -36,7 +38,8 @@ public class ProductsController : Controller
         IRepository<Product> productRepository,
         IRepositoryCaching<Category> categoryRepository,
         IRepository<ApplicationUser> userRepository,
-        IImageHandlerDefaulting<ProductImageKey> productImageHandler
+        IImageHandlerDefaulting<ProductImageKey> productImageHandler,
+        IMessageHandler messageHandler
     )
     {
         _logger = logger;
@@ -45,6 +48,7 @@ public class ProductsController : Controller
         _categoryRepository = categoryRepository;
         _userRepository = userRepository;
         _productImageHandler = productImageHandler;
+        _messageHandler = messageHandler;
     }
 
     // GET: Products
@@ -165,21 +169,32 @@ public class ProductsController : Controller
         {
             try
             {
-
                 // Validate image
                 if (pdto.ProductImage is not null) {
                     if (!pdto.ProductImage.ContentType.StartsWith("image"))
                     {
-                        return BadRequest("The file must be an image.");
+                        _messageHandler.AddMessages(TempData,
+                        [
+                            new Message { Type = Message.MessageType.Warning, Content = "The file must be an image"}
+                        ]);
+                        return RedirectToAction(nameof(Create));
                     }
                     if (pdto.ProductImage.Length > 1_500_000)
                     {
-                        return BadRequest($"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size.");
+                        _messageHandler.AddMessages(TempData,
+                        [
+                            new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size."}
+                        ]);
+                        return RedirectToAction(nameof(Create));
                     }
                     using var stream = pdto.ProductImage.OpenReadStream();
                     if (!await _productImageHandler.ValidateImageAsync(stream))
                     {
-                        return BadRequest("The Image format is invalid.");
+                        _messageHandler.AddMessages(TempData,
+                        [
+                            new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid."}
+                        ]);
+                        return RedirectToAction(nameof(Create));
                     }
                 }
 
@@ -213,7 +228,11 @@ public class ProductsController : Controller
                     {
                         _productRepository.Delete(product);
                         await _productRepository.SaveChangesAsync();
-                        return BadRequest("The Image format is invalid.");
+                        _messageHandler.AddMessages(TempData,
+                        [
+                            new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid."}
+                        ]);
+                        return RedirectToAction(nameof(Create));
                     }
                 }
 
@@ -222,7 +241,11 @@ public class ProductsController : Controller
             catch (DbUpdateException)
             {
                 _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
-                return BadRequest();
+                _messageHandler.AddMessages(TempData,
+                [
+                    new Message { Type = Message.MessageType.Error, Content = "Couldn't create product"}
+                ]);
+                return RedirectToAction(nameof(Create));
             }
         }
         _logger.LogError("ModelState is not valid.");
@@ -260,11 +283,13 @@ public class ProductsController : Controller
             .Select(p => p.SubmitterId)
         );
 
-        if (productSubmitterId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (productSubmitterId != userId)
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
                 + "belonging to user with id \"{ProductOwnerId}\"", productSubmitterId, id);
-            return Unauthorized("Cannot edit a product that is not yours.");
+            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot edit product that is not yours" }]);
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         _logger.LogDebug($"Fetching all categories.");
@@ -309,7 +334,8 @@ public class ProductsController : Controller
                 {
                     _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
                         + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
-                    return Unauthorized("Cannot edit a product that is not yours.");
+                    _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot edit product that is not yours" }]);
+                    return RedirectToAction(nameof(Details), new { id });
                 }
                 submitterId = userId!;
                 
@@ -330,16 +356,28 @@ public class ProductsController : Controller
                 if (pdto.ProductImage is not null) {
                     if (!pdto.ProductImage.ContentType.StartsWith("image"))
                     {
-                        return BadRequest("The file must be an image.");
+                        _messageHandler.AddMessages(TempData,
+                        [
+                            new Message { Type = Message.MessageType.Warning, Content = "The file must be an image"}
+                        ]);
+                        return RedirectToAction(nameof(Create));
                     }
                     if (pdto.ProductImage.Length > 1_500_000)
                     {
-                        return BadRequest($"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size.");
+                        _messageHandler.AddMessages(TempData,
+                        [
+                            new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size."}
+                        ]);
+                        return RedirectToAction(nameof(Create));
                     }
                     using var ImageStream = pdto.ProductImage.OpenReadStream();
                     if (!await _productImageHandler.SetImageAsync(new(id), ImageStream))
                     {
-                        return BadRequest("Image is not of valid format");
+                        _messageHandler.AddMessages(TempData,
+                        [
+                            new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid."}
+                        ]);
+                        return RedirectToAction(nameof(Create));
                     }
                 }
 
@@ -347,15 +385,15 @@ public class ProductsController : Controller
             catch (DbUpdateConcurrencyException dbuce)
             {
                 _logger.LogError(dbuce, "The product with the id of \"{Id}\" could not be updated.", id);
-                throw;
+                _messageHandler.AddMessages(TempData,
+                [
+                    new Message { Type = Message.MessageType.Error, Content = "Couldn't update product"}
+                ]);
+                return RedirectToAction(nameof(Details), new { id });
             }
-            return RedirectToAction(nameof(Details), new { id });
         }
-        _logger.LogDebug($"Fetching all categories.");
-        var categorySelectList = await GetCategoriesSelectListAsync();
-        ViewBag.CategorySelectList = categorySelectList;
         
-        return View(pdto);
+        return RedirectToAction(nameof(Edit), new { id });
     }
 
     // GET: Products/Delete/5
@@ -386,7 +424,8 @@ public class ProductsController : Controller
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
                 + "belonging to user with id \"{ProductOwnerId}\"", pdto.SubmitterId, id);
-            return Unauthorized("Cannot delete a product that is not yours.");
+            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot delete product that is not yours" }]);
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         return View(pdto);
@@ -419,7 +458,8 @@ public class ProductsController : Controller
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
                 + "belonging to user with id \"{ProductOwnerId}\"", userId, product.SubmitterId);
-            return Unauthorized("Cannot delete a product that is not yours.");
+            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot delete product that is not yours" }]);
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         //_context.Products.Remove(product);
@@ -438,7 +478,8 @@ public class ProductsController : Controller
     [HttpPost]
     public async Task<IActionResult> ResetImage(int id)
     {
-        _logger.LogInformation($"POST: Entering Products/Delete.");
+
+        _logger.LogInformation($"POST: Entering Products/ResetImage.");
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var productInfo = await _productRepository.GetSingleAsync(q => q
             .Where(p => p.Id == id)
@@ -457,9 +498,10 @@ public class ProductsController : Controller
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (productInfo.SubmitterId != userId)
         {
-            _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
+            _logger.LogDebug("User with id \"{userId}\" attempted to reset the image of product"
                 + "belonging to user with id \"{ProductOwnerId}\"", userId, productInfo.SubmitterId);
-            return Unauthorized("Cannot delete a product that is not yours.");
+            _messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Cannot delete the image of a product that is not yours" }]);
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);

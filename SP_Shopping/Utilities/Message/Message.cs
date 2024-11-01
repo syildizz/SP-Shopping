@@ -10,7 +10,8 @@ public class Message
     {
         Success,
         Info,
-        Error
+        Error,
+        Warning
     }
 
     public required MessageType Type { get; set; } 
@@ -22,7 +23,8 @@ public class Message
         {
             MessageType.Success => BaseContentHtml("success"),
             MessageType.Info => BaseContentHtml("info"),
-            MessageType.Error => BaseContentHtml("error"),
+            MessageType.Error => BaseContentHtml("danger"),
+            MessageType.Warning => BaseContentHtml("warning"),
             _ => 
                 throw new NotImplementedException("MessageType does not exist")
 

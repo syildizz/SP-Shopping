@@ -6,29 +6,31 @@ namespace SP_Shopping.Utilities.Message;
 
 public class MessageHandler : IMessageHandler
 {
-    private string _messageKey = "Messages";
+    public readonly string _messageKey = "Messages";
 
-    public bool PopulateViewDataWithTempData(ITempDataDictionary tempData, ViewDataDictionary viewData)
+    public void AddMessages(ITempDataDictionary tempData, IEnumerable<Message> messages)
     {
-        if (tempData.TryGetValue(_messageKey, out object? messages) && messages is not null and string)
+        if (tempData.TryGetValue(_messageKey, out object? _messages) && _messages is not null and string)
         {
-            viewData[_messageKey] = ((string)messages).FromJson<IEnumerable<Message>>();
-            return true;
+            var alreadyExistingMessages = ((string)_messages).FromJson<IEnumerable<Message>>();
+            tempData[_messageKey] = alreadyExistingMessages.Concat(messages).ToJson();
         }
         else
         {
-            return false;
+            tempData[_messageKey] = messages.ToJson();
         }
     }
 
-    public void PopulateTempData(ITempDataDictionary tempData, IEnumerable<Message> messages)
+    public IEnumerable<Message>? GetMessages(ITempDataDictionary tempData)
     {
-        tempData[_messageKey] = messages.ToJson();
-    }
-
-    public IEnumerable<Message>? GetMessagesFromViewData(ViewDataDictionary viewData)
-    {
-        return (IEnumerable<Message>?)viewData[_messageKey];
+        if (tempData.TryGetValue(_messageKey, out object? messages) && messages is not null and string)
+        {
+            return ((string)messages).FromJson<IEnumerable<Message>>();
+        }
+        else
+        {
+            return null;
+        }
     }
 
 }

@@ -14,6 +14,7 @@ using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
+using SP_Shopping.Utilities.Message;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +33,7 @@ public class ProductsControllerTests
     private readonly IMapper _mapper;
     private readonly ILogger<ProductsController> _logger;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
+    private readonly IMessageHandler _messageHandler;
     private readonly ProductsController _productsController;
 
     public ProductsControllerTests()
@@ -50,6 +52,7 @@ public class ProductsControllerTests
         _mapper = serviceProvider.GetRequiredService<IMapper>();
         _logger = A.Fake<ILogger<ProductsController>>();
         _productImageHandler = A.Fake<IImageHandlerDefaulting<ProductImageKey>>();
+        _messageHandler = A.Fake<IMessageHandler>();
 
         // SUT
         _productsController = new ProductsController
@@ -59,7 +62,8 @@ public class ProductsControllerTests
             productRepository: _productRepository,
             categoryRepository: _categoryRepository,
             userRepository: _userRepository,
-            productImageHandler: _productImageHandler
+            productImageHandler: _productImageHandler,
+            messageHandler: _messageHandler
         );
     }
 
