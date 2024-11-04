@@ -29,11 +29,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        builder.Entity<Product>()
-            .Navigation(p => p.Category)
-            .AutoInclude();
-
         //new DbSeeder(builder).Seed();
+        builder.Entity<ApplicationUser>()
+            .ToTable(tb => tb.HasTrigger("trg_DeleteUsers"));
 
         base.OnModelCreating(builder);
     }
