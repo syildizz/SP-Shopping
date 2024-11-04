@@ -339,18 +339,18 @@ public class ProductsController : Controller
                     if (!pdto.ProductImage.ContentType.StartsWith("image"))
                     {
                         _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The file must be an image" });
-                        return RedirectToAction(nameof(Create));
+                        return RedirectToAction(nameof(Edit));
                     }
                     if (pdto.ProductImage.Length > 1_500_000)
                     {
                         _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size." });
-                        return RedirectToAction(nameof(Create));
+                        return RedirectToAction(nameof(Edit));
                     }
                     using var ImageStream = pdto.ProductImage.OpenReadStream();
                     if (!await _productImageHandler.SetImageAsync(new(id), ImageStream))
                     {
                         _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
-                        return RedirectToAction(nameof(Create));
+                        return RedirectToAction(nameof(Edit));
                     }
                 }
 
