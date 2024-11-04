@@ -3,10 +3,10 @@
 @model IEnumerable<CartItemDetailsDto>
 @inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
 
-<div class="d-md-flex flex-md-column gap-2 justify-content-start">
+<div class="d-flex flex-column gap-2 align-items-center align-items-sm-start md-justify-content-md-start w-75">
     @foreach (var item in Model)
     {
-    <div class="card" style="width: 100%;">
+    <div class="card">
         <div class="row g-0 align-items-center">
         <div class="col-sm-3 d-flex card-body justify-content-center">
         <img 
@@ -21,22 +21,16 @@
         />
         </div>
         <div class="col-sm-2 card-body d-flex flex-column card-body justify-content-center align-items-center">
-            <div class="card-title d-none d-sm-block fs-5"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>    
-            <div class="card-title d-block d-sm-none fs-2"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>    
-            <div class="card-text d-none d-sm-block fs-5">@Html.DisplayFor(model => item.ProductName)</div>
-            <div class="card-text d-block d-sm-none fs-2">@Html.DisplayFor(model => item.ProductName)</div>
+           <div class="card-title" style="font-size: clamp(1em, 1.5vw, 1.25em)"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>
+            <div class="card-text d-none d-sm-block clamp(1em 1.5vw, 1.25em)">@Html.DisplayFor(model => item.ProductName)</div>
         </div>
         <div class="col-sm-3 card-body d-flex card-body justify-content-center">
             <div class="card-text card-text-fixer">
             <form asp-action="Edit" class="d-flex flex-row justify-content-center gap-2">
                 <input type="hidden" name="@nameof(CartItemDetailsDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
                 <input type="hidden" name="@nameof(CartItemDetailsDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
-                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" class="d-none d-sm-block fs-6" style="width: 4em;" />
-                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" class="d-block d-sm-none fs-2" style="width: 4em;" />
-                <span asp-validation-for="@item.Count" class="text-danger d-none d-sm-block fs-6"></span>
-                <span asp-validation-for="@item.Count" class="text-danger d-block d-sm-none fs-2"></span>
-                <button type="submit" class="btn btn-secondary btn-sm d-none d-sm-block fs-6">Update</button>
-                <button type="submit" class="btn btn-secondary btn-sm d-block d-sm-none fs-2">Update</button>
+                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" style="width: 4em; font-size: clamp(1em, 1.5vw, 1.25em);" />
+                <button type="submit" class="btn btn-secondary btn-sm" style="font-size: clamp(1em, 1.5vw, 1.25em);">Update</button>
             </form>
             </div>
         </div>
@@ -45,8 +39,7 @@
             <form asp-action="Delete">
                 <input type="hidden" name="@nameof(CartItemDetailsDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
                 <input type="hidden" name="@nameof(CartItemDetailsDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
-                <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto d-none d-sm-block fs-6">Remove from cart</button>
-                <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto d-block d-sm-none fs-2">Remove from cart</button>
+                <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto" style="font-size: clamp(1em, 1.5vw, 1.25em);">Remove from cart</button>
             </form>
             </div>
         </div>
