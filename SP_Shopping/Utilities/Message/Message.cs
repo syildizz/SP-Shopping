@@ -21,26 +21,35 @@ public class Message
     {
         get => Type switch
         {
-            MessageType.Success => BaseContentHtml("success"),
-            MessageType.Info => BaseContentHtml("info"),
-            MessageType.Error => BaseContentHtml("danger"),
-            MessageType.Warning => BaseContentHtml("warning"),
+            MessageType.Success => BaseContentHtml("alert-success", "bi-check-circle-fill"),
+            MessageType.Info => BaseContentHtml("alert-info", "bi-info-circle-fill"),
+            MessageType.Error => BaseContentHtml("alert-danger", "bi-exclamation-triangle-fill"),
+            MessageType.Warning => BaseContentHtml("alert-warning", "bi-exclamation-triangle-fill"),
             _ => 
                 throw new NotImplementedException("MessageType does not exist")
-
-
         };
     }
 
-    private string BaseContentHtml(string s)
+    private string BaseContentHtml(string alertType, string iconType)
     {
-        return 
+        //return 
+        //$"""
+        //    <div class="alert alert-{s} alert-dismissible fade show" role="alert">
+        //        {HttpUtility.HtmlEncode(Content)}
+        //        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+        //        </button>
+        //    </div>
+        //""";
+        return
         $"""
-            <div class="alert alert-{s} alert-dismissible fade show" role="alert">
+        <div class="alert {alertType} fade show d-flex align-items-center justify-content-between" role="alert">
+            <div>
+                <i class="bi {iconType} flex-shrink-0 me-2"></i>
                 {HttpUtility.HtmlEncode(Content)}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-                </button>
             </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+            </button>
+        </div>
         """;
     }
 
