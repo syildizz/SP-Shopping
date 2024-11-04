@@ -6,7 +6,7 @@ namespace SP_Shopping.Utilities.Message;
 
 public class MessageHandler : IMessageHandler
 {
-    public readonly string _messageKey = "Messages";
+    private readonly string _messageKey = "Messages";
 
     public void Add(ITempDataDictionary tempData, Message message)
     {
