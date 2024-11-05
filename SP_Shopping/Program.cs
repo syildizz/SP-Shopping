@@ -8,7 +8,7 @@ using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
-using SP_Shopping.Utilities.Message;
+using SP_Shopping.Utilities.MessageHandler;
 
 namespace SP_Shopping;
 
@@ -141,8 +141,13 @@ public class Program
         app.UseAuthorization();
 
         app.MapControllerRoute(
+            name: "adminRoute",
+            pattern: "{area:exists}/{controller=Admin}/{action=Index}/{id?}"
+        );
+        app.MapControllerRoute(
             name: "default",
-            pattern: "{controller=Home}/{action=Index}/{id?}");
+            pattern: "{controller=Home}/{action=Index}/{id?}"
+        );
         app.MapRazorPages();
 
         await AddRoles(app.Services);

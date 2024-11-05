@@ -1,0 +1,27 @@
+﻿@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
+@model ProductDetailsDto
+@inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Product</h4>
+    <hr />
+    <img class="img-fluid" style="width: 10em; aspect-ratio: 1/1;" src="@_productImageHandler.GetImageOrDefaultURL(new(Model.Id))" />
+    <dl class="row">
+        <partial name="_ProductDetailsDescriptionListItemsPartial" model="Model"/>
+    </dl>
+</div>
+<div>
+    <form asp-controller="Cart" asp-action="Create" method="post" class="d-inline-block">
+        <input name="@nameof(CartItemCreateDto.ProductId)" asp-for="Id" type="hidden" />
+        <input type="submit" value="Add to card" class="btn btn-primary" />
+    </form>
+    <a asp-action="Edit" asp-route-Id="@Model?.Id" class="btn btn-primary">Edit</a>
+    <a asp-action="Delete" asp-route-Id="@Model?.Id" class="btn btn-danger">Delete</a>
+</div>

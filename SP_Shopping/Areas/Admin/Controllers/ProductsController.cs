@@ -11,8 +11,10 @@ using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
-namespace SP_Shopping.Controllers;
+namespace SP_Shopping.Areas.Admin.Controllers;
 
+[Authorize(Roles = "Admin")]
+[Area("Admin")]
 public class ProductsController : Controller
 {
     private readonly ILogger<ProductsController> _logger;
@@ -44,6 +46,15 @@ public class ProductsController : Controller
         _messageHandler = messageHandler;
     }
 
+    // GET: Products
+    public async Task<IActionResult> Index()
+    {
+        _logger.LogInformation("GET: Entering Products/Index.");
+        _logger.LogDebug("Fetching all product information.");
+        IEnumerable<ProductDetailsDto> pdtoList = await _productRepository.GetAllAsync(q => _mapper.ProjectTo<ProductDetailsDto>(q));
+        return View(pdtoList);
+    }
+
     public async Task<IActionResult> Search(string? query)
     {
         _logger.LogInformation("GET: Entering Products/Search.");
@@ -68,9 +79,6 @@ public class ProductsController : Controller
     // GET: Products/Details/5
     public async Task<IActionResult> Details(int? id)
     {
-
-        if (User.IsInRole("Admin")) return RedirectToAction("Details", "Products", new { area = "Admin" });
-
         _logger.LogInformation("GET: Entering Products/Details.");
         if (id == null)
         {
@@ -78,7 +86,6 @@ public class ProductsController : Controller
             return BadRequest("Required parameter id not specified");
         }
 
-        _logger.LogDebug("Fetching \"{Id}\" product information.", id);
         ProductDetailsDto? pdto = await _productRepository.GetSingleAsync(q => 
             _mapper.ProjectTo<ProductDetailsDto>(q
                 .Where(p => p.Id == id)
@@ -98,13 +105,13 @@ public class ProductsController : Controller
     [Authorize]
     public async Task<IActionResult> Create()
     {
-        if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
-
         _logger.LogInformation($"GET: Entering Products/Details.");
         var pdto = _mapper.Map<Product, ProductCreateDto>(new Product());
-        _logger.LogDebug($"Fetching all categories.");
+        _logger.LogDebug($"Fetching all categories and users.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
+        IEnumerable<SelectListItem> userSelectList = await GetUsersSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
+        ViewBag.userSelectList = userSelectList;
         return View(pdto);
     }
 
@@ -145,22 +152,26 @@ public class ProductsController : Controller
                 Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
                 product.InsertionDate = DateTime.Now;
 
-                string submitterId;
-                var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == UserId)))
+                if (product.SubmitterId is null)
                 {
-                    return BadRequest("UserId is invalid. Contact developer");
+                    var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == UserId)))
+                    {
+                        return BadRequest("UserId is invalid. Contact developer");
+                    }
+                    // Set submitter to null and manually set Submitter foreign key
+                    // to avoid generating new ApplicationUser with auto-generated id.
+                    product.Submitter = null;
+                    product.SubmitterId = UserId!;
                 }
-                submitterId = UserId!;
+                else
+                {
+                    if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == product.SubmitterId)))
+                    {
+                        return BadRequest("UserId is invalid. Contact developer");
+                    }
+                }
 
-                // Set submitter to null and manually set Submitter foreign key
-                // to avoid generating new ApplicationUser with auto-generated id.
-                product.Submitter = null;
-                product.SubmitterId = submitterId;
-
-                //await _context.AddAsync(product);
-                //await _context.SaveChangesAsync();
-                
                 await _productRepository.CreateAsync(product);
                 await _productRepository.SaveChangesAsync();
 
@@ -169,9 +180,7 @@ public class ProductsController : Controller
                     using var ImageStream = pdto.ProductImage.OpenReadStream();
                     if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
                     {
-                        _productRepository.Delete(product);
-                        await _productRepository.SaveChangesAsync();
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
+                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Couldn't set the image. The Image format is invalid." });
                         return RedirectToAction(nameof(Create));
                     }
                 }
@@ -188,9 +197,11 @@ public class ProductsController : Controller
         _logger.LogError("ModelState is not valid.");
         _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid. Please try again" });
         // Create view instead of redirecting to GET to save current form field states.
-        _logger.LogDebug($"Fetching all categories.");
+        _logger.LogDebug($"Fetching all categories and users.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
+        IEnumerable<SelectListItem> userSelectList = await GetUsersSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
+        ViewBag.userSelectList = userSelectList;
         return View(pdto);
     }
 
@@ -198,9 +209,6 @@ public class ProductsController : Controller
     [Authorize]
     public async Task<IActionResult> Edit(int? id)
     {
-
-        if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
-
         _logger.LogInformation($"GET: Entering Products/Edit.");
         if (id == null)
         {
@@ -227,17 +235,11 @@ public class ProductsController : Controller
             .Select(p => p.SubmitterId)
         );
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (productSubmitterId != userId)
-        {
-            _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
-                + "belonging to user with id \"{ProductOwnerId}\"", productSubmitterId, id);
-            return Unauthorized("Cannot edit product that is not yours");
-        }
-
-        _logger.LogDebug($"Fetching all categories.");
-        var categorySelectList = await GetCategoriesSelectListAsync();
+        _logger.LogDebug($"Fetching all categories and users.");
+        IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
+        IEnumerable<SelectListItem> userSelectList = await GetUsersSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
+        ViewBag.userSelectList = userSelectList;
 
         return View(pdto);
     }
@@ -263,36 +265,32 @@ public class ProductsController : Controller
             {
                 var product = _mapper.Map<ProductCreateDto, Product>(pdto);
 
-                string submitterId;
-
-                // Get user argument from session and edit if the user owns the product.
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Get the existing submitter id for the product from the database.
-                string? productExistingSubmitterId = await _productRepository.GetSingleAsync(q => q
-                    .Where(p => p.Id == id)
-                    .Select(p => p.SubmitterId)
-                );
-                if (productExistingSubmitterId != userId)
-                {
-                    _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
-                        + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
-                    return Unauthorized("Cannot edit product that is not yours");
-                }
-                submitterId = userId!;
-                
                 _logger.LogDebug("Updating product.");
-                await _productRepository.UpdateCertainFieldsAsync(q => q
-                    .Where(p => p.Id == id),
-                    setPropertyCalls: s => s
-                        .SetProperty(p => p.Name, product.Name)
-                        .SetProperty(p => p.Price, product.Price)
-                        .SetProperty(p => p.CategoryId, product.CategoryId)
-                        .SetProperty(p => p.Description, product.Description)
-                        .SetProperty(p => p.SubmitterId, submitterId)
-                        .SetProperty(p => p.ModificationDate, DateTime.Now)
-                );
-                //_context.Update(product);
+                if (product.SubmitterId is not null)
+                {
+                    await _productRepository.UpdateCertainFieldsAsync(q => q
+                        .Where(p => p.Id == id),
+                        setPropertyCalls: s => s
+                            .SetProperty(p => p.Name, product.Name)
+                            .SetProperty(p => p.Price, product.Price)
+                            .SetProperty(p => p.CategoryId, product.CategoryId)
+                            .SetProperty(p => p.Description, product.Description)
+                            .SetProperty(p => p.SubmitterId, product.SubmitterId)
+                            .SetProperty(p => p.ModificationDate, DateTime.Now)
+                    );
+                }
+                else
+                {
+                    await _productRepository.UpdateCertainFieldsAsync(q => q
+                        .Where(p => p.Id == id),
+                        setPropertyCalls: s => s
+                            .SetProperty(p => p.Name, product.Name)
+                            .SetProperty(p => p.Price, product.Price)
+                            .SetProperty(p => p.CategoryId, product.CategoryId)
+                            .SetProperty(p => p.Description, product.Description)
+                            .SetProperty(p => p.ModificationDate, DateTime.Now)
+                    );
+                }
 
                 // Adding image
                 if (pdto.ProductImage is not null) {
@@ -330,9 +328,6 @@ public class ProductsController : Controller
     [Authorize]
     public async Task<IActionResult> Delete(int? id)
     {
-
-        if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
-
         _logger.LogInformation($"GET: Entering Products/Delete.");
         if (id == null)
         {
@@ -351,13 +346,6 @@ public class ProductsController : Controller
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
-        }
-
-        if (pdto.SubmitterId != User.FindFirstValue(ClaimTypes.NameIdentifier))
-        {
-            _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
-                + "belonging to user with id \"{ProductOwnerId}\"", pdto.SubmitterId, id);
-            return Unauthorized("Cannot delete product that is not yours");
         }
 
         return View(pdto);
@@ -382,17 +370,6 @@ public class ProductsController : Controller
             return NotFound($"The product with the passed id of \"{id}\" does not exist.");
         }
 
-        // Get user argument from session and delete if the user owns the product.
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        // Get the existing submitter id for the product from the database.
-        if (product.SubmitterId != userId)
-        {
-            _logger.LogDebug("User with id \"{userId}\" attempted to delete product "
-                + "belonging to user with id \"{ProductOwnerId}\"", userId, product.SubmitterId);
-            return Unauthorized("Cannot delete product that is not yours");
-        }
-
         //_context.Products.Remove(product);
         _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
         _productRepository.Delete(product);
@@ -401,7 +378,7 @@ public class ProductsController : Controller
             _productImageHandler.DeleteImage(new(id));
         }
 
-        return RedirectToAction("Index", "User", new { Id = userId });
+        return RedirectToAction("Index");
     }
 
     [Authorize]
@@ -426,14 +403,6 @@ public class ProductsController : Controller
             return NotFound($"The product with the passed id of \"{id}\" does not exist.");
         }
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (productInfo.SubmitterId != userId)
-        {
-            _logger.LogDebug("User with id \"{userId}\" attempted to reset the image of product"
-                + "belonging to user with id \"{ProductOwnerId}\"", userId, productInfo.SubmitterId);
-            return Unauthorized("Cannot delete the image of a product that is not yours");
-        }
-
         _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);
         _productImageHandler.DeleteImage(new(id));
 
@@ -445,6 +414,13 @@ public class ProductsController : Controller
     {
         return await _categoryRepository.GetAllAsync(nameof(GetCategoriesSelectListAsync), q => q
             .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
+        );
+    }
+
+    private async Task<IEnumerable<SelectListItem>> GetUsersSelectListAsync()
+    {
+        return await _userRepository.GetAllAsync(q => q
+            .Select(u => new SelectListItem { Text = u.UserName, Value = u.Id })
         );
     }
 }

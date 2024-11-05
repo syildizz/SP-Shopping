@@ -14,7 +14,7 @@ using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
-using SP_Shopping.Utilities.Message;
+using SP_Shopping.Utilities.MessageHandler;
 using System;
 using System.Collections.Generic;
 using System.Linq;

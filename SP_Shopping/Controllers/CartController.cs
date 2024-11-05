@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
-using SP_Shopping.Utilities.Message;
+using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 

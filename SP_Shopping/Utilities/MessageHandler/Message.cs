@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Web;
 
-namespace SP_Shopping.Utilities.Message;
+namespace SP_Shopping.Utilities.MessageHandler;
 
 public class Message
 {
@@ -14,7 +14,7 @@ public class Message
         Warning
     }
 
-    public required MessageType Type { get; set; } 
+    public required MessageType Type { get; set; }
     public required string Content { get; set; }
 
     public string ContentHtml
@@ -25,7 +25,7 @@ public class Message
             MessageType.Info => BaseContentHtml("alert-info", "bi-info-circle-fill"),
             MessageType.Error => BaseContentHtml("alert-danger", "bi-exclamation-triangle-fill"),
             MessageType.Warning => BaseContentHtml("alert-warning", "bi-exclamation-triangle-fill"),
-            _ => 
+            _ =>
                 throw new NotImplementedException("MessageType does not exist")
         };
     }

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
-namespace SP_Shopping.Utilities.Message;
+namespace SP_Shopping.Utilities.MessageHandler;
 public interface IMessageHandler
 {
     IEnumerable<Message>? Get(ITempDataDictionary tempData);

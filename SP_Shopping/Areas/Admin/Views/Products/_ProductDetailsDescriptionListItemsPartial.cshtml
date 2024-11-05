@@ -1,0 +1,48 @@
+﻿@model ProductDetailsDto
+
+<dt class = "col-sm-2">
+    @Html.DisplayNameFor(model => model.Name)
+</dt>
+<dd class = "col-sm-10">
+    @Html.DisplayFor(model => model.Name)
+</dd>
+<dt class = "col-sm-2">
+    @Html.DisplayNameFor(model => model.Price)
+</dt>
+<dd class = "col-sm-10">
+    @Html.DisplayFor(model => model.Price)
+</dd>
+<dt class = "col-sm-2">
+    @Html.DisplayNameFor(model => model.CategoryName)
+</dt>
+<dd class = "col-sm-10">
+    @Html.DisplayFor(model => model.CategoryName)
+</dd>
+<dt class = "col-sm-2">
+    @Html.DisplayNameFor(model => model.Description)
+</dt>
+@if (Model.Description is not null)
+{
+<dd class = "col-sm-10" style="white-space: pre-wrap">@Html.DisplayFor(model => model.Description)</dd>
+}
+else {
+<dd class="col-sm-10 text-muted fst-italic">No description has been specified</dd>
+}
+<dt class = "col-sm-2">
+    @Html.DisplayNameFor(model => model.SubmitterName)
+</dt>
+<dd class = "col-sm-10">
+    @Html.DisplayFor(model => model.SubmitterName)
+</dd>
+<dt class = "col-sm-2">
+    @Html.DisplayNameFor(model => model.InsertionDate)
+</dt>
+<dd class = "col-sm-10">
+    @Html.DisplayFor(model => model.InsertionDate)
+</dd>
+<dt class = "col-sm-2">
+    @Html.DisplayNameFor(model => model.ModificationDate)
+</dt>
+<dd class = "col-sm-10">
+    @Html.DisplayFor(model => model.ModificationDate)
+</dd>

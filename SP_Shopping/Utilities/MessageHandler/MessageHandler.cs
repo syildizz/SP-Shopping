@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NuGet.Protocol;
 
-namespace SP_Shopping.Utilities.Message;
+namespace SP_Shopping.Utilities.MessageHandler;
 
 public class MessageHandler : IMessageHandler
 {
