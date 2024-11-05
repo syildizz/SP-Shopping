@@ -4,11 +4,11 @@ using SP_Shopping.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace SP_Shopping.Dtos;
+namespace SP_Shopping.Areas.Admin.Dtos;
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+
 [RequestSizeLimit(2_000_000)]
-public class ProductCreateDto
+public class AdminProductCreateDto
 {
     public int? Id { get; set; }
     [Required]
@@ -24,6 +24,7 @@ public class ProductCreateDto
     [Display(Name = "Product Picture")]
     [DataType(DataType.Upload)]
     public IFormFile? ProductImage { get; set; }
+    [DisplayName("Submitter")]
+    public string SubmitterId { get; set; }
 }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 

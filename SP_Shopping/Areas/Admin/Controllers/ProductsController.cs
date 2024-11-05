@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using SP_Shopping.Areas.Admin.Dtos;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -105,7 +106,7 @@ public class ProductsController : Controller
     public async Task<IActionResult> Create()
     {
         _logger.LogInformation($"GET: Entering Products/Details.");
-        var pdto = _mapper.Map<Product, ProductCreateDto>(new Product());
+        var pdto = _mapper.Map<Product, AdminProductCreateDto>(new Product());
         _logger.LogDebug($"Fetching all categories and users.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
         IEnumerable<SelectListItem> userSelectList = await GetUsersSelectListAsync();
@@ -119,7 +120,7 @@ public class ProductsController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(ProductCreateDto pdto)
+    public async Task<IActionResult> Create(AdminProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Create.");
         if (ModelState.IsValid)
@@ -147,7 +148,7 @@ public class ProductsController : Controller
                 }
 
                 _logger.LogDebug($"Creating product.");
-                Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
+                Product product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
                 product.InsertionDate = DateTime.Now;
 
                 if (product.SubmitterId is null)
@@ -216,7 +217,7 @@ public class ProductsController : Controller
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var pdto = await _productRepository.GetSingleAsync(q =>
-            _mapper.ProjectTo<ProductCreateDto>(q
+            _mapper.ProjectTo<AdminProductCreateDto>(q
                 .Where(p => p.Id == id)
             )
         );
@@ -246,7 +247,7 @@ public class ProductsController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ProductCreateDto pdto)
+    public async Task<IActionResult> Edit(int id, AdminProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Edit.");
         if (!_productRepository.Exists(q => q.Where(p => p.Id == id)))
@@ -259,7 +260,7 @@ public class ProductsController : Controller
         {
             try
             {
-                var product = _mapper.Map<ProductCreateDto, Product>(pdto);
+                var product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
 
                 _logger.LogDebug("Updating product.");
                 if (product.SubmitterId is not null)
