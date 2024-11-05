@@ -102,7 +102,6 @@ public class ProductsController : Controller
     }
 
     // GET: Products/Create
-    [Authorize]
     public async Task<IActionResult> Create()
     {
         _logger.LogInformation($"GET: Entering Products/Details.");
@@ -120,7 +119,6 @@ public class ProductsController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize]
     public async Task<IActionResult> Create(ProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Create.");
@@ -206,7 +204,6 @@ public class ProductsController : Controller
     }
 
     // GET: Products/Edit/5
-    [Authorize]
     public async Task<IActionResult> Edit(int? id)
     {
         _logger.LogInformation($"GET: Entering Products/Edit.");
@@ -249,7 +246,6 @@ public class ProductsController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize]
     public async Task<IActionResult> Edit(int id, ProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Edit.");
@@ -325,7 +321,6 @@ public class ProductsController : Controller
     }
 
     // GET: Products/Delete/5
-    [Authorize]
     public async Task<IActionResult> Delete(int? id)
     {
         _logger.LogInformation($"GET: Entering Products/Delete.");
@@ -354,7 +349,6 @@ public class ProductsController : Controller
     // POST: Products/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    [Authorize]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         _logger.LogInformation($"POST: Entering Products/Delete.");
@@ -381,7 +375,6 @@ public class ProductsController : Controller
         return RedirectToAction("Index");
     }
 
-    [Authorize]
     [ValidateAntiForgeryToken]
     [HttpPost]
     public async Task<IActionResult> ResetImage(int id)
