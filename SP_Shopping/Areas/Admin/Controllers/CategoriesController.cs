@@ -5,8 +5,9 @@ using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 
-namespace SP_Shopping.Controllers;
+namespace SP_Shopping.Areas.Admin.Controllers;
 
+[Area("Admin")]
 public class CategoriesController : Controller
 {
     private readonly ApplicationDbContext _context;
