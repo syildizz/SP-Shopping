@@ -20,7 +20,7 @@
         />
     </li>
     <li class="nav-item">
-        <a class="nav-link text-dark" asp-controller="User" asp-action="Index" asp-route-Id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" title="Manage">Hello @User.Identity?.Name!</a>
+        <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="Index" asp-route-Id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" title="Manage">Hello @User.Identity?.Name!</a>
     </li>
     <li class="nav-item">
         <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Settings</a>
