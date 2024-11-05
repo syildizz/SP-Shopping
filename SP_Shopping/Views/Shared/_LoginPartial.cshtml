@@ -1,12 +1,26 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
+@inject IImageHandlerDefaulting<UserProfileImageKey> _userProfileImageHandler
 
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
+    <li class="nav-item align-items-center gap-2 d-none d-sm-flex">
+        <img 
+            class="img-fluid"  
+            style="
+                height: calc(var(--bs-body-line-height) * 1em); 
+                aspect-ratio: 1/1;" 
+            src="@(_userProfileImageHandler
+                    .GetImageOrDefaultURL(new(User.FindFirstValue(ClaimTypes.NameIdentifier)!))
+                 )?width=32&height=32" 
+        />
+    </li>
     <li class="nav-item">
-        <a  class="nav-link text-dark" asp-controller="User" asp-action="Index" asp-route-Id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" title="Manage">Hello @User.Identity?.Name!</a>
+        <a class="nav-link text-dark" asp-controller="User" asp-action="Index" asp-route-Id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" title="Manage">Hello @User.Identity?.Name!</a>
     </li>
     <li class="nav-item">
         <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Settings</a>

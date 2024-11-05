@@ -1,8 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@using SP_Shopping.Utilities.ImageHandler
-@using SP_Shopping.Utilities.ImageHandlerKeys
 @using SP_Shopping.Utilities.MessageHandler
-@inject IImageHandlerDefaulting<UserProfileImageKey> _userProfileImageHandler
 @inject IMessageHandler _messageHandler
 
 @{
@@ -38,10 +35,10 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Products" asp-action="Index">Products</a>
+                            <a class="nav-link text-dark" asp-area="Admin" asp-controller="Products" asp-action="Index">Products</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Categories" asp-action="Index">Categories</a>
+                            <a class="nav-link text-dark" asp-area="Admin" asp-controller="Categories" asp-action="Index">Categories</a>
                         </li>
                         @if (User.Identity?.IsAuthenticated ?? false)
                         {
@@ -50,22 +47,6 @@
                         </li>
                         }
                     </ul>
-                    @if (User.Identity?.IsAuthenticated ?? false)
-                    {
-                        <ul class="navbar-nav p-2">
-                            <li class="d-inline-flex">
-                            <img 
-                                class="img-fluid" 
-                                style="
-                                    height: calc(var(--bs-body-line-height) * 1em); 
-                                    aspect-ratio: 1/1;" 
-                                src="@(_userProfileImageHandler
-                                        .GetImageOrDefaultURL(new(User.FindFirstValue(ClaimTypes.NameIdentifier)!))
-                                     )?width=32&height=32" 
-                                />
-                        </li>
-                    </ul>
-                    }
                     <partial name="_LoginPartial" />
                 </div>
             </div>
