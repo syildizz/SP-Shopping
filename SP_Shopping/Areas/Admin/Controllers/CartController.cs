@@ -2,15 +2,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SP_Shopping.Areas.Admin.Dtos;
 using SP_Shopping.Dtos;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.MessageHandler;
-using System.Security.Claims;
 
-namespace SP_Shopping.Controllers;
+namespace SP_Shopping.Areas.Admin.Controllers;
 
-[Authorize]
+[Area("Admin")]
+[Authorize(Roles = "Admin")]
 public class CartController
 (
     ILogger<CartController> logger,
@@ -22,7 +23,6 @@ public class CartController
 
 ) : Controller
 {
-
     private readonly ILogger<CartController> _logger = logger;
     private readonly IMapper _mapper = mapper;
     private readonly IRepository<CartItem> _cartItemRepository = cartItemRepository;
@@ -30,49 +30,66 @@ public class CartController
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IMessageHandler _messageHandler = messageHandler;
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? userName)
     {
-        _logger.LogInformation("GET: Cart/Index");
+        _logger.LogInformation("GET: Admin/Cart/Index.");
 
-        string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId))
+        if (userName is not null && !await _userRepository.ExistsAsync(q => q.Where(u => u.UserName == userName)))
         {
-            _logger.LogError("UserId does not exist i.e. no user is logged in.");
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "You need to log in to see your cart" });
-            return RedirectToAction("Index", "Home");
+            _logger.LogError("UserId does not exist for user with given id of \"{Id}\".", userName);
+            return NotFound("The user was not found");
         }
 
-        IEnumerable<CartItemDetailsDto> cidtos = await _cartItemRepository.GetAllAsync(q => 
-            _mapper.ProjectTo<CartItemDetailsDto>(q
-               .Where(c => c.UserId == userId)
-            )
-       );
+        // Filter based on userName based on userName
+        Func<IQueryable<CartItemDetailsDto>, IQueryable<CartItemDetailsDto>> userNameFilter;
+        if (userName is not null)
+        {
+            userNameFilter = q => q.Where(u => u.UserName == userName);
+            ViewBag.Message = $"The shopping cart of user {userName}";
+        }
+        else
+        {
+            userNameFilter = q => q;
+            ViewBag.Message = $"The shopping carts of all users";
+        }
 
-        return View(cidtos);
+        IEnumerable<CartItemDetailsDto> cdtos = await _cartItemRepository.GetAllAsync(q =>
+            userNameFilter(
+                _mapper.ProjectTo<CartItemDetailsDto>(q)
+            )
+        );
+
+        return View("Index", cdtos);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CartItemCreateDto cidto)
+    public async Task<IActionResult> Create(AdminCartItemCreateDto cidto)
     {
-        _logger.LogInformation("POST: Cart/Create.");
+        _logger.LogInformation("POST: Admin/Cart/Create.");
 
         if (ModelState.IsValid)
         {
-            CartItem cartItem = _mapper.Map<CartItemCreateDto, CartItem>(cidto);
-            cartItem.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            CartItem cartItem = _mapper.Map<CartItem>(cidto);
 
             // Check that the keys are valid.
 
+            _logger.LogDebug("Checking if user with \"{userId}\" exists in database.", cartItem.UserId);
+            bool userExists = await _userRepository.ExistsAsync(q => q.Where(u => u.Id == cartItem.UserId));
+            if (!userExists)
+            {
+                _logger.LogError("The user id of \"{UserId}\" does not exist in the database.", cartItem.UserId);
+                return BadRequest("Invalid user id specified.");
+            }
+
             _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", cartItem.ProductId);
             bool productExists = await _productRepository.ExistsAsync(q => q.Where(p => p.Id == cartItem.ProductId));
-
             if (!productExists)
             {
                 _logger.LogError("The product id of \"{ProductId}\" does not exist in the database.", cartItem.ProductId);
                 return BadRequest("Invalid product id specified.");
             }
-
 
             try
             {
@@ -104,15 +121,9 @@ public class CartController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(CartItemDetailsDto cidto)
     {
-        _logger.LogInformation("POST: Cart/Delete.");
-
         if (ModelState.IsValid)
         {
-            if (cidto.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
-            {
-                _logger.LogError("The user is not allowed to log from other user's cart.");
-                return Unauthorized("You can only delete products from your own shopping cart");
-            }
+            _logger.LogInformation("POST: Admin/Cart/Delete.");
 
             var cartItem = _mapper.Map<CartItemDetailsDto, CartItem>(cidto);
 
@@ -132,14 +143,13 @@ public class CartController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(CartItemCreateDto cidto)
+    public async Task<IActionResult> Edit(AdminCartItemCreateDto cidto)
     {
-        _logger.LogInformation("POST: Cart/Edit.");
+        _logger.LogInformation("POST: Admin/Cart/Edit.");
 
         if (ModelState.IsValid)
         {
-            var cartItem = _mapper.Map<CartItemCreateDto, CartItem>(cidto);
-            cartItem.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var cartItem = _mapper.Map<CartItem>(cidto);
 
             _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
             await _cartItemRepository.UpdateCertainFieldsAsync(
@@ -156,6 +166,7 @@ public class CartController
         }
 
         return Redirect(nameof(Index));
+        
     }
 
 }
