@@ -113,7 +113,7 @@ public class CartController
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to add product to cart" });
         }
 
-        return Redirect(nameof(Index));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -138,7 +138,7 @@ public class CartController
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
         }
 
-        return Redirect(nameof(Index));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -165,7 +165,7 @@ public class CartController
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
         }
 
-        return Redirect(nameof(Index));
+        return RedirectToAction(nameof(Index));
         
     }
 

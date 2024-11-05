@@ -53,109 +53,93 @@ public class CartController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CartItemCreateDto cidto)
+    public async Task<IActionResult> Create(int id)
     {
         _logger.LogInformation("POST: Cart/Create.");
 
-        if (ModelState.IsValid)
+        _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", id);
+        bool productExists = await _productRepository.ExistsAsync(q => q.Where(p => p.Id == id));
+
+        if (!productExists)
         {
-            CartItem cartItem = _mapper.Map<CartItemCreateDto, CartItem>(cidto);
-            cartItem.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
-            // Check that the keys are valid.
-
-            _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", cartItem.ProductId);
-            bool productExists = await _productRepository.ExistsAsync(q => q.Where(p => p.Id == cartItem.ProductId));
-
-            if (!productExists)
-            {
-                _logger.LogError("The product id of \"{ProductId}\" does not exist in the database.", cartItem.ProductId);
-                return BadRequest("Invalid product id specified.");
-            }
-
-
-            try
-            {
-                _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-                await _cartItemRepository.CreateAsync(cartItem);
-                await _cartItemRepository.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                // Exception occurs when adding same product to same users cart.
-                // This is a desired effect, therefore the below codoe is commented out.
-                // TODO: Analyze update exception for the above mentioned exception and throw 
-                //     otherwise
-                //_logger.LogError("Failed to create CartItem in the database for user of id \"{UserId}\" and for product of \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-                //_messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Error when adding product to cart" }]);
-            }
-        }
-        else
-        {
-            _logger.LogError("ModeState is invalid");
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to add product to cart" });
+            _logger.LogError("The product id of \"{ProductId}\" does not exist in the database.", id);
+            return BadRequest("Invalid product id specified.");
         }
 
-        return Redirect(nameof(Index));
+        CartItem cartItem = new CartItem
+        {
+            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!,
+            ProductId = id,
+            Count = 0
+        };
+
+        try
+        {
+            _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+            await _cartItemRepository.CreateAsync(cartItem);
+            await _cartItemRepository.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Exception occurs when adding same product to same users cart.
+            // This is a desired effect, therefore the below codoe is commented out.
+            // TODO: Analyze update exception for the above mentioned exception and throw 
+            //     otherwise
+            //_logger.LogError("Failed to create CartItem in the database for user of id \"{UserId}\" and for product of \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+            //_messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Error when adding product to cart" }]);
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
     [ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(CartItemDetailsDto cidto)
+    public async Task<IActionResult> Delete(int id)
     {
         _logger.LogInformation("POST: Cart/Delete.");
 
-        if (ModelState.IsValid)
-        {
-            if (cidto.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
-            {
-                _logger.LogError("The user is not allowed to log from other user's cart.");
-                return Unauthorized("You can only delete products from your own shopping cart");
-            }
-
-            var cartItem = _mapper.Map<CartItemDetailsDto, CartItem>(cidto);
-
-            _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+        //if (ModelState.IsValid)
+        //{
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
             await _cartItemRepository.DeleteCertainEntriesAsync(q => q
-                .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId)
+                .Where(c => c.UserId == userId && c.ProductId == id)
             );
-        }
-        else
-        {
-            _logger.LogError("ModeState is invalid");
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
-        }
+        //}
+        //else
+        //{
+        //    _logger.LogError("ModeState is invalid");
+        //    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
+        //}
 
-        return Redirect(nameof(Index));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(CartItemCreateDto cidto)
+    public async Task<IActionResult> Edit(int id, CartItemCreateDto cidto)
     {
         _logger.LogInformation("POST: Cart/Edit.");
 
         if (ModelState.IsValid)
         {
-            var cartItem = _mapper.Map<CartItemCreateDto, CartItem>(cidto);
-            cartItem.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
-            _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
             await _cartItemRepository.UpdateCertainFieldsAsync(
                 q => q
-                    .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId), 
+                    .Where(c => c.UserId == userId && c.ProductId == id), 
                 s => s
-                    .SetProperty(c => c.Count, cartItem.Count)
+                    .SetProperty(c => c.Count, cidto.Count)
             );
         }
         else
         {
-            _logger.LogError("ModeState is invalid");
+            _logger.LogError("ModelState is invalid");
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
         }
 
-        return Redirect(nameof(Index));
+        return RedirectToAction(nameof(Index));
     }
 
 }
