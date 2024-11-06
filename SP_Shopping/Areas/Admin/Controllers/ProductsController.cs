@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.Product;
@@ -57,7 +58,7 @@ public class ProductsController : Controller
             queryFilter = type switch
             {
                 nameof(ProductDetailsDto.Name) => q => q.Where(p => p.Name.Contains(query)),
-                nameof(ProductDetailsDto.Price) => q => q.Where(p => p.Price.ToString().Contains(query)),
+                nameof(ProductDetailsDto.Price) => decimal.TryParse(query, out var queryNumber) ? q => q.Where(p => p.Price == queryNumber) : q => q,
                 nameof(ProductDetailsDto.CategoryName) => q => q.Where(p => p.CategoryName != null && p.CategoryName.Contains(query)),
                 nameof(ProductDetailsDto.Description) => q => q.Where(p => p.Description != null && p.Description.Contains(query)),
                 nameof(ProductDetailsDto.SubmitterName) => q => q.Where(p => p.SubmitterName.Contains(query)),

@@ -42,7 +42,7 @@ public class CartController
                 nameof(CartItemDetailsDto.ProductName) => q => q.Where(c => c.ProductName.Contains(query)),
                 nameof(CartItemDetailsDto.UserName) => q => q.Where(c => c.UserName.Contains(query)),
                 nameof(CartItemDetailsDto.SubmitterName) => q => q.Where(c => c.SubmitterName.Contains(query)),
-                nameof(CartItemDetailsDto.Count) => q => q.Where(c => c.Count.ToString().Contains(query)),
+                nameof(CartItemDetailsDto.Count) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.Count == queryNumber) : q => q,
                 _ => null
             };
         }
@@ -53,7 +53,7 @@ public class CartController
 
         if (userNameFilter is null)
         {
-            return BadRequest("Invalid type");
+            return BadRequest("Invalid query");
         }
 
         _logger.LogDebug("Fetching product information matching search term.");

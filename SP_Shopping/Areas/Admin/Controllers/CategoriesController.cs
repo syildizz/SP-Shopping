@@ -32,7 +32,7 @@ public class CategoriesController : Controller
         {
             queryFilter = type switch
             {
-                nameof(Category.Id) => q => q.Where(p => p.Id.ToString().Contains(query)),
+                nameof(Category.Id) => int.TryParse(query, out var queryNumber) ? q => q.Where(p => p.Id == queryNumber) : q => q,
                 nameof(Category.Name) => q => q.Where(p => p.Name.Contains(query)),
                 _ => null
             };
