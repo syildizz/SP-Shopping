@@ -1,0 +1,100 @@
+﻿@model IEnumerable<AdminUserDetailsDto>
+
+@{
+    ViewData["Title"] = "Search";
+    Layout = "_SearchLayout";
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.UserName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PhoneNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Roles)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.UserName)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.PhoneNumber)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.Email)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.Roles)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+            </td>
+        </tr>
+    @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PhoneNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Email) 
+            </td>
+            <td>
+                @foreach (var role in item.Roles) {
+                    <p>@(role)</p>
+                }
+            </td>
+            <td>
+@*                 <form asp-action="Edit">
+                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
+                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
+                    <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" />
+                    <span asp-validation-for="@item.Count" class="text-danger"></span>
+                    <input type="submit" value="Update" class="btn btn-secondary btn-sm" />
+                </form>
+                <form asp-action="Delete">
+                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
+                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
+                    <input type="submit" value="Remove from cart" class="btn btn-danger btn-sm" />
+                </form>
+ *@            </td>
+        </tr>
+    }
+    </tbody>
+</table>
