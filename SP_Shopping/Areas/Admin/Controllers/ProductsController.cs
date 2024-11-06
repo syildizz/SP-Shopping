@@ -47,15 +47,7 @@ public class ProductsController : Controller
     }
 
     // GET: Products
-    public async Task<IActionResult> Index()
-    {
-        _logger.LogInformation("GET: Entering Admin/Products/Index.");
-        _logger.LogDebug("Fetching all product information.");
-        IEnumerable<ProductDetailsDto> pdtoList = await _productRepository.GetAllAsync(q => _mapper.ProjectTo<ProductDetailsDto>(q));
-        return View(pdtoList);
-    }
-
-    public async Task<IActionResult> Search(string? query, string? type)
+    public async Task<IActionResult> Index(string? query, string? type)
     {
         _logger.LogInformation("GET: Entering Admin/Products/Search.");
 

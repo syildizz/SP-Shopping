@@ -1,10 +1,104 @@
 ﻿@model IEnumerable<CartItemDetailsDto>
+
 @{
-    string message = (string)ViewBag.Message;
+    ViewData["Title"] = "Index";
+    Layout = "_SearchLayout";
 }
 
-<h1>@message</h1>
+<p>
+    <a asp-area="Admin" asp-controller="Cart" asp-action="Create">Create New</a>
+</p>
 
-<table class="table">
-    <partial name="_AdminCartIndexTableItemsPartial" model="Model"/>
+<div class="table-responsive">
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.UserName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SubmitterName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ProductName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Count)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(CartItemDetailsDto.UserName)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(CartItemDetailsDto.SubmitterName)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(CartItemDetailsDto.ProductName)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(CartItemDetailsDto.Count)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+            </td>
+        </tr>
+    @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SubmitterName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ProductName) 
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Count) 
+            </td>
+            <td>
+                <form asp-action="Edit">
+                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
+                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
+                    <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" />
+                    <span asp-validation-for="@item.Count" class="text-danger"></span>
+                    <input type="submit" value="Update" class="btn btn-secondary btn-sm" />
+                </form>
+                <form asp-action="Delete">
+                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
+                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
+                    <input type="submit" value="Remove from cart" class="btn btn-danger btn-sm" />
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
 </table>
+</div>

@@ -23,12 +23,7 @@ public class CategoriesController : Controller
     }
 
     // GET: Categories
-    public async Task<IActionResult> Index()
-    {
-        return View(await _categoryRepository.GetAllAsync());
-    }
-
-    public async Task<IActionResult> Search(string? query, string? type)
+    public async Task<IActionResult> Index(string? query, string? type)
     {
         _logger.LogInformation("GET: Entering Admin/Products/Search.");
 

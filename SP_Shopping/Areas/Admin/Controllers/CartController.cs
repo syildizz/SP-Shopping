@@ -30,38 +30,7 @@ public class CartController
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IMessageHandler _messageHandler = messageHandler;
 
-    public async Task<IActionResult> Index(string? userName)
-    {
-        _logger.LogInformation("GET: Admin/Cart/Index.");
-
-        if (userName is not null && !await _userRepository.ExistsAsync(q => q.Where(u => u.UserName == userName)))
-        {
-            _logger.LogError("UserId does not exist for user with given id of \"{Id}\".", userName);
-            return NotFound("The user was not found");
-        }
-
-        // Filter based on userName based on userName
-        Func<IQueryable<CartItemDetailsDto>, IQueryable<CartItemDetailsDto>> userNameFilter;
-        if (userName is not null)
-        {
-            userNameFilter = q => q.Where(u => u.UserName == userName);
-            ViewBag.Message = $"The shopping cart of user {userName}";
-        }
-        else
-        {
-            userNameFilter = q => q;
-            ViewBag.Message = $"The shopping carts of all users";
-        }
-
-        IEnumerable<CartItemDetailsDto> cdtos = await _cartItemRepository.GetAllAsync(q =>
-            userNameFilter(
-                _mapper.ProjectTo<CartItemDetailsDto>(q)
-            )
-        );
-
-        return View("Index", cdtos);
-    }
-    public async Task<IActionResult> Search(string? query, string? type)
+    public async Task<IActionResult> Index(string? query, string? type)
     {
         _logger.LogInformation("GET: Entering Admin/Products/Search.");
 
@@ -151,7 +120,7 @@ public class CartController
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to add product to cart" });
         }
 
-        return RedirectToAction(nameof(Search));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -176,7 +145,7 @@ public class CartController
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
         }
 
-        return RedirectToAction(nameof(Search));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -203,7 +172,7 @@ public class CartController
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
         }
 
-        return RedirectToAction(nameof(Search));
+        return RedirectToAction(nameof(Index));
         
     }
 

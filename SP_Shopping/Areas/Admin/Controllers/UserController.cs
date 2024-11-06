@@ -49,7 +49,7 @@ public class UserController
     //    return View(udto);
     //}
 
-    public async Task<IActionResult> Search(string? query, string? type)
+    public async Task<IActionResult> Index(string? query, string? type)
     {
         _logger.LogInformation("GET: Entering Admin/Products/Search.");
 
