@@ -51,7 +51,7 @@ public class UserController
 
     public async Task<IActionResult> Index(string? query, string? type)
     {
-        _logger.LogInformation("GET: Entering Admin/Products/Search.");
+        _logger.LogInformation("GET: Entering Admin/Products.");
 
         Func<IQueryable<AdminUserDetailsDto>, IQueryable<AdminUserDetailsDto>>? userNameFilter;
         if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))

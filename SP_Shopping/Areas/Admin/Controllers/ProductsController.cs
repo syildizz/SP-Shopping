@@ -50,7 +50,7 @@ public class ProductsController : Controller
     // GET: Products
     public async Task<IActionResult> Index(string? query, string? type)
     {
-        _logger.LogInformation("GET: Entering Admin/Products/Search.");
+        _logger.LogInformation("GET: Entering Admin/Products.");
 
         Func<IQueryable<ProductDetailsDto>, IQueryable<ProductDetailsDto>>? queryFilter;
         if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))

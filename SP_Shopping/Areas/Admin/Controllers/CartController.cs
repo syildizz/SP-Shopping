@@ -32,7 +32,7 @@ public class CartController
 
     public async Task<IActionResult> Index(string? query, string? type)
     {
-        _logger.LogInformation("GET: Entering Admin/Products/Search.");
+        _logger.LogInformation("GET: Entering Admin/Products.");
 
         Func<IQueryable<CartItemDetailsDto>, IQueryable<CartItemDetailsDto>>? userNameFilter;
         if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
