@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.CodeAnalysis.Operations;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Dtos.Product;
@@ -26,7 +25,6 @@ public class ProductsController : Controller
     private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
     private readonly IMessageHandler _messageHandler;
-    private readonly int paginationCount = 5;
 
     public ProductsController
     (
@@ -91,7 +89,7 @@ public class ProductsController : Controller
             queryFilter(_mapper.ProjectTo<ProductDetailsDto>(q)
                 .OrderByDescending(p => p.InsertionDate)
                 .ThenByDescending(p => p.ModificationDate)
-                .Take(paginationCount)
+                .Take(20)
             )
         );
 
