@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
-namespace SP_Shopping.Areas.Admin.Dtos;
+namespace SP_Shopping.Areas.Admin.Dtos.Cart;
 
 public class AdminCartItemCreateDto
 {

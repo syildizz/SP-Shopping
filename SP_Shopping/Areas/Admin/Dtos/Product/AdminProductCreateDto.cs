@@ -4,7 +4,7 @@ using SP_Shopping.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace SP_Shopping.Areas.Admin.Dtos;
+namespace SP_Shopping.Areas.Admin.Dtos.Product;
 
 
 [RequestSizeLimit(2_000_000)]

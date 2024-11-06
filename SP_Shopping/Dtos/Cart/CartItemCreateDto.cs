@@ -1,4 +1,4 @@
-﻿namespace SP_Shopping.Dtos;
+﻿namespace SP_Shopping.Dtos.Cart;
 
 public class CartItemCreateDto
 {

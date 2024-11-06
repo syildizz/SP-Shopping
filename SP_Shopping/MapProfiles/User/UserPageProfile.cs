@@ -1,8 +1,9 @@
 ﻿using AutoMapper;
-using SP_Shopping.Dtos;
+using SP_Shopping.Dtos.Product;
+using SP_Shopping.Dtos.User;
 using SP_Shopping.Models;
 
-namespace SP_Shopping.MapProfiles;
+namespace SP_Shopping.MapProfiles.User;
 
 public class UserPageProfile : Profile
 {
@@ -12,12 +13,12 @@ public class UserPageProfile : Profile
             .ForMember(u => u.ProductDetails, opt => opt.MapFrom(uu => uu.Products))
             .ReverseMap();
 
-        CreateMap<Product, UserPageDto.UserPageProductDto>()
+        CreateMap<Models.Product, UserPageDto.UserPageProductDto>()
             .ReverseMap();
-        
+
         CreateMap<ProductDetailsDto, UserPageDto.UserPageProductDto>()
             .ReverseMap();
 
     }
-        
+
 }

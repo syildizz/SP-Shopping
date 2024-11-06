@@ -1,8 +1,7 @@
-﻿
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace SP_Shopping.Dtos;
+namespace SP_Shopping.Dtos.Cart;
 
 public class CartItemDetailsDto
 {

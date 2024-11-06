@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
-using SP_Shopping.Areas.Admin.Dtos;
+using SP_Shopping.Areas.Admin.Dtos.Cart;
 using SP_Shopping.Models;
 
-namespace SP_Shopping.MapProfiles;
+namespace SP_Shopping.Areas.Admin.MapProfiles;
 
 public class AdminCartItemCreateProfile : Profile
 {

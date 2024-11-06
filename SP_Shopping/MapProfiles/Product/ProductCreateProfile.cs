@@ -1,14 +1,13 @@
 ﻿using AutoMapper;
-using SP_Shopping.Dtos;
-using SP_Shopping.Models;
+using SP_Shopping.Dtos.Product;
 
-namespace SP_Shopping.MapProfiles;
+namespace SP_Shopping.MapProfiles.Product;
 
 public class ProductCreateProfile : Profile
 {
     public ProductCreateProfile()
     {
-        CreateMap<Product, ProductCreateDto>()
+        CreateMap<Models.Product, ProductCreateDto>()
             .ReverseMap();
     }
 }
