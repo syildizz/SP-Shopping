@@ -61,6 +61,44 @@ public class CartController
 
         return View("Index", cdtos);
     }
+    public async Task<IActionResult> Search(string? query, string? type)
+    {
+        _logger.LogInformation("GET: Entering Admin/Products/Search.");
+
+        Func<IQueryable<CartItemDetailsDto>, IQueryable<CartItemDetailsDto>>? userNameFilter;
+        if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
+        {
+            userNameFilter = type switch
+            {
+                nameof(CartItemDetailsDto.ProductName) => q => q.Where(c => c.ProductName.Contains(query)),
+                nameof(CartItemDetailsDto.UserName) => q => q.Where(c => c.UserName.Contains(query)),
+                nameof(CartItemDetailsDto.SubmitterName) => q => q.Where(c => c.SubmitterName.Contains(query)),
+                nameof(CartItemDetailsDto.Count) => q => q.Where(c => c.Count.ToString().Contains(query)),
+                _ => null
+            };
+        }
+        else
+        {
+            userNameFilter = q => q;
+        }
+
+        if (userNameFilter is null)
+        {
+            return BadRequest("Invalid type");
+        }
+
+        _logger.LogDebug("Fetching product information matching search term.");
+        var cidtoList = await _cartItemRepository.GetAllAsync(q =>
+            userNameFilter(_mapper.ProjectTo<CartItemDetailsDto>(q)
+                .OrderByDescending(p => p.UserName)
+                .ThenByDescending(p => p.ProductName)
+                .Take(20)
+            )
+        );
+
+        return View(cidtoList);
+        
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -113,19 +151,19 @@ public class CartController
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to add product to cart" });
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Search));
     }
 
     [HttpPost]
     [ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(CartItemDetailsDto cidto)
+    public async Task<IActionResult> Delete(AdminCartItemCreateDto cidto)
     {
         if (ModelState.IsValid)
         {
             _logger.LogInformation("POST: Admin/Cart/Delete.");
 
-            var cartItem = _mapper.Map<CartItemDetailsDto, CartItem>(cidto);
+            var cartItem = _mapper.Map<CartItem>(cidto);
 
             _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
             await _cartItemRepository.DeleteCertainEntriesAsync(q => q
@@ -138,7 +176,7 @@ public class CartController
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Search));
     }
 
     [HttpPost]
@@ -165,7 +203,7 @@ public class CartController
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Search));
         
     }
 

@@ -1,0 +1,12 @@
+﻿@{
+    Layout = "_Layout";
+}
+<!DOCTYPE html>
+
+<ul>
+    <li><a asp-area="Admin" asp-controller="Products" asp-action="Search">Products</a></li>
+    <li><a asp-area="Admin" asp-controller="User" asp-action="Search">Users</a></li>
+    <li><a asp-area="Admin" asp-controller="Cart" asp-action="Search">Carts</a></li>
+</ul>
+
+@RenderBody()

@@ -1,24 +1,137 @@
-﻿@model IEnumerable<ProductDetailsDto>?
+﻿@model IEnumerable<ProductDetailsDto>
 
 @{
     ViewData["Title"] = "Search";
+    Layout = "_SearchLayout";
 }
 
 <h1>Search</h1>
 
-<div class="my-4">
-    <partial name="_SearchFormPartial" model="@("Products", "Search", "query")"/>
-</div>
-
-@if (Model is null)
-{
-    <p>Please enter a non-empty search term.</p>
-}
-else if (Model.Count() <= 0)
-{
-    <p>No search result found.</p> 
-}
-else
-{
-    <partial name="_ProductCardsPartial" model="Model" />
-}
+<p>
+    <a asp-area="Admin" asp-controller="Products" asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Price)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CategoryName)
+            </th>
+            <th class="mw-25">
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SubmitterName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InsertionDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ModificationDate)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(ProductDetailsDto.Name)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(ProductDetailsDto.Price)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(ProductDetailsDto.CategoryName)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(ProductDetailsDto.Description)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(ProductDetailsDto.SubmitterName)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(ProductDetailsDto.InsertionDate)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(ProductDetailsDto.ModificationDate)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+            </td>
+        </tr>
+    @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Price)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CategoryName) 
+            </td>
+            <td style="white-space: pre-wrap">@Html.DisplayFor(modelItem => item.Description)</td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SubmitterName) 
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.InsertionDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModificationDate)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

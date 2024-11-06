@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.Operations;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Dtos.Product;
@@ -50,29 +51,51 @@ public class ProductsController : Controller
     // GET: Products
     public async Task<IActionResult> Index()
     {
-        _logger.LogInformation("GET: Entering Products/Index.");
+        _logger.LogInformation("GET: Entering Admin/Products/Index.");
         _logger.LogDebug("Fetching all product information.");
         IEnumerable<ProductDetailsDto> pdtoList = await _productRepository.GetAllAsync(q => _mapper.ProjectTo<ProductDetailsDto>(q));
         return View(pdtoList);
     }
 
-    public async Task<IActionResult> Search(string? query)
+    public async Task<IActionResult> Search(string? query, string? type)
     {
-        _logger.LogInformation("GET: Entering Products/Search.");
+        _logger.LogInformation("GET: Entering Admin/Products/Search.");
 
-        IEnumerable<ProductDetailsDto>? pdtoList = null;
-        if (!string.IsNullOrWhiteSpace(query))
+        Func<IQueryable<ProductDetailsDto>, IQueryable<ProductDetailsDto>>? queryFilter;
+        if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
         {
-            _logger.LogDebug("Fetching product information matching search term.");
-            pdtoList = await _productRepository.GetAllAsync(q =>
-                _mapper.ProjectTo<ProductDetailsDto>(q
-                    .Where(p => p.Name.Contains(query))
-                    .OrderByDescending(p => p.InsertionDate)
-                    .ThenByDescending(p => p.ModificationDate)
-                    .Take(paginationCount)
-                )
-            );
+            queryFilter = type switch
+            {
+                nameof(ProductDetailsDto.Name) => q => q.Where(p => p.Name.Contains(query)),
+                nameof(ProductDetailsDto.Price) => q => q.Where(p => p.Price.ToString().Contains(query)),
+                nameof(ProductDetailsDto.CategoryName) => q => q.Where(p => p.CategoryName != null && p.CategoryName.Contains(query)),
+                nameof(ProductDetailsDto.Description) => q => q.Where(p => p.Description != null && p.Description.Contains(query)),
+                nameof(ProductDetailsDto.SubmitterName) => q => q.Where(p => p.SubmitterName.Contains(query)),
+                nameof(ProductDetailsDto.InsertionDate) => q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
+                nameof(ProductDetailsDto.ModificationDate) => q => q.Where(p => p.ModificationDate != null && p.ModificationDate.ToString().Contains(query)),
+                _ => null
+            };
         }
+        else
+        {
+            queryFilter = q => q;
+        }
+
+        if (queryFilter is null)
+        {
+            return BadRequest("Invalid type");
+        }
+
+        _logger.LogDebug("Fetching product information matching search term.");
+        var pdtoList = await _productRepository.GetAllAsync(q =>
+            queryFilter(_mapper.ProjectTo<ProductDetailsDto>(q)
+                .OrderByDescending(p => p.InsertionDate)
+                .ThenByDescending(p => p.ModificationDate)
+                .Take(paginationCount)
+            )
+        );
+
+
         return View(pdtoList);
         
     }
@@ -80,7 +103,7 @@ public class ProductsController : Controller
     // GET: Products/Details/5
     public async Task<IActionResult> Details(int? id)
     {
-        _logger.LogInformation("GET: Entering Products/Details.");
+        _logger.LogInformation("GET: Entering Admin/Products/Details.");
         if (id == null)
         {
             _logger.LogError("The specified id \"{Id}\" for Product/Details does not exist.", id);
@@ -105,7 +128,7 @@ public class ProductsController : Controller
     // GET: Products/Create
     public async Task<IActionResult> Create()
     {
-        _logger.LogInformation($"GET: Entering Products/Details.");
+        _logger.LogInformation($"GET: Entering Admin/Products/Details.");
         var pdto = _mapper.Map<Product, AdminProductCreateDto>(new Product());
         _logger.LogDebug($"Fetching all categories and users.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
@@ -122,7 +145,7 @@ public class ProductsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(AdminProductCreateDto pdto)
     {
-        _logger.LogInformation($"POST: Entering Products/Create.");
+        _logger.LogInformation($"POST: Entering Admin/Products/Create.");
         if (ModelState.IsValid)
         {
             try
@@ -207,7 +230,7 @@ public class ProductsController : Controller
     // GET: Products/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
-        _logger.LogInformation($"GET: Entering Products/Edit.");
+        _logger.LogInformation($"GET: Entering Admin/Products/Edit.");
         if (id == null)
         {
             _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
@@ -249,7 +272,7 @@ public class ProductsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, AdminProductCreateDto pdto)
     {
-        _logger.LogInformation($"POST: Entering Products/Edit.");
+        _logger.LogInformation($"POST: Entering Admin/Products/Edit.");
         if (!_productRepository.Exists(q => q.Where(p => p.Id == id)))
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
@@ -324,7 +347,7 @@ public class ProductsController : Controller
     // GET: Products/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
-        _logger.LogInformation($"GET: Entering Products/Delete.");
+        _logger.LogInformation($"GET: Entering Admin/Products/Delete.");
         if (id == null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
@@ -352,7 +375,7 @@ public class ProductsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        _logger.LogInformation($"POST: Entering Products/Delete.");
+        _logger.LogInformation($"POST: Entering Admin/Products/Delete.");
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         Product? product = await _productRepository.GetSingleAsync(q => q
@@ -381,7 +404,7 @@ public class ProductsController : Controller
     public async Task<IActionResult> ResetImage(int id)
     {
 
-        _logger.LogInformation($"POST: Entering Products/ResetImage.");
+        _logger.LogInformation($"POST: Entering Admin/Products/ResetImage.");
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var productInfo = await _productRepository.GetSingleAsync(q => q
             .Where(p => p.Id == id)
