@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -8,21 +8,60 @@ using SP_Shopping.Repository;
 namespace SP_Shopping.Areas.Admin.Controllers;
 
 [Area("Admin")]
+[Authorize(Roles = "Admin")]
 public class CategoriesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IRepositoryCaching<Category> _categoryRepository;
+    private readonly ILogger<CategoriesController> _logger;
 
-    public CategoriesController(ApplicationDbContext context, IRepositoryCaching<Category> categoryRepository)
+    public CategoriesController(ApplicationDbContext context, IRepositoryCaching<Category> categoryRepository, ILogger<CategoriesController> logger)
     {
         _context = context;
         _categoryRepository = categoryRepository;
+        _logger = logger;
     }
 
     // GET: Categories
     public async Task<IActionResult> Index()
     {
         return View(await _categoryRepository.GetAllAsync());
+    }
+
+    public async Task<IActionResult> Search(string? query, string? type)
+    {
+        _logger.LogInformation("GET: Entering Admin/Products/Search.");
+
+        Func<IQueryable<Category>, IQueryable<Category>>? queryFilter;
+        if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
+        {
+            queryFilter = type switch
+            {
+                nameof(Category.Id) => q => q.Where(p => p.Id.ToString().Contains(query)),
+                nameof(Category.Name) => q => q.Where(p => p.Name.Contains(query)),
+                _ => null
+            };
+        }
+        else
+        {
+            queryFilter = q => q;
+        }
+
+        if (queryFilter is null)
+        {
+            return BadRequest("Invalid type");
+        }
+
+        _logger.LogDebug("Fetching product information matching search term.");
+        var pdtoList = await _categoryRepository.GetAllAsync(q =>
+            queryFilter(q
+                .OrderByDescending(p => p.Name)
+                .Take(20)
+            )
+        );
+
+        return View(pdtoList);
+        
     }
 
     // GET: Categories/Details/5

@@ -1,0 +1,65 @@
+﻿@model IEnumerable<Category>
+
+@{
+    ViewData["Title"] = "Search";
+    Layout = "_SearchLayout";
+}
+
+<p>
+    <a asp-area="Admin" asp-controller="Categories" asp-action="Create">Create New</a>
+</p>
+
+<div class="table-responsive">
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Id)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(Category.Id)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get">
+                    <input name="query" />
+                    <input type="hidden" name="type" value="@nameof(Category.Name)" />
+                    <button type="submit">Search</button>
+                </form>
+                </search>
+            </td>
+            <td>
+            </td>
+        </tr>
+    @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>
