@@ -10,6 +10,9 @@
     <thead>
         <tr>
             <th>
+                @Html.DisplayNameFor(model => model.Id)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.UserName)
             </th>
             <th>
@@ -21,6 +24,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.Roles)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InsertionDate)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -29,7 +35,16 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
+                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.Id)" />
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get" class="d-flex">
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
                     <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.UserName)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -38,7 +53,7 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
                     <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.PhoneNumber)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -47,7 +62,7 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
                     <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.Email)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -56,8 +71,17 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
                     <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.Roles)" />
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get" class="d-flex">
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
+                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.InsertionDate)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
                 </search>
@@ -67,6 +91,9 @@
         </tr>
     @foreach (var item in Model) {
         <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Id)
+            </td>
             <td>
                 @Html.DisplayFor(modelItem => item.UserName)
             </td>
@@ -80,6 +107,9 @@
                 @foreach (var role in item.Roles) {
                     <p>@(role)</p>
                 }
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.InsertionDate) 
             </td>
             <td>
 @*                 <form asp-action="Edit">

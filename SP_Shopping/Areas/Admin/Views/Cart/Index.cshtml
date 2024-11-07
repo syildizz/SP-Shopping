@@ -1,4 +1,4 @@
-﻿@model IEnumerable<CartItemDetailsDto>
+﻿@model IEnumerable<AdminCartItemDetailsDto>
 
 @{
     ViewData["Title"] = "Index";
@@ -14,13 +14,22 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.UserName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SubmitterName)
+                @Html.DisplayNameFor(model => model.ProductId)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.ProductName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UserId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UserName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SubmitterId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SubmitterName)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Count)
@@ -33,8 +42,8 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
-                    <input type="hidden" name="type" value="@nameof(CartItemDetailsDto.UserName)" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
+                    <input type="hidden" name="type" value="@nameof(AdminCartItemDetailsDto.ProductId)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
                 </search>
@@ -42,8 +51,8 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
-                    <input type="hidden" name="type" value="@nameof(CartItemDetailsDto.SubmitterName)" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
+                    <input type="hidden" name="type" value="@nameof(AdminCartItemDetailsDto.ProductName)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
                 </search>
@@ -51,8 +60,8 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
-                    <input type="hidden" name="type" value="@nameof(CartItemDetailsDto.ProductName)" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
+                    <input type="hidden" name="type" value="@nameof(AdminCartItemDetailsDto.UserId)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
                 </search>
@@ -60,8 +69,35 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
-                    <input type="hidden" name="type" value="@nameof(CartItemDetailsDto.Count)" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
+                    <input type="hidden" name="type" value="@nameof(AdminCartItemDetailsDto.UserName)" />
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get" class="d-flex">
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
+                    <input type="hidden" name="type" value="@nameof(AdminCartItemDetailsDto.SubmitterId)" />
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get" class="d-flex">
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
+                    <input type="hidden" name="type" value="@nameof(AdminCartItemDetailsDto.SubmitterName)" />
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get" class="d-flex">
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
+                    <input type="hidden" name="type" value="@nameof(AdminCartItemDetailsDto.Count)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
                 </search>
@@ -72,13 +108,22 @@
     @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.UserName)
+                @Html.DisplayFor(modelItem => item.ProductId)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.SubmitterName)
+                @Html.DisplayFor(modelItem => item.ProductName)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.ProductName) 
+                @Html.DisplayFor(modelItem => item.UserId) 
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserName) 
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SubmitterId) 
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SubmitterName) 
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Count) 
@@ -94,7 +139,7 @@
                 <form asp-action="Delete">
                     <input type="hidden" name="@nameof(AdminCartItemCreateDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
                     <input type="hidden" name="@nameof(AdminCartItemCreateDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
-                    <input type="submit" value="Remove from cart" class="btn btn-danger btn-sm" />
+                    <input type="submit" value="Delete" class="btn btn-danger btn-sm" />
                 </form>
             </td>
         </tr>

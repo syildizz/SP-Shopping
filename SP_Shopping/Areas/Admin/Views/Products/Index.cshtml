@@ -14,6 +14,9 @@
     <thead>
         <tr>
             <th>
+                @Html.DisplayNameFor(model => model.Id)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.Name)
             </th>
             <th>
@@ -24,6 +27,9 @@
             </th>
             <th class="mw-25">
                 @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SubmitterId)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.SubmitterName)
@@ -42,7 +48,16 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;" />
+                    <input type="hidden" name="type" value="@nameof(ProductDetailsDto.Id)" />
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get" class="d-flex">
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;" />
                     <input type="hidden" name="type" value="@nameof(ProductDetailsDto.Name)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -51,7 +66,7 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;" />
                     <input type="hidden" name="type" value="@nameof(ProductDetailsDto.Price)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -60,7 +75,7 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;" />
                     <input type="hidden" name="type" value="@nameof(ProductDetailsDto.CategoryName)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -69,7 +84,7 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;" />
                     <input type="hidden" name="type" value="@nameof(ProductDetailsDto.Description)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -78,7 +93,16 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;" />
+                    <input type="hidden" name="type" value="@nameof(ProductDetailsDto.SubmitterId)" />
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                </form>
+                </search>
+            </td>
+            <td>
+                <search>
+                <form action="#" method="get" class="d-flex">
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;" />
                     <input type="hidden" name="type" value="@nameof(ProductDetailsDto.SubmitterName)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -87,7 +111,7 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;" />
                     <input type="hidden" name="type" value="@nameof(ProductDetailsDto.InsertionDate)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -96,7 +120,7 @@
             <td>
                 <search>
                 <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" />
+                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
                     <input type="hidden" name="type" value="@nameof(ProductDetailsDto.ModificationDate)" />
                     <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
                 </form>
@@ -108,6 +132,9 @@
     @foreach (var item in Model) {
         <tr>
             <td>
+                @Html.DisplayFor(modelItem => item.Id)
+            </td>
+            <td>
                 @Html.DisplayFor(modelItem => item.Name)
             </td>
             <td>
@@ -117,6 +144,9 @@
                 @Html.DisplayFor(modelItem => item.CategoryName) 
             </td>
             <td style="white-space: pre-wrap">@Html.DisplayFor(modelItem => item.Description)</td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SubmitterId) 
+            </td>
             <td>
                 @Html.DisplayFor(modelItem => item.SubmitterName) 
             </td>

@@ -31,24 +31,6 @@ public class UserController
     private readonly ILogger<UserController> _logger = logger;
     private readonly IMapper _mapper = mapper;
 
-    //public async Task<IActionResult> Index(string id)
-    //{
-    //    _logger.LogInformation("GET: Entering Admin/User/Index");
-    //    UserPageDto? udto = await _userRepository.GetSingleAsync(q => 
-    //        _mapper.ProjectTo<UserPageDto>(q
-    //            .Where(u => u.Id == id)
-    //        )
-    //    );
-
-    //    if (udto is null)
-    //    {
-    //        _logger.LogError("The user with the id of \"{Id}\" does not exist", id);
-    //        return NotFound("The user does not exist");
-    //    }
-
-    //    return View(udto);
-    //}
-
     public async Task<IActionResult> Index(string? query, string? type)
     {
         _logger.LogInformation("GET: Entering Admin/Products.");
@@ -63,6 +45,7 @@ public class UserController
                 nameof(AdminUserDetailsDto.PhoneNumber) => q => q.Where(u => u.PhoneNumber.Contains(query)),
                 nameof(AdminUserDetailsDto.Email) => q => q.Where(u => u.Email.Contains(query)),
                 nameof(AdminUserDetailsDto.Roles) => q => q.Where(u => u.Roles.Aggregate(" ", (acc, curr) => acc + curr).Contains(query)),
+                nameof(AdminUserDetailsDto.InsertionDate) => q => q.Where(u => u.InsertionDate.ToString().Contains(query)),
                 _ => null
             };
         }

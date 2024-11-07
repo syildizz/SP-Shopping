@@ -57,10 +57,12 @@ public class ProductsController : Controller
         {
             queryFilter = type switch
             {
+                nameof(ProductDetailsDto.Id) => q => q.Where(p => p.Name.Contains(query)),
                 nameof(ProductDetailsDto.Name) => q => q.Where(p => p.Name.Contains(query)),
                 nameof(ProductDetailsDto.Price) => decimal.TryParse(query, out var queryNumber) ? q => q.Where(p => p.Price == queryNumber) : q => q,
                 nameof(ProductDetailsDto.CategoryName) => q => q.Where(p => p.CategoryName != null && p.CategoryName.Contains(query)),
                 nameof(ProductDetailsDto.Description) => q => q.Where(p => p.Description != null && p.Description.Contains(query)),
+                nameof(ProductDetailsDto.SubmitterId) => q => q.Where(p => p.SubmitterName.Contains(query)),
                 nameof(ProductDetailsDto.SubmitterName) => q => q.Where(p => p.SubmitterName.Contains(query)),
                 nameof(ProductDetailsDto.InsertionDate) => q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
                 nameof(ProductDetailsDto.ModificationDate) => q => q.Where(p => p.ModificationDate != null && p.ModificationDate.ToString().Contains(query)),

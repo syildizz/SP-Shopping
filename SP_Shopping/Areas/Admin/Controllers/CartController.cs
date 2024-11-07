@@ -34,15 +34,18 @@ public class CartController
     {
         _logger.LogInformation("GET: Entering Admin/Products.");
 
-        Func<IQueryable<CartItemDetailsDto>, IQueryable<CartItemDetailsDto>>? userNameFilter;
+        Func<IQueryable<AdminCartItemDetailsDto>, IQueryable<AdminCartItemDetailsDto>>? userNameFilter;
         if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
         {
             userNameFilter = type switch
             {
-                nameof(CartItemDetailsDto.ProductName) => q => q.Where(c => c.ProductName.Contains(query)),
-                nameof(CartItemDetailsDto.UserName) => q => q.Where(c => c.UserName.Contains(query)),
-                nameof(CartItemDetailsDto.SubmitterName) => q => q.Where(c => c.SubmitterName.Contains(query)),
-                nameof(CartItemDetailsDto.Count) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.Count == queryNumber) : q => q,
+                nameof(AdminCartItemDetailsDto.ProductId) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.ProductId == queryNumber) : q => q,
+                nameof(AdminCartItemDetailsDto.ProductName) => q => q.Where(c => c.ProductName.Contains(query)),
+                nameof(AdminCartItemDetailsDto.UserId) => q => q.Where(c => c.UserName.Contains(query)),
+                nameof(AdminCartItemDetailsDto.UserName) => q => q.Where(c => c.UserName.Contains(query)),
+                nameof(AdminCartItemDetailsDto.SubmitterId) => q => q.Where(c => c.SubmitterName.Contains(query)),
+                nameof(AdminCartItemDetailsDto.SubmitterName) => q => q.Where(c => c.SubmitterName.Contains(query)),
+                nameof(AdminCartItemDetailsDto.Count) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.Count == queryNumber) : q => q,
                 _ => null
             };
         }
@@ -58,7 +61,7 @@ public class CartController
 
         _logger.LogDebug("Fetching product information matching search term.");
         var cidtoList = await _cartItemRepository.GetAllAsync(q =>
-            userNameFilter(_mapper.ProjectTo<CartItemDetailsDto>(q)
+            userNameFilter(_mapper.ProjectTo<AdminCartItemDetailsDto>(q)
                 .OrderByDescending(p => p.UserName)
                 .ThenByDescending(p => p.ProductName)
                 .Take(20)
@@ -67,6 +70,13 @@ public class CartController
 
         return View(cidtoList);
         
+    }
+
+    public async Task<IActionResult> Create()
+    {
+        _logger.LogInformation("GET: Admin/Cart/Create.");
+
+        return View(new AdminCartItemCreateDto());
     }
 
     [HttpPost]

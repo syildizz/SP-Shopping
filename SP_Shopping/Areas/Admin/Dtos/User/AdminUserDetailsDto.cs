@@ -8,4 +8,6 @@ public class AdminUserDetailsDto
     public string PhoneNumber { get; set; }
     public List<string> Roles { get; set; }
 
+    public DateTime InsertionDate { get; set; }
+
 }
