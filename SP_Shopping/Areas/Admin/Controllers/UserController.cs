@@ -12,6 +12,7 @@ using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.ImageValidator;
 using SP_Shopping.Utilities.MessageHandler;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
 
@@ -96,6 +97,13 @@ public class UserController
                 .Where(u => u.Id == id)
             )
         );
+
+        if (udto is null)
+        {
+            return NotFound("The user is not found");
+        }
+
+        udto.Roles = (await _userManager.GetRolesAsync(_mapper.Map<ApplicationUser>(udto))).Aggregate("", (acc, curr) => acc + " " + curr, fin => fin.Trim());
         return View(udto);
     }
 
@@ -105,6 +113,11 @@ public class UserController
         _logger.LogInformation("POST: Entering Admin/Edit.");
 
         var user = await _userRepository.GetSingleAsync(q => q.Where(u => u.Id == id));
+
+        if (user is null)
+        {
+            return NotFound("The user is not found");
+        }
 
         var transactionSucceeded = await _userRepository.DoInTransactionAsync(async () =>
         {
@@ -123,6 +136,7 @@ public class UserController
                 _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to set email" });
                 return false;
             }
+    
 
             result = await _userManager.SetPhoneNumberAsync(user, udto.PhoneNumber);
             if (!result.Succeeded)
@@ -131,10 +145,63 @@ public class UserController
                 return false;
             }
 
+            if (!string.IsNullOrWhiteSpace(udto.Roles))
+            {
+                var userRoles = (await _userManager.GetRolesAsync(user)).Select(s => s.ToUpperInvariant());
+                var requestRoles = udto.Roles.Split(' ').Where(r => !string.IsNullOrWhiteSpace(r)).Select(s => s.ToUpperInvariant());
+                var userDifferenceRequestRoles = userRoles.Except(requestRoles);
+                var requestDifferenceUserRoles = requestRoles.Except(userRoles);
+
+                var wentToCatch = false;
+                var errorMessage = "Failed to set roles";
+                try
+                {
+                    result = await _userManager.AddToRolesAsync(user, requestDifferenceUserRoles);
+                }
+                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.Message; }
+                if (wentToCatch || !result.Succeeded)
+                {
+                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = errorMessage });
+                    return false;
+                }
+
+                wentToCatch = false;
+                try
+                {
+                    result = await _userManager.RemoveFromRolesAsync(user, userDifferenceRequestRoles);
+                }
+                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.Message; }
+                if (wentToCatch || !result.Succeeded)
+                {
+                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = errorMessage });
+                    return false;
+                }
+            }
+            else
+            {
+                var wentToCatch = false;
+                var errorMessage = "Failed to set roles";
+                try
+                {
+                    result = await _userManager.RemoveFromRolesAsync(user, await _userManager.GetRolesAsync(user));
+                }
+                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.Message; }
+                if (wentToCatch || !result.Succeeded)
+                {
+                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = errorMessage });
+                    return false;
+                }
+            }
+
             int result2 = await _userRepository.UpdateCertainFieldsAsync(q => q
                 .Where(u => u.Id == udto.Id),
                 s => s
                     .SetProperty(u => u.Description, udto.Description)
+                    // Confirm e-mail and phone number when changed by admin.
+                    // Maybe change this functionality in the future idk.
+                    // TODO: Add panels in admin panel to confirm / unconfirm user email / phone number
+                    .SetProperty(u => u.EmailConfirmed, true)
+                    .SetProperty(u => u.PhoneNumberConfirmed, true)
             );
 
             if (result2 < 1)

@@ -38,6 +38,11 @@
                 <span asp-validation-for="@Model.PhoneNumber" class="text-danger"></span>
             </div>
             <div class="form-group">
+                <label asp-for="@Model.Roles" class="control-label"></label>
+                <input asp-for="@Model.Roles" class="form-control" />
+                <span asp-validation-for="@Model.Roles" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="@Model.Description" class="control-label"></label>
                 <textarea asp-for="@Model.Description" class="form-control"></textarea>
                 <span asp-validation-for="@Model.Description" class="text-danger"></span>
