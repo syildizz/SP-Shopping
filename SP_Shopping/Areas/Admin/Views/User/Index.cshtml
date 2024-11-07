@@ -125,19 +125,11 @@
                 @Html.DisplayFor(modelItem => item.InsertionDate) 
             </td>
             <td>
-@*                 <form asp-action="Edit">
-                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
-                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
-                    <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" />
-                    <span asp-validation-for="@item.Count" class="text-danger"></span>
-                    <input type="submit" value="Update" class="btn btn-secondary btn-sm" />
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-secondary btn-sm">Update</a>
+                <form asp-action="Delete" asp-route-id="@item.Id">
+                    <input type="submit" value="Remove user" class="btn btn-danger btn-sm" />
                 </form>
-                <form asp-action="Delete">
-                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.UserId)" asp-for="@item.UserId" value="@item.UserId"/>
-                    <input type="hidden" name="@nameof(AdminCartItemCreateDto.ProductId)" asp-for="@item.ProductId" value="@item.ProductId"/>
-                    <input type="submit" value="Remove from cart" class="btn btn-danger btn-sm" />
-                </form>
- *@            </td>
+            </td>
         </tr>
     }
     </tbody>

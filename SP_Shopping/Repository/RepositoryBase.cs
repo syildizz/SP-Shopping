@@ -130,4 +130,52 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
         return await _context.SaveChangesAsync();
     }
 
+    public virtual bool DoInTransaction(Func<bool> action)
+    {
+        using var transact = _context.Database.BeginTransaction();
+        try
+        {
+            var succeeded = action();
+            if (succeeded)
+            {
+                transact.Commit();
+                return true;
+            }
+            else
+            {
+                transact.Rollback();
+                return false;
+            }
+        }
+        catch
+        {
+            transact.Rollback();
+            throw;
+        }
+    }
+
+    public virtual async Task<bool> DoInTransactionAsync(Func<Task<bool>> action)
+    {
+        using var transact = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var succeeded = await action();
+            if (succeeded)
+            {
+                await transact.CommitAsync();
+                return true;
+            }
+            else
+            {
+                await transact.RollbackAsync();
+                return false;
+            }
+        }
+        catch
+        {
+            await transact.RollbackAsync();
+            throw;
+        }
+    }
+
 }

@@ -1,7 +1,7 @@
 ﻿namespace SP_Shopping.Utilities.ImageValidator;
 
-public readonly struct ImageValidatorResult(ResultType type, string defaultMessage)
+public readonly struct ImageValidatorResult(ImageValidatorResultType type, string defaultMessage)
 {
-    public ResultType Type { get; } = type;
+    public ImageValidatorResultType Type { get; } = type;
     public string DefaultMessage { get; } = defaultMessage;
 }

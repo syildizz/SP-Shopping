@@ -72,7 +72,7 @@ public class CartController
         
     }
 
-    public async Task<IActionResult> Create()
+    public IActionResult Create()
     {
         _logger.LogInformation("GET: Admin/Cart/Create.");
 
