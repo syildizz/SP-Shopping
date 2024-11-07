@@ -45,6 +45,7 @@ public class UserController
                 nameof(AdminUserDetailsDto.PhoneNumber) => q => q.Where(u => u.PhoneNumber.Contains(query)),
                 nameof(AdminUserDetailsDto.Email) => q => q.Where(u => u.Email.Contains(query)),
                 nameof(AdminUserDetailsDto.Roles) => q => q.Where(u => u.Roles.Aggregate(" ", (acc, curr) => acc + curr).Contains(query)),
+                nameof(AdminUserDetailsDto.Description) => q => q.Where(u => u.Description.Contains(query)),
                 nameof(AdminUserDetailsDto.InsertionDate) => q => q.Where(u => u.InsertionDate.ToString().Contains(query)),
                 _ => null
             };
