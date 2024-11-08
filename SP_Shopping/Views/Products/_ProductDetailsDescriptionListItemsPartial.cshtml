@@ -32,7 +32,7 @@ else {
     @Html.DisplayNameFor(model => model.SubmitterName)
 </dt>
 <dd class = "col-sm-10">
-    @Html.DisplayFor(model => model.SubmitterName)
+    <a asp-controller="User" asp-action="Index" asp-route-id="@Model.SubmitterId">@Html.DisplayFor(model => model.SubmitterName)</a>
 </dd>
 <dt class = "col-sm-2">
     @Html.DisplayNameFor(model => model.InsertionDate)
