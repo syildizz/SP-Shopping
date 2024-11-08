@@ -1,13 +1,43 @@
 ﻿@{
     Layout = "_Layout";
+    ViewData["AdminPanelCreateArea"] ??= "Admin";
+    ViewData["AdminPanelCreateAction"] ??= "Create";
 }
-<!DOCTYPE html>
 
-<ul>
-    <li><a asp-area="Admin" asp-controller="Products" asp-action="Index">Products</a></li>
-    <li><a asp-area="Admin" asp-controller="Categories" asp-action="Index">Categories</a></li>
-    <li><a asp-area="Admin" asp-controller="User" asp-action="Index">Users</a></li>
-    <li><a asp-area="Admin" asp-controller="Cart" asp-action="Index">Carts</a></li>
-</ul>
-
+<nav class="navbar">
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a asp-area="Admin" asp-controller="Products" asp-action="Index" class="nav-link" aria-current="page">
+                Products
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-area="Admin" asp-controller="Categories" asp-action="Index" class="nav-link" aria-current="page">
+                Categories
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-area="Admin" asp-controller="User" asp-action="Index" class="nav-link" aria-current="page">
+                Users
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-area="Admin" asp-controller="Cart" asp-action="Index" class="nav-link" aria-current="page">
+                Carts
+            </a>
+        </li>
+    </ul>
+    @if (ViewData["AdminPanelCreateController"] is string createController)
+    {
+        <a asp-area="@ViewData["AdminPanelCreateArea"]"  asp-controller="@createController" asp-action="@ViewData["AdminPanelCreateAction"]" class="btn btn-primary" aria-current="page">
+            Create New
+        </a>
+    }
+    else
+    {
+        <a asp-area="@ViewData["AdminPanelCreateArea"]"  asp-action="@ViewData["AdminPanelCreateAction"]" class="btn btn-primary" aria-current="page">
+            Create New
+        </a>
+    }
+</nav>
 @RenderBody()
