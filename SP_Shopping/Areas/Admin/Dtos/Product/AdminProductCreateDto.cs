@@ -18,7 +18,7 @@ public class AdminProductCreateDto
     [Required]
     [PrecisionAndScale(18, 2)]
     public decimal Price { get; set; }
-    [DisplayName(nameof(Category))]
+    [DisplayName("Category")]
     public int CategoryId { get; set; }
     public string? Description { get; set; }
     [Display(Name = "Product Picture")]

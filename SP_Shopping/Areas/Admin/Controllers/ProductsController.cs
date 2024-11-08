@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.Product;
-using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
@@ -52,20 +51,20 @@ public class ProductsController : Controller
     {
         _logger.LogInformation("GET: Entering Admin/Products.");
 
-        Func<IQueryable<ProductDetailsDto>, IQueryable<ProductDetailsDto>>? queryFilter;
+        Func<IQueryable<AdminProductDetailsDto>, IQueryable<AdminProductDetailsDto>>? queryFilter;
         if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
         {
             queryFilter = type switch
             {
-                nameof(ProductDetailsDto.Id) => q => q.Where(p => p.Name.Contains(query)),
-                nameof(ProductDetailsDto.Name) => q => q.Where(p => p.Name.Contains(query)),
-                nameof(ProductDetailsDto.Price) => decimal.TryParse(query, out var queryNumber) ? q => q.Where(p => p.Price == queryNumber) : q => q,
-                nameof(ProductDetailsDto.CategoryName) => q => q.Where(p => p.CategoryName != null && p.CategoryName.Contains(query)),
-                nameof(ProductDetailsDto.Description) => q => q.Where(p => p.Description != null && p.Description.Contains(query)),
-                nameof(ProductDetailsDto.SubmitterId) => q => q.Where(p => p.SubmitterName.Contains(query)),
-                nameof(ProductDetailsDto.SubmitterName) => q => q.Where(p => p.SubmitterName.Contains(query)),
-                nameof(ProductDetailsDto.InsertionDate) => q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
-                nameof(ProductDetailsDto.ModificationDate) => q => q.Where(p => p.ModificationDate != null && p.ModificationDate.ToString().Contains(query)),
+                nameof(AdminProductDetailsDto.Id) => q => q.Where(p => p.Name.Contains(query)),
+                nameof(AdminProductDetailsDto.Name) => q => q.Where(p => p.Name.Contains(query)),
+                nameof(AdminProductDetailsDto.Price) => decimal.TryParse(query, out var queryNumber) ? q => q.Where(p => p.Price == queryNumber) : q => q,
+                nameof(AdminProductDetailsDto.CategoryName) => q => q.Where(p => p.CategoryName != null && p.CategoryName.Contains(query)),
+                nameof(AdminProductDetailsDto.Description) => q => q.Where(p => p.Description != null && p.Description.Contains(query)),
+                nameof(AdminProductDetailsDto.SubmitterId) => q => q.Where(p => p.SubmitterName.Contains(query)),
+                nameof(AdminProductDetailsDto.SubmitterName) => q => q.Where(p => p.SubmitterName.Contains(query)),
+                nameof(AdminProductDetailsDto.InsertionDate) => q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
+                nameof(AdminProductDetailsDto.ModificationDate) => q => q.Where(p => p.ModificationDate != null && p.ModificationDate.ToString().Contains(query)),
                 _ => null
             };
         }
@@ -81,7 +80,7 @@ public class ProductsController : Controller
 
         _logger.LogDebug("Fetching product information matching search term.");
         var pdtoList = await _productRepository.GetAllAsync(q =>
-            queryFilter(_mapper.ProjectTo<ProductDetailsDto>(q)
+            queryFilter(_mapper.ProjectTo<AdminProductDetailsDto>(q)
                 .OrderByDescending(p => p.InsertionDate)
                 .ThenByDescending(p => p.ModificationDate)
                 .Take(20)
@@ -103,8 +102,8 @@ public class ProductsController : Controller
             return BadRequest("Required parameter id not specified");
         }
 
-        ProductDetailsDto? pdto = await _productRepository.GetSingleAsync(q => 
-            _mapper.ProjectTo<ProductDetailsDto>(q
+        AdminProductDetailsDto? pdto = await _productRepository.GetSingleAsync(q => 
+            _mapper.ProjectTo<AdminProductDetailsDto>(q
                 .Where(p => p.Id == id)
             )
         );
@@ -349,7 +348,7 @@ public class ProductsController : Controller
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var pdto = await _productRepository.GetSingleAsync(q =>
-            _mapper.ProjectTo<ProductDetailsDto>(q
+            _mapper.ProjectTo<AdminProductDetailsDto>(q
                 .Where(p => p.Id == id)
             )
         );

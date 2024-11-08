@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace SP_Shopping.Dtos.Cart;
+namespace SP_Shopping.Areas.Admin.Dtos.Cart;
 
 public class AdminCartItemDetailsDto
 {

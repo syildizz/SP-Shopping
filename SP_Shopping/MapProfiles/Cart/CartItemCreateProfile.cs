@@ -2,12 +2,12 @@
 using SP_Shopping.Dtos.Cart;
 using SP_Shopping.Models;
 
-namespace SP_Shopping.MapProfiles.CartItem;
+namespace SP_Shopping.MapProfiles.Cart;
 
 public class CartItemCreateProfile : Profile
 {
     public CartItemCreateProfile()
     {
-        CreateMap<Models.CartItem, CartItemCreateDto>().ReverseMap();
+        CreateMap<CartItem, CartItemCreateDto>().ReverseMap();
     }
 }

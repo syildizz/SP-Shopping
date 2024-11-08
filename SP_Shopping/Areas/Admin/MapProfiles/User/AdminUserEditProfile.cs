@@ -2,7 +2,7 @@
 using SP_Shopping.Areas.Admin.Dtos.User;
 using SP_Shopping.Models;
 
-namespace SP_Shopping.Areas.Admin.MapProfiles;
+namespace SP_Shopping.Areas.Admin.MapProfiles.User;
 
 public class AdminUserEditProfile : Profile
 {
