@@ -2,18 +2,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Operations;
+using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.User;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.ImageValidator;
 using SP_Shopping.Utilities.MessageHandler;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
@@ -41,50 +38,68 @@ public class UserController
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
     private readonly IImageValidator _imageValidator = new ImageValidator();
 
-    public async Task<IActionResult> Index(string? query, string? type)
+    public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {
         _logger.LogInformation("GET: Entering Admin/Products.");
 
-        Func<IQueryable<AdminUserDetailsDto>, IQueryable<AdminUserDetailsDto>>? userNameFilter;
-        if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
-        {
-            userNameFilter = type switch
-            {
-                nameof(AdminUserDetailsDto.Id) => q => q.Where(u => u.Id.Contains(query)),
-                nameof(AdminUserDetailsDto.UserName) => q => q.Where(u => u.UserName.Contains(query)),
-                nameof(AdminUserDetailsDto.PhoneNumber) => q => q.Where(u => u.PhoneNumber.Contains(query)),
-                nameof(AdminUserDetailsDto.Email) => q => q.Where(u => u.Email.Contains(query)),
-                nameof(AdminUserDetailsDto.Roles) => q => q.Where(u => u.Roles.Aggregate(" ", (acc, curr) => acc + curr).Contains(query)),
-                nameof(AdminUserDetailsDto.Description) => q => q.Where(u => u.Description.Contains(query)),
-                nameof(AdminUserDetailsDto.InsertionDate) => q => q.Where(u => u.InsertionDate.ToString().Contains(query)),
-                _ => null
-            };
-        }
-        else
-        {
-            userNameFilter = q => q;
-        }
+        Func<IQueryable<AdminUserDetailsDto>, IQueryable<AdminUserDetailsDto>> queryFilter = q => q;
+        Func<IQueryable<AdminUserDetailsDto>, IQueryable<AdminUserDetailsDto>> sortFilter = q => q
+            .OrderByDescending(p => p.InsertionDate);
 
-        if (userNameFilter is null)
+        try
         {
-            return BadRequest("Invalid type");
+            if (!string.IsNullOrWhiteSpace(type))
+            {
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    queryFilter = type switch
+                    {
+                        nameof(AdminUserDetailsDto.Id) => q => q.Where(u => u.Id.Contains(query)),
+                        nameof(AdminUserDetailsDto.UserName) => q => q.Where(u => u.UserName.Contains(query)),
+                        nameof(AdminUserDetailsDto.PhoneNumber) => q => q.Where(u => u.PhoneNumber.Contains(query)),
+                        nameof(AdminUserDetailsDto.Email) => q => q.Where(u => u.Email.Contains(query)),
+                        nameof(AdminUserDetailsDto.Roles) => q => q.Where(u => u.Roles.Aggregate(" ", (acc, curr) => acc + curr).Contains(query)),
+                        nameof(AdminUserDetailsDto.Description) => q => q.Where(u => u.Description.Contains(query)),
+                        nameof(AdminUserDetailsDto.InsertionDate) => q => q.Where(u => u.InsertionDate.ToString().Contains(query)),
+                        _ => throw new NotImplementedException($"{type} is invalid")
+                    };
+                }
+
+                sort ??= false;
+                sortFilter = type switch
+                {
+                    nameof(AdminUserDetailsDto.Id) => (bool)sort ? q => q.OrderBy(u => u.Id) : q => q.OrderByDescending(u => u.Id),
+                    nameof(AdminUserDetailsDto.UserName) => (bool)sort ? q => q.OrderBy(u => u.UserName) : q => q.OrderByDescending(u => u.UserName),
+                    nameof(AdminUserDetailsDto.PhoneNumber) => (bool)sort ? q => q.OrderBy(u => u.PhoneNumber) : q => q.OrderByDescending(u => u.PhoneNumber),
+                    nameof(AdminUserDetailsDto.Email) => (bool)sort ? q => q.OrderBy(u => u.Email) : q => q.OrderByDescending(u => u.Email),
+                    nameof(AdminUserDetailsDto.Roles) => (bool)sort ? q => q.OrderBy(u => u.Roles) : q => q.OrderByDescending(u => u.Roles),
+                    nameof(AdminUserDetailsDto.Description) => (bool)sort ? q => q.OrderBy(u => u.Description) : q => q.OrderByDescending(u => u.Description),
+                    nameof(AdminUserDetailsDto.InsertionDate) => (bool)sort ? q => q.OrderBy(u => u.InsertionDate) : q => q.OrderByDescending(u => u.InsertionDate),
+                    _ => throw new NotImplementedException($"{type} is invalid")
+                };
+            }
+        }
+        catch (NotImplementedException ex)
+        {
+            return BadRequest(ex.Message);
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var udtoList = await _userRepository.GetAllAsync(q =>
-            userNameFilter(_mapper.ProjectTo<AdminUserDetailsDto>(q)
-                .OrderByDescending(p => p.UserName)
-                .ThenByDescending(p => p.Email)
+        var pdtoList = await _userRepository.GetAllAsync(q =>
+            _mapper.ProjectTo<AdminUserDetailsDto>(q)
                 .Take(20)
-            )
+                ._(queryFilter)
+                ._(sortFilter)
         );
-        foreach (var udto in udtoList)
+
+
+        foreach (var pdto in pdtoList)
         {
-            udto.Roles = (List<string>) await _userManager.GetRolesAsync(_mapper.Map<ApplicationUser>(udto));
+            pdto.Roles = (List<string>) await _userManager.GetRolesAsync(_mapper.Map<ApplicationUser>(pdto));
         }
 
 
-        return View(udtoList);
+        return View(pdtoList);
         
     }
 

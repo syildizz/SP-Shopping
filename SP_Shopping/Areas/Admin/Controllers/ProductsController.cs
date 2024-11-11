@@ -1,18 +1,19 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
+
 
 [Authorize(Roles = "Admin")]
 [Area("Admin")]
@@ -47,44 +48,64 @@ public class ProductsController : Controller
     }
 
     // GET: Products
-    public async Task<IActionResult> Index(string? query, string? type)
+    public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {
         _logger.LogInformation("GET: Entering Admin/Products.");
 
-        Func<IQueryable<AdminProductDetailsDto>, IQueryable<AdminProductDetailsDto>>? queryFilter;
-        if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
-        {
-            queryFilter = type switch
-            {
-                nameof(AdminProductDetailsDto.Id) => q => q.Where(p => p.Name.Contains(query)),
-                nameof(AdminProductDetailsDto.Name) => q => q.Where(p => p.Name.Contains(query)),
-                nameof(AdminProductDetailsDto.Price) => decimal.TryParse(query, out var queryNumber) ? q => q.Where(p => p.Price == queryNumber) : q => q,
-                nameof(AdminProductDetailsDto.CategoryName) => q => q.Where(p => p.CategoryName != null && p.CategoryName.Contains(query)),
-                nameof(AdminProductDetailsDto.Description) => q => q.Where(p => p.Description != null && p.Description.Contains(query)),
-                nameof(AdminProductDetailsDto.SubmitterId) => q => q.Where(p => p.SubmitterName.Contains(query)),
-                nameof(AdminProductDetailsDto.SubmitterName) => q => q.Where(p => p.SubmitterName.Contains(query)),
-                nameof(AdminProductDetailsDto.InsertionDate) => q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
-                nameof(AdminProductDetailsDto.ModificationDate) => q => q.Where(p => p.ModificationDate != null && p.ModificationDate.ToString().Contains(query)),
-                _ => null
-            };
-        }
-        else
-        {
-            queryFilter = q => q;
-        }
+        Func<IQueryable<AdminProductDetailsDto>, IQueryable<AdminProductDetailsDto>> queryFilter = q => q;
+        Func<IQueryable<AdminProductDetailsDto>, IQueryable<AdminProductDetailsDto>> sortFilter = q => q
+            .OrderByDescending(p => p.InsertionDate)
+            .ThenByDescending(p => p.ModificationDate);
 
-        if (queryFilter is null)
+        try
         {
-            return BadRequest("Invalid type");
+            if (!string.IsNullOrWhiteSpace(type))
+            {
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    queryFilter = type switch
+                    {
+                        nameof(AdminProductDetailsDto.Id) => q => q.Where(p => p.Name.Contains(query)),
+                        nameof(AdminProductDetailsDto.Name) => q => q.Where(p => p.Name.Contains(query)),
+                        nameof(AdminProductDetailsDto.Price) => decimal.TryParse(query, out var queryNumber) ? q => q.Where(p => p.Price == queryNumber) : q => q,
+                        nameof(AdminProductDetailsDto.CategoryName) => q => q.Where(p => p.CategoryName != null && p.CategoryName.Contains(query)),
+                        nameof(AdminProductDetailsDto.Description) => q => q.Where(p => p.Description != null && p.Description.Contains(query)),
+                        nameof(AdminProductDetailsDto.SubmitterId) => q => q.Where(p => p.SubmitterName.Contains(query)),
+                        nameof(AdminProductDetailsDto.SubmitterName) => q => q.Where(p => p.SubmitterName.Contains(query)),
+                        nameof(AdminProductDetailsDto.InsertionDate) => q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
+                        nameof(AdminProductDetailsDto.ModificationDate) => q => q.Where(p => p.ModificationDate != null && p.ModificationDate.ToString().Contains(query)),
+                        _ => throw new NotImplementedException($"{type} is invalid")
+                    };
+                }
+
+                sort ??= false;
+                sortFilter = type switch
+                {
+                    nameof(AdminProductDetailsDto.Id) => (bool)sort ? q => q.OrderBy(p => p.Id) : q => q.OrderByDescending(p => p.Id),
+                    nameof(AdminProductDetailsDto.Name) => (bool)sort ? q => q.OrderBy(p => p.Name) : q => q.OrderByDescending(p => p.Name),
+                    nameof(AdminProductDetailsDto.Price) => (bool)sort ? q => q.OrderBy(p => p.Price) : q => q.OrderByDescending(p => p.Price),
+                    nameof(AdminProductDetailsDto.CategoryName) => (bool)sort ? q => q.OrderBy(p => p.CategoryName) : q => q.OrderByDescending(p => p.CategoryName),
+                    nameof(AdminProductDetailsDto.Description) => (bool)sort ? q => q.OrderBy(p => p.Description) : q => q.OrderByDescending(p => p.Description),
+                    nameof(AdminProductDetailsDto.SubmitterId) => (bool)sort ? q => q.OrderBy(p => p.SubmitterId) : q => q.OrderByDescending(p => p.SubmitterId),
+                    nameof(AdminProductDetailsDto.SubmitterName) => (bool)sort ? q => q.OrderBy(p => p.SubmitterName) : q => q.OrderByDescending(p => p.SubmitterName),
+                    nameof(AdminProductDetailsDto.InsertionDate) => (bool)sort ? q => q.OrderBy(p => p.InsertionDate) : q => q.OrderByDescending(p => p.InsertionDate),
+                    nameof(AdminProductDetailsDto.ModificationDate) => (bool)sort ? q => q.OrderBy(p => p.ModificationDate) : q => q.OrderByDescending(p => p.ModificationDate),
+                    _ => throw new NotImplementedException($"{type} is invalid")
+                };
+
+            }
+        }
+        catch (NotImplementedException ex)
+        {
+            return BadRequest(ex.Message);
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
         var pdtoList = await _productRepository.GetAllAsync(q =>
-            queryFilter(_mapper.ProjectTo<AdminProductDetailsDto>(q)
-                .OrderByDescending(p => p.InsertionDate)
-                .ThenByDescending(p => p.ModificationDate)
+            _mapper.ProjectTo<AdminProductDetailsDto>(q)
                 .Take(20)
-            )
+                ._(queryFilter)
+                ._(sortFilter)
         );
 
 

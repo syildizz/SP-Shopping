@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
 
@@ -23,39 +24,50 @@ public class CategoriesController : Controller
     }
 
     // GET: Categories
-    public async Task<IActionResult> Index(string? query, string? type)
+    public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {
         _logger.LogInformation("GET: Entering Admin/Products/Search.");
 
-        Func<IQueryable<Category>, IQueryable<Category>>? queryFilter;
-        if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
-        {
-            queryFilter = type switch
-            {
-                nameof(Category.Id) => int.TryParse(query, out var queryNumber) ? q => q.Where(p => p.Id == queryNumber) : q => q,
-                nameof(Category.Name) => q => q.Where(p => p.Name.Contains(query)),
-                _ => null
-            };
-        }
-        else
-        {
-            queryFilter = q => q;
-        }
+        Func<IQueryable<Category>, IQueryable<Category>> queryFilter = q => q;
+        Func<IQueryable<Category>, IQueryable<Category>> sortFilter = q => q
+            .OrderByDescending(c => c.Name);
 
-        if (queryFilter is null)
+        try
         {
-            return BadRequest("Invalid type");
+            if (!string.IsNullOrWhiteSpace(type))
+            {
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    queryFilter = type switch
+                    {
+                        nameof(Category.Id) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.Id == queryNumber) : q => q,
+                        nameof(Category.Name) => q => q.Where(c => c.Name.Contains(query)),
+                        _ => throw new NotImplementedException($"{type} is invalid")
+                    };
+                }
+
+                sort ??= false;
+                sortFilter = type switch
+                {
+                    nameof(Category.Id) => (bool)sort ? q => q.OrderBy(c => c.Id) : q => q.OrderByDescending(c => c.Id),
+                    nameof(Category.Name) => (bool)sort ? q => q.OrderBy(c => c.Name) : q => q.OrderByDescending(c => c.Name),
+                    _ => throw new NotImplementedException($"{type} is invalid")
+                };
+            }
+        }
+        catch (NotImplementedException ex)
+        {
+            return BadRequest(ex.Message);
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var pdtoList = await _categoryRepository.GetAllAsync(q =>
-            queryFilter(q
-                .OrderByDescending(p => p.Name)
-                .Take(20)
-            )
+        var categoryList = await _categoryRepository.GetAllAsync(q => q
+            ._(queryFilter)
+            ._(sortFilter)
+            .Take(20)
         );
 
-        return View(pdtoList);
+        return View(categoryList);
         
     }
 

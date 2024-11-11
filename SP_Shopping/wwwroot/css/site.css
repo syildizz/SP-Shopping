@@ -30,3 +30,14 @@ body {
     justify-content: start;
     justify-items: stretch;
 }
+
+/* Sort icon on hover different */
+/* https://stackoverflow.com/a/5453219 + my own ingenuity */
+
+*:not(:checked) + label > .my-bi-sort-checking::before {
+    content: "\f575";
+}
+
+*:checked + label > .my-bi-sort-checking::before {
+    content: "\f57b";
+}

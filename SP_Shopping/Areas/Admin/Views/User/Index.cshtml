@@ -39,67 +39,25 @@
     <tbody>
         <tr>
             <td>
-                <search>
-                <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
-                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.Id)" />
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
-                </form>
-                </search>
+                <partial name="_AdminPanelSearchBarPartial" model="@nameof(AdminUserDetailsDto.Id)" />
             </td>
             <td>
-                <search>
-                <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
-                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.UserName)" />
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
-                </form>
-                </search>
+                <partial name="_AdminPanelSearchBarPartial" model="@nameof(AdminUserDetailsDto.UserName)" />
             </td>
             <td>
-                <search>
-                <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
-                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.PhoneNumber)" />
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
-                </form>
-                </search>
+                <partial name="_AdminPanelSearchBarPartial" model="@nameof(AdminUserDetailsDto.PhoneNumber)" />
             </td>
             <td>
-                <search>
-                <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
-                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.Email)" />
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
-                </form>
-                </search>
+                <partial name="_AdminPanelSearchBarPartial" model="@nameof(AdminUserDetailsDto.Email)" />
             </td>
             <td>
-                <search>
-                <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
-                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.Roles)" />
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
-                </form>
-                </search>
+                <partial name="_AdminPanelSearchBarPartial" model="@nameof(AdminUserDetailsDto.Roles)" />
             </td>
             <td>
-                <search>
-                <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
-                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.Description)" />
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
-                </form>
-                </search>
+                <partial name="_AdminPanelSearchBarPartial" model="@nameof(AdminUserDetailsDto.Description)" />
             </td>
             <td>
-                <search>
-                <form action="#" method="get" class="d-flex">
-                    <input type="search" name="query" aria-label="search" class="form-control me-sm-2" style="min-width: 5em;"/>
-                    <input type="hidden" name="type" value="@nameof(AdminUserDetailsDto.InsertionDate)" />
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
-                </form>
-                </search>
+                <partial name="_AdminPanelSearchBarPartial" model="@nameof(AdminUserDetailsDto.InsertionDate)" />
             </td>
             <td>
             </td>

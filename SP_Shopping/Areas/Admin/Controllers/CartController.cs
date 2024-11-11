@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.Cart;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.MessageHandler;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
@@ -29,42 +30,61 @@ public class CartController
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IMessageHandler _messageHandler = messageHandler;
 
-    public async Task<IActionResult> Index(string? query, string? type)
+    public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {
         _logger.LogInformation("GET: Entering Admin/Products.");
 
-        Func<IQueryable<AdminCartItemDetailsDto>, IQueryable<AdminCartItemDetailsDto>>? userNameFilter;
-        if (!string.IsNullOrWhiteSpace(query) && !string.IsNullOrWhiteSpace(type))
+        Func<IQueryable<AdminCartItemDetailsDto>, IQueryable<AdminCartItemDetailsDto>> queryFilter = q => q;
+        Func<IQueryable<AdminCartItemDetailsDto>, IQueryable<AdminCartItemDetailsDto>> sortFilter = q => q
+            .OrderByDescending(p => p.UserName)
+            .ThenByDescending(p => p.ProductName);
+
+        try
         {
-            userNameFilter = type switch
+            if (!string.IsNullOrWhiteSpace(type))
             {
-                nameof(AdminCartItemDetailsDto.ProductId) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.ProductId == queryNumber) : q => q,
-                nameof(AdminCartItemDetailsDto.ProductName) => q => q.Where(c => c.ProductName.Contains(query)),
-                nameof(AdminCartItemDetailsDto.UserId) => q => q.Where(c => c.UserName.Contains(query)),
-                nameof(AdminCartItemDetailsDto.UserName) => q => q.Where(c => c.UserName.Contains(query)),
-                nameof(AdminCartItemDetailsDto.SubmitterId) => q => q.Where(c => c.SubmitterName.Contains(query)),
-                nameof(AdminCartItemDetailsDto.SubmitterName) => q => q.Where(c => c.SubmitterName.Contains(query)),
-                nameof(AdminCartItemDetailsDto.Count) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.Count == queryNumber) : q => q,
-                _ => null
-            };
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    queryFilter = type switch
+                    {
+                        nameof(AdminCartItemDetailsDto.ProductId) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.ProductId == queryNumber) : q => q,
+                        nameof(AdminCartItemDetailsDto.ProductName) => q => q.Where(c => c.ProductName.Contains(query)),
+                        nameof(AdminCartItemDetailsDto.UserId) => q => q.Where(c => c.UserName.Contains(query)),
+                        nameof(AdminCartItemDetailsDto.UserName) => q => q.Where(c => c.UserName.Contains(query)),
+                        nameof(AdminCartItemDetailsDto.SubmitterId) => q => q.Where(c => c.SubmitterName.Contains(query)),
+                        nameof(AdminCartItemDetailsDto.SubmitterName) => q => q.Where(c => c.SubmitterName.Contains(query)),
+                        nameof(AdminCartItemDetailsDto.Count) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.Count == queryNumber) : q => q,
+                        _ => throw new NotImplementedException($"{type} is invalid")
+                    };
+                }
+
+                sort ??= false;
+                sortFilter = type switch
+                {
+                    nameof(AdminCartItemDetailsDto.ProductId) => (bool)sort ? q => q.OrderBy(c => c.ProductId) : q => q.OrderByDescending(c => c.ProductId),
+                    nameof(AdminCartItemDetailsDto.ProductName) => (bool)sort ? q => q.OrderBy(c => c.ProductName) : q => q.OrderByDescending(c => c.ProductName),
+                    nameof(AdminCartItemDetailsDto.UserId) => (bool)sort ? q => q.OrderBy(c => c.UserId) : q => q.OrderByDescending(c => c.UserId),
+                    nameof(AdminCartItemDetailsDto.UserName) => (bool)sort ? q => q.OrderBy(c => c.UserName) : q => q.OrderByDescending(c => c.UserName),
+                    nameof(AdminCartItemDetailsDto.SubmitterId) => (bool)sort ? q => q.OrderBy(c => c.SubmitterId) : q => q.OrderByDescending(c => c.SubmitterId),
+                    nameof(AdminCartItemDetailsDto.SubmitterName) => (bool)sort ? q => q.OrderBy(c => c.SubmitterName) : q => q.OrderByDescending(c => c.SubmitterName),
+                    nameof(AdminCartItemDetailsDto.Count) => (bool)sort ? q => q.OrderBy(c => c.Count) : q => q.OrderByDescending(c => c.Count),
+                    _ => throw new NotImplementedException($"{type} is invalid")
+                };
+
+            }
         }
-        else
+        catch (NotImplementedException ex)
         {
-            userNameFilter = q => q;
+            return BadRequest(ex.Message);
         }
 
-        if (userNameFilter is null)
-        {
-            return BadRequest("Invalid query");
-        }
 
         _logger.LogDebug("Fetching product information matching search term.");
         var cidtoList = await _cartItemRepository.GetAllAsync(q =>
-            userNameFilter(_mapper.ProjectTo<AdminCartItemDetailsDto>(q)
-                .OrderByDescending(p => p.UserName)
-                .ThenByDescending(p => p.ProductName)
+            _mapper.ProjectTo<AdminCartItemDetailsDto>(q)
+                ._(queryFilter)
+                ._(sortFilter)
                 .Take(20)
-            )
         );
 
         return View(cidtoList);
