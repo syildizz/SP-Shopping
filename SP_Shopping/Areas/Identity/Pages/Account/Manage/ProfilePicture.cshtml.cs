@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using SP_Shopping.Models;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
+using SP_Shopping.Utilities.ImageValidator;
+using SP_Shopping.Utilities.MessageHandler;
 
 namespace SP_Shopping.Areas.Identity.Pages.Account.Manage;
 
@@ -16,20 +18,22 @@ public class ProfilePictureModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _userProfileImageHandler;
+    private readonly IImageValidator _imageValidator;
+    private readonly IMessageHandler _messageHandler;
     private const int MAX_FILESIZE_BYTE = 1_500_000;
 
     public ProfilePictureModel
     (
         UserManager<ApplicationUser> userManager,
-        IImageHandlerDefaulting<UserProfileImageKey> userProfileImageHandler
+        IImageHandlerDefaulting<UserProfileImageKey> userProfileImageHandler,
+        IMessageHandler messageHandler
     )
     {
         _userManager = userManager;
         _userProfileImageHandler = userProfileImageHandler;
+        _imageValidator = new ImageValidator(MAX_FILESIZE_BYTE);
+        _messageHandler = messageHandler;
     }
-
-    [TempData]
-    public string StatusMessage { get; set; }
 
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -84,7 +88,7 @@ public class ProfilePictureModel : PageModel
         if (button == "Reset")
         {
             _userProfileImageHandler.DeleteImage(new(user.Id));
-            StatusMessage = "Your profile picture has been reset to the default.";
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Success, Content = "Your profile picture has been reset to the default." });;
             return RedirectToPage();
         }
 
@@ -93,27 +97,23 @@ public class ProfilePictureModel : PageModel
             return RedirectToPage();
         }
 
-        if (!Input.NewProfilePicture.ContentType.StartsWith("image"))
-        {
-            StatusMessage = "File has to be an image.";
-            return BadRequest("File has to be an image.");
-        }
+        var result = _imageValidator.Validate(Input.NewProfilePicture);
 
-        if (Input.NewProfilePicture.Length > MAX_FILESIZE_BYTE)
+        if (result.Type is not ImageValidatorResultType.Success)
         {
-            StatusMessage = $"Cannot upload images larger than {MAX_FILESIZE_BYTE} bytes to the database.";
-            return BadRequest($"Cannot upload images larger than {MAX_FILESIZE_BYTE} bytes to the database.");   
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });;
+            return RedirectToPage();
         }
 
         using var imageStream = Input.NewProfilePicture.OpenReadStream();
 
         if (!await _userProfileImageHandler.SetImageAsync(new(user.Id), imageStream))
         {
-            StatusMessage = "Image is not of valid format.";
-            return BadRequest("Image is not of valid format.");
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content =  "Image is not of valid format." });;
+            return RedirectToPage();
         }
 
-        StatusMessage = "Your account description has been updated.";
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Success, Content =  "Your account description has been updated." });;
         return RedirectToPage();
     }
 

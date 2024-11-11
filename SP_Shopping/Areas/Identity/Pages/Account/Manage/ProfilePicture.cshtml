@@ -9,7 +9,6 @@
 }
 
 <h3>@ViewData["Title"]</h3>
-<partial name="_StatusMessage" for="StatusMessage" />
 <div class="row">
     <div class="col-md-6">
     <img class="img-fluid ratio-1x1" style="width: 10em;" src="@_userProfileImageHandler.GetImageOrDefaultURL(new UserProfileImageKey(User.FindFirstValue(ClaimTypes.NameIdentifier)!))" />

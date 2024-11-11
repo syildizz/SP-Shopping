@@ -5,5 +5,5 @@ public interface IImageValidator
 {
     long MaxFileSizeByte { get; }
 
-    ImageValidatorResult Validate(IFormFile maybeImageFile);
+    ImageValidatorResult Validate(IFormFile imageFile);
 }
