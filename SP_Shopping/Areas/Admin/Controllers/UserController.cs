@@ -230,7 +230,7 @@ public class UserController
                 var ivResult = _imageValidator.Validate(udto.ProfilePicture);
                 if (ivResult.Type is not ImageValidatorResultType.Success)
                 {
-                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to set profile picture" });
+                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = ivResult.DefaultMessage });
                     return false;
                 }
                 using var imageStream = udto.ProfilePicture.OpenReadStream();

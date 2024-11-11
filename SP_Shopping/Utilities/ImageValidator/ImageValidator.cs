@@ -24,7 +24,7 @@ public class ImageValidator(long maxFileSizeByte = 1_500_000) : IImageValidator
             return new ImageValidatorResult
             (
                 type: ImageValidatorResultType.LengthIsNotWithinLimits,
-                defaultMessage: $"Cannot upload images larger than {MaxFileSizeByte / 1_000_000M} bytes to the database."
+                defaultMessage: $"Cannot upload images larger than {MaxFileSizeByte / 1_000_000M}MB."
             );
         }
 
