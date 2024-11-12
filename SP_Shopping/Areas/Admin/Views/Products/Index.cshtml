@@ -1,4 +1,7 @@
-﻿@model IEnumerable<AdminProductDetailsDto>
+﻿@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
+@model IEnumerable<AdminProductDetailsDto>
+@inject IImageHandlerDefaulting<ProductImageKey> _imageHandler
 
 @{
     ViewData["Title"] = "Index";
@@ -6,9 +9,12 @@
 }
 
 <div class="table-responsive">
-<table class="table table-striped">
+<table class="table table-striped align-middle">
     <thead>
         <tr>
+            <th class="text-nowrap">
+                Image
+            </th>
             <th class="text-nowrap">
                 @Html.DisplayNameFor(model => model.Id)
             </th>
@@ -42,6 +48,8 @@
     <tbody>
         <tr>
             <td>
+            </td>
+            <td>
                 <partial name="_AdminPanelSearchBarPartial" model="@nameof(AdminProductDetailsDto.Id)" />
             </td>
             <td>
@@ -73,6 +81,9 @@
         </tr>
     @foreach (var item in Model) {
         <tr>
+            <td>
+                <img class="img-fluid" src="@_imageHandler.GetImageOrDefaultURL(new(item.Id))" />
+            </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Id)
             </td>
