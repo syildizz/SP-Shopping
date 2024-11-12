@@ -419,15 +419,11 @@ public class ProductsController : Controller
 
         _logger.LogInformation($"POST: Entering Admin/Products/ResetImage.");
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var productInfo = await _productRepository.GetSingleAsync(q => q
+        var productExists = await _productRepository.ExistsAsync(q => q
             .Where(p => p.Id == id)
-            .Select(p => new 
-            {
-                p.SubmitterId
-            })
         );
 
-        if (productInfo is null)
+        if (!productExists)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound($"The product with the passed id of \"{id}\" does not exist.");
