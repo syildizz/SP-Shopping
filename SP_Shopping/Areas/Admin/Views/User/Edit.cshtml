@@ -1,4 +1,7 @@
-﻿@model AdminUserEditDto
+﻿@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
+@model AdminUserEditDto
+@inject IImageHandlerDefaulting<UserProfileImageKey> _imageHandler
 @{
     ViewData["Title"] = "Create";
 }
@@ -8,6 +11,17 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
+        <form id=reset-image-form asp-action="ResetImage" asp-route-Id="@Model.Id">
+            <img 
+                class="img-fluid" 
+                style="width: 10em; aspect-ratio: 1/1"
+                src="@(_imageHandler.GetImageOrDefaultURL(new(Model.Id)))" 
+            />
+            @if (_imageHandler.ImageExists(new(Model.Id)))
+            {
+                <button type="submit" class="btn-close position-absolute translate-middle badge rounded-pill bg-danger"> </button>
+            }
+        </form>
         <form asp-action="Edit" asp-route-id="@Model.Id" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">

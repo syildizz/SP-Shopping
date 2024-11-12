@@ -346,4 +346,27 @@ public class UserController
         return RedirectToAction(nameof(Index), new { id });
     }
 
+    [ValidateAntiForgeryToken]
+    [HttpPost]
+    public async Task<IActionResult> ResetImage(string id)
+    {
+        _logger.LogInformation($"POST: Entering Admin/User/ResetImage.");
+        _logger.LogDebug("Fetching user for id \"{Id}\".", id);
+        var userExists = await _userRepository.ExistsAsync(q => q
+            .Where(p => p.Id == id)
+        );
+
+        if (!userExists)
+        {
+            _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
+            return NotFound($"The product with the passed id of \"{id}\" does not exist.");
+        }
+
+        _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);
+        _profileImageHandler.DeleteImage(new(id));
+
+        return Redirect(Url.Action(nameof(Edit), new { id }) ?? @"/");
+        
+    }
+
 }
