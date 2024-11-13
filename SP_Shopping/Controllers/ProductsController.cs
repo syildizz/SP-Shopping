@@ -2,10 +2,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Service;
+using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
@@ -22,6 +25,7 @@ public class ProductsController : Controller
     private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
     private readonly IMessageHandler _messageHandler;
+    private readonly ProductService _productService;
     private readonly int paginationCount = 5;
 
     public ProductsController
@@ -42,6 +46,7 @@ public class ProductsController : Controller
         _userRepository = userRepository;
         _productImageHandler = productImageHandler;
         _messageHandler = messageHandler;
+        _productService = new ProductService(_productRepository, _productImageHandler);
     }
 
     public async Task<IActionResult> Search(string? query)
@@ -119,71 +124,24 @@ public class ProductsController : Controller
         _logger.LogInformation($"POST: Entering Products/Create.");
         if (ModelState.IsValid)
         {
-            try
+            _logger.LogDebug($"Creating product.");
+            Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
+
+            string? submitterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == submitterId)))
             {
-                // Validate image
-                if (pdto.ProductImage is not null) {
-                    if (!pdto.ProductImage.ContentType.StartsWith("image"))
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The file must be an image" });
-                        return RedirectToAction(nameof(Create));
-                    }
-                    if (pdto.ProductImage.Length > 1_500_000)
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size." });
-                        return RedirectToAction(nameof(Create));
-                    }
-                    using var stream = pdto.ProductImage.OpenReadStream();
-                    if (!await _productImageHandler.ValidateImageAsync(stream))
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
-                        return RedirectToAction(nameof(Create));
-                    }
-                }
-
-                _logger.LogDebug($"Creating product.");
-                Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
-                product.InsertionDate = DateTime.Now;
-
-                string submitterId;
-                var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == UserId)))
-                {
-                    return BadRequest("UserId is invalid. Contact developer");
-                }
-                submitterId = UserId!;
-
-                // Set submitter to null and manually set Submitter foreign key
-                // to avoid generating new ApplicationUser with auto-generated id.
-                product.Submitter = null;
-                product.SubmitterId = submitterId;
-
-                //await _context.AddAsync(product);
-                //await _context.SaveChangesAsync();
-                
-                await _productRepository.CreateAsync(product);
-                await _productRepository.SaveChangesAsync();
-
-                if (pdto.ProductImage is not null)
-                {
-                    using var ImageStream = pdto.ProductImage.OpenReadStream();
-                    if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
-                    {
-                        _productRepository.Delete(product);
-                        await _productRepository.SaveChangesAsync();
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
-                        return RedirectToAction(nameof(Create));
-                    }
-                }
-
-                return RedirectToAction(nameof(Details), new { id = product.Id });
+                return BadRequest("UserId is invalid. Contact developer");
             }
-            catch (DbUpdateException)
+            product.SubmitterId = submitterId;
+
+            if (!(await _productService.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
             {
                 _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
-                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't create product" });
+                _messageHandler.Add(TempData, errMsgs!);
                 return RedirectToAction(nameof(Create));
             }
+
+            return RedirectToAction(nameof(Details), new { id = product.Id });
         }
         _logger.LogError("ModelState is not valid.");
         _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid. Please try again" });
@@ -259,71 +217,39 @@ public class ProductsController : Controller
 
         if (ModelState.IsValid)
         {
-            try
+            var product = _mapper.Map<ProductCreateDto, Product>(pdto);
+            product.Id = id;
+
+            // Get user argument from session and edit if the user owns the product.
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Get the existing submitter id for the product from the database.
+            string? productExistingSubmitterId = await _productRepository.GetSingleAsync(q => q
+                .Where(p => p.Id == id)
+                .Select(p => p.SubmitterId)
+            );
+            if (productExistingSubmitterId != userId)
             {
-                var product = _mapper.Map<ProductCreateDto, Product>(pdto);
-
-                string submitterId;
-
-                // Get user argument from session and edit if the user owns the product.
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Get the existing submitter id for the product from the database.
-                string? productExistingSubmitterId = await _productRepository.GetSingleAsync(q => q
-                    .Where(p => p.Id == id)
-                    .Select(p => p.SubmitterId)
-                );
-                if (productExistingSubmitterId != userId)
-                {
-                    _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
-                        + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
-                    return Unauthorized("Cannot edit product that is not yours");
-                }
-                submitterId = userId!;
-                
-                _logger.LogDebug("Updating product.");
-                await _productRepository.UpdateCertainFieldsAsync(q => q
-                    .Where(p => p.Id == id),
-                    setPropertyCalls: s => s
-                        .SetProperty(p => p.Name, product.Name)
-                        .SetProperty(p => p.Price, product.Price)
-                        .SetProperty(p => p.CategoryId, product.CategoryId)
-                        .SetProperty(p => p.Description, product.Description)
-                        .SetProperty(p => p.SubmitterId, submitterId)
-                        .SetProperty(p => p.ModificationDate, DateTime.Now)
-                );
-                //_context.Update(product);
-
-                // Adding image
-                if (pdto.ProductImage is not null) {
-                    if (!pdto.ProductImage.ContentType.StartsWith("image"))
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The file must be an image" });
-                        return RedirectToAction(nameof(Edit));
-                    }
-                    if (pdto.ProductImage.Length > 1_500_000)
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size." });
-                        return RedirectToAction(nameof(Edit));
-                    }
-                    using var ImageStream = pdto.ProductImage.OpenReadStream();
-                    if (!await _productImageHandler.SetImageAsync(new(id), ImageStream))
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
-                        return RedirectToAction(nameof(Edit));
-                    }
-                }
-
+                _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
+                    + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
+                return Unauthorized("Cannot edit product that is not yours");
             }
-            catch (DbUpdateConcurrencyException dbuce)
+            
+            _logger.LogDebug("Updating product.");
+            if(!(await _productService.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
             {
-                _logger.LogError(dbuce, "The product with the id of \"{Id}\" could not be updated.", id);
-                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't update product" });
-                return RedirectToAction(nameof(Details), new { id });
+                _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
+                _messageHandler.Add(TempData, errMsgs!);
+                return RedirectToAction(nameof(Edit), new { id });
             }
+            return RedirectToAction(nameof(Details), new { id });
         }
-        
-        return RedirectToAction(nameof(Edit), new { id });
+        else
+        {
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid" });
+        }
+        return RedirectToAction(nameof(Details), new { id });
+
     }
 
     // GET: Products/Delete/5
@@ -395,10 +321,9 @@ public class ProductsController : Controller
 
         //_context.Products.Remove(product);
         _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
-        _productRepository.Delete(product);
-        if (await _productRepository.SaveChangesAsync() > 0)
+        if (!(await _productService.TryDeleteAsync(product)).TryOut(out var errMsgs))
         {
-            _productImageHandler.DeleteImage(new(id));
+            _messageHandler.Add(TempData, errMsgs!);
         }
 
         return RedirectToAction("Index", "User", new { Id = userId });

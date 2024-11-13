@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Service;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
@@ -26,6 +27,7 @@ public class ProductsController : Controller
     private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
     private readonly IMessageHandler _messageHandler;
+    private readonly ProductService _productService;
 
     public ProductsController
     (
@@ -41,10 +43,11 @@ public class ProductsController : Controller
         _logger = logger;
         _mapper = mapper;
         _productRepository = productRepository;
-        _categoryRepository = categoryRepository;
         _userRepository = userRepository;
         _productImageHandler = productImageHandler;
         _messageHandler = messageHandler;
+        _categoryRepository = categoryRepository;
+        _productService = new ProductService(_productRepository, _productImageHandler);
     }
 
     // GET: Products
@@ -161,31 +164,8 @@ public class ProductsController : Controller
         _logger.LogInformation($"POST: Entering Admin/Products/Create.");
         if (ModelState.IsValid)
         {
-            try
-            {
-                // Validate image
-                if (pdto.ProductImage is not null) {
-                    if (!pdto.ProductImage.ContentType.StartsWith("image"))
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The file must be an image" });
-                        return RedirectToAction(nameof(Create));
-                    }
-                    if (pdto.ProductImage.Length > 1_500_000)
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size." });
-                        return RedirectToAction(nameof(Create));
-                    }
-                    using var stream = pdto.ProductImage.OpenReadStream();
-                    if (!await _productImageHandler.ValidateImageAsync(stream))
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
-                        return RedirectToAction(nameof(Create));
-                    }
-                }
-
                 _logger.LogDebug($"Creating product.");
                 Product product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
-                product.InsertionDate = DateTime.Now;
 
                 if (product.SubmitterId is null)
                 {
@@ -194,10 +174,7 @@ public class ProductsController : Controller
                     {
                         return BadRequest("UserId is invalid. Contact developer");
                     }
-                    // Set submitter to null and manually set Submitter foreign key
-                    // to avoid generating new ApplicationUser with auto-generated id.
-                    product.Submitter = null;
-                    product.SubmitterId = UserId!;
+                    product.SubmitterId = UserId;
                 }
                 else
                 {
@@ -207,27 +184,16 @@ public class ProductsController : Controller
                     }
                 }
 
-                await _productRepository.CreateAsync(product);
-                await _productRepository.SaveChangesAsync();
 
-                if (pdto.ProductImage is not null)
+                if (!(await _productService.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
                 {
-                    using var ImageStream = pdto.ProductImage.OpenReadStream();
-                    if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Couldn't set the image. The Image format is invalid." });
-                        return RedirectToAction(nameof(Create));
-                    }
+                    _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
+                    _messageHandler.Add(TempData, errMsgs!);
+                    return RedirectToAction(nameof(Create));
                 }
 
                 return RedirectToAction(nameof(Details), new { id = product.Id });
-            }
-            catch (DbUpdateException)
-            {
-                _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
-                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't create product" });
-                return RedirectToAction(nameof(Create));
-            }
+
         }
         _logger.LogError("ModelState is not valid.");
         _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid. Please try again" });
@@ -294,67 +260,27 @@ public class ProductsController : Controller
 
         if (ModelState.IsValid)
         {
-            try
+            var product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
+            product.Id = id;
+
+            _logger.LogDebug("Updating product.");
+
+            if (!(await _productService.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
             {
-                var product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
-
-                _logger.LogDebug("Updating product.");
-                if (product.SubmitterId is not null)
-                {
-                    await _productRepository.UpdateCertainFieldsAsync(q => q
-                        .Where(p => p.Id == id),
-                        setPropertyCalls: s => s
-                            .SetProperty(p => p.Name, product.Name)
-                            .SetProperty(p => p.Price, product.Price)
-                            .SetProperty(p => p.CategoryId, product.CategoryId)
-                            .SetProperty(p => p.Description, product.Description)
-                            .SetProperty(p => p.SubmitterId, product.SubmitterId)
-                            .SetProperty(p => p.ModificationDate, DateTime.Now)
-                    );
-                }
-                else
-                {
-                    await _productRepository.UpdateCertainFieldsAsync(q => q
-                        .Where(p => p.Id == id),
-                        setPropertyCalls: s => s
-                            .SetProperty(p => p.Name, product.Name)
-                            .SetProperty(p => p.Price, product.Price)
-                            .SetProperty(p => p.CategoryId, product.CategoryId)
-                            .SetProperty(p => p.Description, product.Description)
-                            .SetProperty(p => p.ModificationDate, DateTime.Now)
-                    );
-                }
-
-                // Adding image
-                if (pdto.ProductImage is not null) {
-                    if (!pdto.ProductImage.ContentType.StartsWith("image"))
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The file must be an image" });
-                        return RedirectToAction(nameof(Edit));
-                    }
-                    if (pdto.ProductImage.Length > 1_500_000)
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"The file is too large. Must be below {1_500_000M / 1_000_000}MB in size." });
-                        return RedirectToAction(nameof(Edit));
-                    }
-                    using var ImageStream = pdto.ProductImage.OpenReadStream();
-                    if (!await _productImageHandler.SetImageAsync(new(id), ImageStream))
-                    {
-                        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "The Image format is invalid." });
-                        return RedirectToAction(nameof(Edit));
-                    }
-                }
-
-            }
-            catch (DbUpdateConcurrencyException dbuce)
-            {
-                _logger.LogError(dbuce, "The product with the id of \"{Id}\" could not be updated.", id);
+                _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
                 _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't update product" });
-                return RedirectToAction(nameof(Details), new { id });
+                _messageHandler.Add(TempData, errMsgs!);
+                return RedirectToAction(nameof(Edit), new { id });
             }
+            return RedirectToAction(nameof(Edit), new { id });
+
+        }
+        else
+        {
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid" });
+            return RedirectToAction(nameof(Edit), new { id });
         }
         
-        return RedirectToAction(nameof(Edit), new { id });
     }
 
     // GET: Products/Delete/5
@@ -403,10 +329,12 @@ public class ProductsController : Controller
 
         //_context.Products.Remove(product);
         _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
-        _productRepository.Delete(product);
-        if (await _productRepository.SaveChangesAsync() > 0)
+        if (!(await _productService.TryDeleteAsync(product)).TryOut(out var errMsgs))
         {
-            _productImageHandler.DeleteImage(new(id));
+            _logger.LogError("The product with the id of \"{Id}\" could not be deleted.", id);
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't delete product" });
+            _messageHandler.Add(TempData, errMsgs!);
+            return RedirectToAction(nameof(Edit), new { id });
         }
 
         return RedirectToAction("Index");

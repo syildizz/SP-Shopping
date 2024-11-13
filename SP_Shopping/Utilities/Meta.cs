@@ -12,4 +12,25 @@ public static class Meta
     {
         return f(_);
     }
+
+}
+
+// https://stackoverflow.com/a/57707700
+public static class TupleExtensions
+{
+    public static bool TryOut<P2>(this ValueTuple<bool, P2> tuple, out P2 p2)
+    {
+        bool p1;
+        (p1, p2) = tuple;
+        return p1;
+    }
+
+    public static bool TryOut<P2, P3>(this ValueTuple<bool, P2, P3> tuple, out P2 p2, out P3 p3)
+    {
+        bool p1;
+        (p1, p2, p3) = tuple;
+        return p1;
+    }
+
+    // continue to support larger tuples...
 }
