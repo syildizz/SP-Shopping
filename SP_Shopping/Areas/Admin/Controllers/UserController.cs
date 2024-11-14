@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.User;
+using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Service;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
@@ -19,10 +21,11 @@ namespace SP_Shopping.Areas.Admin.Controllers;
 [Authorize(Roles = "Admin")]
 public class UserController
 (
+    ApplicationDbContext context,
     IRepository<ApplicationUser> userRepository,
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
-    IMessageHandler messageHander,
+    IMessageHandler messageHandler,
 	ILogger<UserController> logger,
 	IMapper mapper,
     IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler
@@ -32,11 +35,12 @@ public class UserController
     private readonly IRepository<ApplicationUser> _userRepository = userRepository;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
-    private readonly IMessageHandler _messageHandler = messageHander;
+    private readonly IMessageHandler _messageHandler = messageHandler;
     private readonly ILogger<UserController> _logger = logger;
     private readonly IMapper _mapper = mapper;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
     private readonly IImageValidator _imageValidator = new ImageValidator();
+    private readonly UserService _userService = new UserService(context, userRepository, userManager, profileImageHandler, messageHandler);
 
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {
@@ -123,137 +127,24 @@ public class UserController
     }
 
     [HttpPost]
-    public async Task<IActionResult> Edit(string id, AdminUserEditDto udto)
+    public async Task<IActionResult> Edit(AdminUserEditDto udto)
     {
         _logger.LogInformation("POST: Entering Admin/Edit.");
 
-        var user = await _userRepository.GetSingleAsync(q => q.Where(u => u.Id == id));
+        var user = _mapper.Map<ApplicationUser>(udto);
 
         if (user is null)
         {
             return NotFound("The user is not found");
         }
 
-        var transactionSucceeded = await _userRepository.DoInTransactionAsync(async () =>
+
+        if (!(await _userService.TryUpdateAsync(user, udto.ProfilePicture, udto.Roles?.Split(' '))).TryOut(out var errMsgs))
         {
-            IdentityResult result;
-
-            result = await _userManager.SetUserNameAsync(user, udto.UserName);
-            if (!result.Succeeded)
-            {
-                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to set username" });
-                return false;
-            }
-
-            result = await _userManager.SetEmailAsync(user, udto.Email);
-            if (!result.Succeeded)
-            {
-                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to set email" });
-                return false;
-            }
-    
-
-            result = await _userManager.SetPhoneNumberAsync(user, udto.PhoneNumber);
-            if (!result.Succeeded)
-            {
-                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to set phone number" });
-                return false;
-            }
-
-            if (!string.IsNullOrWhiteSpace(udto.Roles))
-            {
-                var userRoles = (await _userManager.GetRolesAsync(user)).Select(s => s.ToUpperInvariant());
-                var requestRoles = udto.Roles.Split(' ').Where(r => !string.IsNullOrWhiteSpace(r)).Select(s => s.ToUpperInvariant());
-                var userDifferenceRequestRoles = userRoles.Except(requestRoles);
-                var requestDifferenceUserRoles = requestRoles.Except(userRoles);
-
-                var wentToCatch = false;
-                var errorMessage = "Failed to set roles";
-                try
-                {
-                    result = await _userManager.AddToRolesAsync(user, requestDifferenceUserRoles);
-                }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.Message; }
-                if (wentToCatch || !result.Succeeded)
-                {
-                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = errorMessage });
-                    return false;
-                }
-
-                wentToCatch = false;
-                try
-                {
-                    result = await _userManager.RemoveFromRolesAsync(user, userDifferenceRequestRoles);
-                }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.Message; }
-                if (wentToCatch || !result.Succeeded)
-                {
-                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = errorMessage });
-                    return false;
-                }
-            }
-            else
-            {
-                var wentToCatch = false;
-                var errorMessage = "Failed to set roles";
-                try
-                {
-                    result = await _userManager.RemoveFromRolesAsync(user, await _userManager.GetRolesAsync(user));
-                }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.Message; }
-                if (wentToCatch || !result.Succeeded)
-                {
-                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = errorMessage });
-                    return false;
-                }
-            }
-
-            int result2 = await _userRepository.UpdateCertainFieldsAsync(q => q
-                .Where(u => u.Id == udto.Id),
-                s => s
-                    .SetProperty(u => u.Description, udto.Description)
-                    // Confirm e-mail and phone number when changed by admin.
-                    // Maybe change this functionality in the future idk.
-                    // TODO: Add panels in admin panel to confirm / unconfirm user email / phone number
-                    .SetProperty(u => u.EmailConfirmed, true)
-                    .SetProperty(u => u.PhoneNumberConfirmed, true)
-            );
-
-            if (result2 < 1)
-            {
-                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to set description" });
-                return false;
-            }
-
-            if (udto.ProfilePicture is not null)
-            {
-                var ivResult = _imageValidator.Validate(udto.ProfilePicture);
-                if (ivResult.Type is not ImageValidatorResultType.Success)
-                {
-                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = ivResult.DefaultMessage });
-                    return false;
-                }
-                using var imageStream = udto.ProfilePicture.OpenReadStream();
-                if (!await _profileImageHandler.SetImageAsync(new(udto.Id), imageStream))
-                {
-                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to set profile picture" });
-                    return false;
-                }
-
-                return true;
-            }
-
-            return true;
-        });
-
-       if (transactionSucceeded)
-       {
-           return RedirectToAction(nameof(Index));
-       }
-       else
-       {
+           _messageHandler.Add(TempData, errMsgs!); 
            return RedirectToAction("Edit", new { id = udto.Id });
-       }
+        }
+       return RedirectToAction(nameof(Index));
 
     }
 
@@ -266,14 +157,10 @@ public class UserController
 
         if (user is not null)
         {
-            var result = await _userManager.DeleteAsync(user);
-            if (result.Succeeded)
+            if (!(await _userService.TryDeleteAsync(user)).TryOut(out var errMsgs))
             {
-                _profileImageHandler.DeleteImage(new(id));
-            }
-            else
-            {
-                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to remove user" }); 
+                _messageHandler.Add(TempData, errMsgs!);
+               return RedirectToAction("Edit", new { id });
             }
         }
 
