@@ -76,21 +76,15 @@ public class RepositoryBaseCaching<TEntity>
     public override void Create(TEntity entity)
     {
         base.Create(entity);
-        _logger.LogInformation("Clearing cache for {Type}", typeof(TEntity).FullName);
-        _memoryCacher.ClearWith(k => k.StartsWith(typeof(TEntity).FullName!));
     }
 
     public override async Task CreateAsync(TEntity entity)
     {
         await base.CreateAsync(entity);
-        _logger.LogInformation("Clearing cache for {Type}", typeof(TEntity).FullName);
-        _memoryCacher.ClearWith(k => k.StartsWith(typeof(TEntity).FullName!));
     }
     public override void Update(TEntity entity)
     {
         base.Update(entity);
-        _logger.LogInformation("Clearing cache for {Type}", typeof(TEntity).FullName);
-        _memoryCacher.ClearWith(k => k.StartsWith(typeof(TEntity).FullName!));
     }
 
     public override int UpdateCertainFields
@@ -120,8 +114,6 @@ public class RepositoryBaseCaching<TEntity>
     public override void Delete(TEntity entity)
     {
         base.Delete(entity);
-        _logger.LogInformation("Clearing cache for {Type}", typeof(TEntity).FullName);
-        _memoryCacher.ClearWith(k => k.StartsWith(typeof(TEntity).FullName!));
     }
 
     public override int DeleteCertainEntries(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
@@ -156,12 +148,18 @@ public class RepositoryBaseCaching<TEntity>
 
     public override int SaveChanges()
     {
-        return base.SaveChanges();
+        int result = base.SaveChanges();
+        _logger.LogInformation("Clearing cache for {Type}", typeof(TEntity).FullName);
+        _memoryCacher.ClearWith(k => k.StartsWith(typeof(TEntity).FullName!));
+        return result;
     }
 
     public override async Task<int> SaveChangesAsync()
     {
-        return await base.SaveChangesAsync();
+        int result = await base.SaveChangesAsync();
+        _logger.LogInformation("Clearing cache for {Type}", typeof(TEntity).FullName);
+        _memoryCacher.ClearWith(k => k.StartsWith(typeof(TEntity).FullName!));
+        return result;
     }
 
 }
