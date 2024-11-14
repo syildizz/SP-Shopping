@@ -48,8 +48,14 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
 
     protected virtual void ProcessImageData(Image image)
     {
+        image.Metadata.ExifProfile = null;
+        image.Metadata.IccProfile = null;
+        image.Metadata.IptcProfile = null;
+        image.Metadata.XmpProfile = null;
+        image.Metadata.CicpProfile = null;
         image.Mutate(o => o
             .Resize(480, 480)
+            .GaussianBlur(0.01f)
         );
     }
 
