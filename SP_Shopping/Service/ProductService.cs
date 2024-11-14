@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Components.Web;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using Microsoft.Identity.Client;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
@@ -24,10 +22,10 @@ public class ProductService
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler = productImageHandler;
     private readonly IImageValidator _imageValidator = new ImageValidator();
 
-    public (bool succeeded, IEnumerable<Message>? errorMessages) TryCreate(Product product, IFormFile? image)
+    public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Product product, IFormFile? image)
     {
 
-        IEnumerable<Message> errorMessages = [];
+        ICollection<Message> errorMessages = [];
 
         bool transactionSucceeded = _productRepository.DoInTransaction(() =>
         {
@@ -47,9 +45,9 @@ public class ProductService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
                     #else
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
+                    errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
                     return false;
                 }
@@ -64,14 +62,14 @@ public class ProductService
                 var result = _imageValidator.Validate(image);
                 if (result.Type is not ImageValidatorResultType.Success)
                 {
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
                     return false;
                 }
 
                 using var ImageStream = image.OpenReadStream();
                 if (!_productImageHandler.SetImage(new(product.Id), ImageStream))
                 {
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
                     return false;
                 }
             }
@@ -90,10 +88,10 @@ public class ProductService
 
     }
 
-    public async Task<(bool succeeded, IEnumerable<Message>? errorMessages)> TryCreateAsync(Product product, IFormFile? image)
+    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryCreateAsync(Product product, IFormFile? image)
     {
 
-        IEnumerable<Message> errorMessages = [];
+        ICollection<Message> errorMessages = [];
 
         bool transactionSucceeded = await _productRepository.DoInTransactionAsync(async () =>
         {
@@ -113,9 +111,9 @@ public class ProductService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
                     #else
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
                     return false;
                 }
@@ -130,14 +128,14 @@ public class ProductService
                 var result = _imageValidator.Validate(image);
                 if (result.Type is not ImageValidatorResultType.Success)
                 {
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
                     return false;
                 }
 
                 using var ImageStream = image.OpenReadStream();
                 if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
                 {
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
                     return false;
                 }
             }
@@ -156,9 +154,9 @@ public class ProductService
 
     }
 
-    public (bool succeeded, IEnumerable<Message>? errorMesages) TryUpdate(Product product, IFormFile? image)
+    public (bool succeeded, ICollection<Message>? errorMesages) TryUpdate(Product product, IFormFile? image)
     {
-        IEnumerable<Message>? errorMessages = [];
+        ICollection<Message>? errorMessages = [];
 
         bool transactionSucceeded = _productRepository.DoInTransaction(() =>
         {
@@ -204,9 +202,9 @@ public class ProductService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
                     #else
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
                     return false;
                 }
@@ -221,14 +219,14 @@ public class ProductService
                 var result = _imageValidator.Validate(image);
                 if (result.Type is not ImageValidatorResultType.Success)
                 {
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
                     return false;
                 }
 
                 using var ImageStream = image.OpenReadStream();
                 if (!_productImageHandler.SetImage(new(product.Id), ImageStream))
                 {
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
                     return false;
                 }
             }
@@ -248,9 +246,9 @@ public class ProductService
 
     }
 
-    public async Task<(bool succeeded, IEnumerable<Message>? errorMesages)> TryUpdateAsync(Product product, IFormFile? image)
+    public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(Product product, IFormFile? image)
     {
-        IEnumerable<Message> errorMessages = [];
+        ICollection<Message> errorMessages = [];
 
         bool transactionSucceeded = await _productRepository.DoInTransactionAsync(async () =>
         {
@@ -296,9 +294,9 @@ public class ProductService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
                     #else
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
                     return false;
                 }
@@ -313,14 +311,14 @@ public class ProductService
                 var result = _imageValidator.Validate(image);
                 if (result.Type is not ImageValidatorResultType.Success)
                 {
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
                     return false;
                 }
 
                 using var ImageStream = image.OpenReadStream();
                 if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
                 {
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
                     return false;
                 }
             }
@@ -339,10 +337,10 @@ public class ProductService
 
     }
 
-    public (bool succeeded, IEnumerable<Message>? errorMessages) TryDelete(Product product)
+    public (bool succeeded, ICollection<Message>? errorMessages) TryDelete(Product product)
     {
 
-        IEnumerable<Message> errorMessages = [];
+        ICollection<Message> errorMessages = [];
 
         bool transactionSucceeded = _productRepository.DoInTransaction(() =>
         {
@@ -357,9 +355,9 @@ public class ProductService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
                     #else
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
                     return false;
                 }
@@ -376,9 +374,9 @@ public class ProductService
             catch (Exception ex)
             {
                 #if DEBUG
-                errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.Message}" });
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.Message}" });
                 #else
-                errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
                 #endif
                 return false;
             }
@@ -397,10 +395,10 @@ public class ProductService
 
     }
 
-    public async Task<(bool succeeded, IEnumerable<Message>? errorMessages)> TryDeleteAsync(Product product)
+    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(Product product)
     {
 
-        IEnumerable<Message> errorMessages = [];
+        ICollection<Message> errorMessages = [];
 
         bool transactionSucceeded = await _productRepository.DoInTransactionAsync(async () =>
         {
@@ -415,9 +413,9 @@ public class ProductService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
                     #else
-                    errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
                     return false;
                 }
@@ -434,9 +432,9 @@ public class ProductService
             catch (Exception ex)
             {
                 #if DEBUG
-                errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.Message}" });
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.Message}" });
                 #else
-                errorMessages = errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
                 #endif
                 return false;
             }
@@ -454,6 +452,5 @@ public class ProductService
         }
 
     }
-
 
 }
