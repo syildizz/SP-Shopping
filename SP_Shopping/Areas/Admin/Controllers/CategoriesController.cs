@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Service;
 using SP_Shopping.Utilities;
+using SP_Shopping.Utilities.MessageHandler;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
 
@@ -14,13 +15,17 @@ public class CategoriesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IRepositoryCaching<Category> _categoryRepository;
+    private readonly CategoryService _categoryService;
     private readonly ILogger<CategoriesController> _logger;
+    private readonly IMessageHandler _messageHandler;
 
-    public CategoriesController(ApplicationDbContext context, IRepositoryCaching<Category> categoryRepository, ILogger<CategoriesController> logger)
+    public CategoriesController(ApplicationDbContext context, IRepositoryCaching<Category> categoryRepository, ILogger<CategoriesController> logger, IMessageHandler messageHandler)
     {
         _context = context;
         _categoryRepository = categoryRepository;
+        _categoryService = new CategoryService(_categoryRepository);
         _logger = logger;
+        _messageHandler = messageHandler;
     }
 
     // GET: Categories
@@ -61,7 +66,7 @@ public class CategoriesController : Controller
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var categoryList = await _categoryRepository.GetAllAsync(q => q
+        var categoryList = await _categoryRepository.GetAllAsync(HttpContext.Request.Path, q => q
             ._(queryFilter)
             ._(sortFilter)
             .Take(20)
@@ -103,10 +108,11 @@ public class CategoriesController : Controller
     {
         if (ModelState.IsValid)
         {
-            //_context.Add(category);
-            //await _context.SaveChangesAsync();
-            await _categoryRepository.CreateAsync(category);
-            await _categoryRepository.SaveChangesAsync();
+            if (!(await _categoryService.TryCreateAsync(category)).TryOut(out var errMsgs))
+            {
+                _messageHandler.Add(TempData, errMsgs!);
+                return View(category);
+            }
             return RedirectToAction(nameof(Index));
         }
         return View(category);
@@ -120,7 +126,6 @@ public class CategoriesController : Controller
             return NotFound();
         }
 
-        //var category = await _context.Categories.FindAsync(id);
         var category = await _categoryRepository.GetByKeyAsync(HttpContext.Request.Path, (int)id);
         if (category == null)
         {
@@ -143,22 +148,10 @@ public class CategoriesController : Controller
 
         if (ModelState.IsValid)
         {
-            try
+            if (!(await _categoryService.TryUpdateAsync(category)).TryOut(out var errMsgs))
             {
-                //_context.Update(category);
-                _categoryRepository.Update(category);
-                await _categoryRepository.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (await _categoryRepository.ExistsAsync(HttpContext.Request.Path, q => q.Where(c => c.Id == category.Id)))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                _messageHandler.Add(TempData, errMsgs!);
+                return View(category);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -193,9 +186,11 @@ public class CategoriesController : Controller
         var category = await _categoryRepository.GetByKeyAsync("All", id);
         if (category != null)
         {
-            //_context.Categories.Remove(category);
-            _categoryRepository.Delete(category);
-            await _categoryRepository.SaveChangesAsync();
+            if (!(await _categoryService.TryDeleteAsync(category)).TryOut(out var errMsgs))
+            {
+                _messageHandler.Add(TempData, errMsgs!);
+                return View(category);
+            }
         }
 
         //await _context.SaveChangesAsync();
