@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Dtos.Cart;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Service;
+using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
@@ -29,6 +31,7 @@ public class CartController
     private readonly IRepository<ApplicationUser> _userRepository = userRepository;
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IMessageHandler _messageHandler = messageHandler;
+    private readonly CartItemService _cartItemService = new CartItemService(cartItemRepository);
 
     public async Task<IActionResult> Index()
     {
@@ -66,27 +69,17 @@ public class CartController
             return BadRequest("Invalid product id specified.");
         }
 
-        CartItem cartItem = new CartItem
+        CartItem cartItem = new()
         {
             UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!,
             ProductId = id,
             Count = 0
         };
 
-        try
+        _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+        if (!(await _cartItemService.TryCreateAsync(cartItem)).TryOut(out var errMsgs))
         {
-            _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            await _cartItemRepository.CreateAsync(cartItem);
-            await _cartItemRepository.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            // Exception occurs when adding same product to same users cart.
-            // This is a desired effect, therefore the below codoe is commented out.
-            // TODO: Analyze update exception for the above mentioned exception and throw 
-            //     otherwise
-            //_logger.LogError("Failed to create CartItem in the database for user of id \"{UserId}\" and for product of \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            //_messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Error when adding product to cart" }]);
+            _messageHandler.Add(TempData, errMsgs!);
         }
 
         return RedirectToAction(nameof(Index));
@@ -99,19 +92,13 @@ public class CartController
     {
         _logger.LogInformation("POST: Cart/Delete.");
 
-        //if (ModelState.IsValid)
-        //{
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
-            await _cartItemRepository.DeleteCertainEntriesAsync(q => q
-                .Where(c => c.UserId == userId && c.ProductId == id)
-            );
-        //}
-        //else
-        //{
-        //    _logger.LogError("ModeState is invalid");
-        //    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
-        //}
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        CartItem cartItem = new() { ProductId = id, UserId = userId };
+        _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
+        if (!(await _cartItemService.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
+        {
+            _messageHandler.Add(TempData, errMsgs!);
+        }
 
         return RedirectToAction(nameof(Index));
     }
@@ -125,13 +112,12 @@ public class CartController
         if (ModelState.IsValid)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            CartItem cartItem = new() { ProductId = id, UserId = userId, Count = cidto.Count };
             _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
-            await _cartItemRepository.UpdateCertainFieldsAsync(
-                q => q
-                    .Where(c => c.UserId == userId && c.ProductId == id), 
-                s => s
-                    .SetProperty(c => c.Count, cidto.Count)
-            );
+            if (!(await _cartItemService.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
+            {
+                _messageHandler.Add(TempData, errMsgs!);
+            }
         }
         else
         {

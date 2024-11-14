@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.Cart;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Service;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.MessageHandler;
 
@@ -29,6 +30,7 @@ public class CartController
     private readonly IRepository<ApplicationUser> _userRepository = userRepository;
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IMessageHandler _messageHandler = messageHandler;
+    private readonly CartItemService _cartItemService = new CartItemService(cartItemRepository);
 
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {
@@ -127,21 +129,12 @@ public class CartController
                 return BadRequest("Invalid product id specified.");
             }
 
-            try
+            _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+            if (!(await _cartItemService.TryCreateAsync(cartItem)).TryOut(out var errMsgs))
             {
-                _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-                await _cartItemRepository.CreateAsync(cartItem);
-                await _cartItemRepository.SaveChangesAsync();
+                _messageHandler.Add(TempData, errMsgs!);
             }
-            catch (DbUpdateException)
-            {
-                // Exception occurs when adding same product to same users cart.
-                // This is a desired effect, therefore the below codoe is commented out.
-                // TODO: Analyze update exception for the above mentioned exception and throw 
-                //     otherwise
-                //_logger.LogError("Failed to create CartItem in the database for user of id \"{UserId}\" and for product of \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-                //_messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Error when adding product to cart" }]);
-            }
+
         }
         else
         {
@@ -164,9 +157,10 @@ public class CartController
             var cartItem = _mapper.Map<CartItem>(cidto);
 
             _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            await _cartItemRepository.DeleteCertainEntriesAsync(q => q
-                .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId)
-            );
+            if (!(await _cartItemService.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
+            {
+                _messageHandler.Add(TempData, errMsgs!);
+            }
         }
         else
         {
@@ -188,12 +182,10 @@ public class CartController
             var cartItem = _mapper.Map<CartItem>(cidto);
 
             _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            await _cartItemRepository.UpdateCertainFieldsAsync(
-                q => q
-                    .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId), 
-                s => s
-                    .SetProperty(c => c.Count, cartItem.Count)
-            );
+            if (!(await _cartItemService.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
+            {
+                _messageHandler.Add(TempData, errMsgs!);
+            }
         }
         else
         {
