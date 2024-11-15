@@ -28,7 +28,8 @@ public class UserController
     IMessageHandler messageHandler,
 	ILogger<UserController> logger,
 	IMapper mapper,
-    IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler
+    IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler,
+    UserService userService
 ) : Controller
 {
 
@@ -40,7 +41,7 @@ public class UserController
     private readonly IMapper _mapper = mapper;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
     private readonly IImageValidator _imageValidator = new ImageValidator();
-    private readonly UserService _userService = new UserService(context, userRepository, userManager, profileImageHandler, messageHandler);
+    private readonly UserService _userService = userService;
 
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {

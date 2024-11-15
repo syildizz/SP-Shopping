@@ -19,11 +19,11 @@ public class CategoriesController : Controller
     private readonly ILogger<CategoriesController> _logger;
     private readonly IMessageHandler _messageHandler;
 
-    public CategoriesController(ApplicationDbContext context, IRepositoryCaching<Category> categoryRepository, ILogger<CategoriesController> logger, IMessageHandler messageHandler)
+    public CategoriesController(ApplicationDbContext context, IRepositoryCaching<Category> categoryRepository, ILogger<CategoriesController> logger, IMessageHandler messageHandler, CategoryService categoryService)
     {
         _context = context;
         _categoryRepository = categoryRepository;
-        _categoryService = new CategoryService(_categoryRepository);
+        _categoryService = categoryService;
         _logger = logger;
         _messageHandler = messageHandler;
     }

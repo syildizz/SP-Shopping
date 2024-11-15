@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Dtos.Cart;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -20,7 +19,8 @@ public class CartController
     IRepository<CartItem> cartItemRepository,
     IRepository<ApplicationUser> userRepository,
     IRepository<Product> productRepository,
-    IMessageHandler messageHandler
+    IMessageHandler messageHandler,
+    CartItemService cartItemService
 
 ) : Controller
 {
@@ -31,7 +31,7 @@ public class CartController
     private readonly IRepository<ApplicationUser> _userRepository = userRepository;
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IMessageHandler _messageHandler = messageHandler;
-    private readonly CartItemService _cartItemService = new CartItemService(cartItemRepository);
+    private readonly CartItemService _cartItemService = cartItemService;
 
     public async Task<IActionResult> Index()
     {

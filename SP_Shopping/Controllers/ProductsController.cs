@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -36,7 +34,8 @@ public class ProductsController : Controller
         IRepositoryCaching<Category> categoryRepository,
         IRepository<ApplicationUser> userRepository,
         IImageHandlerDefaulting<ProductImageKey> productImageHandler,
-        IMessageHandler messageHandler
+        IMessageHandler messageHandler,
+        ProductService productService
     )
     {
         _logger = logger;
@@ -46,7 +45,7 @@ public class ProductsController : Controller
         _userRepository = userRepository;
         _productImageHandler = productImageHandler;
         _messageHandler = messageHandler;
-        _productService = new ProductService(_productRepository, _productImageHandler);
+        _productService = productService;
     }
 
     public async Task<IActionResult> Search(string? query)

@@ -6,6 +6,7 @@ using SixLabors.ImageSharp.Web.Processors;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Service;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
@@ -82,6 +83,14 @@ public class Program
                 imgExtension: "png"
             )
         );
+
+        builder.Services.AddScoped<CategoryService>();
+
+        builder.Services.AddScoped<ProductService>();
+
+        builder.Services.AddScoped<UserService>();
+
+        builder.Services.AddScoped<CartItemService>();
 
         builder.Services.AddScoped<IMessageHandler, MessageHandler>();
 

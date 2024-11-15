@@ -453,4 +453,36 @@ public class ProductService
 
     }
 
+    public (bool succeeded, ICollection<Message>? errorMessages) TryDeleteCascade(Product product)
+    {
+
+        ICollection<Message> errorMessages = [];
+
+        bool transactionSucceeded = false;
+        try
+        {
+            _productImageHandler.DeleteImage(new(product.Id));
+            transactionSucceeded = true;
+        }
+        catch (Exception ex)
+        {
+            #if DEBUG
+            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.Message}" });
+            #else
+            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
+            #endif
+        }
+
+        if (transactionSucceeded)
+        {
+            return (true, null);
+        }
+        else
+        {
+            return (false, errorMessages);
+        }
+
+    }
+
+
 }

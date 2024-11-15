@@ -8,11 +8,15 @@ namespace SP_Shopping.Service;
 
 public class CategoryService
 (
-    IRepositoryCaching<Category> categoryRepository
+    IRepositoryCaching<Category> categoryRepository,
+    IRepository<Product> productRepository,
+    ProductService productService
 )
 {
 
     private readonly IRepositoryCaching<Category> _categoryRepository = categoryRepository;
+    private readonly IRepository<Product> _productRepository = productRepository;
+    private readonly ProductService _productService = productService;
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Category category)
     {
@@ -206,6 +210,8 @@ public class CategoryService
 
         ICollection<Message> errorMessages = [];
 
+        var productIds = _productRepository.GetAll(q => q.Where(p => p.Category == category).Select(p => p.Id));
+
         bool transactionSucceeded = _categoryRepository.DoInTransaction(() =>
         {
 
@@ -236,6 +242,10 @@ public class CategoryService
 
         if (transactionSucceeded)
         {
+            foreach (var productId in productIds)
+            {
+                _productService.TryDeleteCascade(new Product { Id = productId });
+            }
             return (true, null);
         }
         else
@@ -249,6 +259,8 @@ public class CategoryService
     {
 
         ICollection<Message> errorMessages = [];
+
+        var productIds = await _productRepository.GetAllAsync(q => q.Where(p => p.Category == category).Select(p => p.Id));
 
         bool transactionSucceeded = await _categoryRepository.DoInTransactionAsync(async () =>
         {
@@ -280,6 +292,10 @@ public class CategoryService
 
         if (transactionSucceeded)
         {
+            foreach (var productId in productIds)
+            {
+                _productService.TryDeleteCascade(new Product { Id = productId });
+            }
             return (true, null);
         }
         else

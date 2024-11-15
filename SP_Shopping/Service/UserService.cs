@@ -14,19 +14,21 @@ namespace SP_Shopping.Service;
 
 public class UserService
 (
-    ApplicationDbContext context,
     IRepository<ApplicationUser> userRepository,
+    IRepository<Product> productRepository,
     UserManager<ApplicationUser> userManager,
     IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler,
-    IMessageHandler messageHandler
+    IMessageHandler messageHandler,
+    ProductService productService
 )
 {
-    private readonly ApplicationDbContext _context = context;
     private readonly IRepository<ApplicationUser> _userRepository = userRepository;
+    private readonly IRepository<Product> _productRepository = productRepository;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
     private readonly IImageValidator _imageValidator = new ImageValidator();
     private readonly IMessageHandler _messageHandler = messageHandler;
+    private readonly ProductService _productService = productService;
 
     public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(ApplicationUser user, IFormFile? image, IEnumerable<string>? roles)
     {
@@ -173,6 +175,8 @@ public class UserService
 
         ICollection<Message> errorMessages = [];
 
+        var productIds = await _productRepository.GetAllAsync(q => q.Where(p => p.SubmitterId == user.Id).Select(p => p.Id));
+
         bool transactionSucceeded = await _userRepository.DoInTransactionAsync(async () =>
         {
 
@@ -205,6 +209,10 @@ public class UserService
 
         if (transactionSucceeded)
         {
+            foreach (var productId in productIds)
+            {
+                _productService.TryDeleteCascade(new Product { Id = productId });
+            }
             return (true, null);
         }
         else
