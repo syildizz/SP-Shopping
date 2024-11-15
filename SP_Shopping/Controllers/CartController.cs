@@ -51,6 +51,7 @@ public class CartController
             )
        );
 
+        ViewBag.TotalPrice = cidtos.Select(m => new { m.Price, m.Count }).Aggregate(0M, (acc, curr) => acc + curr.Price * curr.Count);
         return View(cidtos);
     }
 

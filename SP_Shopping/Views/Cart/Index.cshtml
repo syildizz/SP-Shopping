@@ -1,8 +1,11 @@
 ﻿@model IEnumerable<CartItemDetailsDto>
 @{
     string? message = (string?)ViewBag.Message;
+    decimal totalPrice = (decimal?)ViewBag.TotalPrice ?? 0M;
 }
 
 <h1>@message</h1>
 
 <partial name="_CartIndexCardsPartial" model="Model"/>
+
+<h3 class="my-3 p-3 border bg-info bg-opacity-10 border border-info">Total price: @totalPrice.ToString("C")</h3>

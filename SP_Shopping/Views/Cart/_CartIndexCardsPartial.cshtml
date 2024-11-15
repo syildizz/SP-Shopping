@@ -3,42 +3,44 @@
 @model IEnumerable<CartItemDetailsDto>
 @inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
 
-<div class="d-flex flex-column gap-2 align-items-center align-items-sm-start md-justify-content-md-start w-75">
+<div class="d-flex flex-column gap-2 align-items-center align-items-sm-start md-justify-content-md-start">
+@* <div> *@
     @foreach (var item in Model)
     {
-    <div class="card">
-        <div class="row g-0 align-items-center">
-        <div class="col-sm-3 d-flex card-body justify-content-center">
-        <img 
-            src="@_productImageHandler.GetImageOrDefaultURL(new(item.ProductId))"
-            class="img-fluid mh-100 ratio-1x1 w-75 d-none d-sm-block"
-            alt="Image for product"
-        />
-        <img 
-            src="@_productImageHandler.GetImageOrDefaultURL(new(item.ProductId))"
-            class="img-fluid mh-100 ratio-1x1 w-50 d-block d-sm-none"
-            alt="Image for product"
-        />
-        </div>
-        <div class="col-sm-2 card-body d-flex flex-column card-body justify-content-center align-items-center">
-           <div class="card-title" style="font-size: clamp(1em, 1.5vw, 1.25em)"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>
-            <div class="card-text d-none d-sm-block clamp(1em 1.5vw, 1.25em)">@Html.DisplayFor(model => item.ProductName)</div>
-        </div>
-        <div class="col-sm-3 card-body d-flex card-body justify-content-center">
-            <div class="card-text card-text-fixer">
-            <form asp-action="Edit" asp-route-id="@item.ProductId" class="d-flex flex-row justify-content-center gap-2">
-                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" style="width: 4em; font-size: clamp(1em, 1.5vw, 1.25em);" />
-                <button type="submit" class="btn btn-secondary btn-sm" style="font-size: clamp(1em, 1.5vw, 1.25em);">Update</button>
-            </form>
+    <div class="card justify-content-around" style="min-height: 10em; width: 50em; max-width: 80%">
+        <div class="row g-0 align-items-center h-100">
+            <div class="col-sm-3 d-flex card-body justify-content-center h-100">
+                <img 
+                    src="@_productImageHandler.GetImageOrDefaultURL(new(item.ProductId))"
+                    class="img-fluid ratio-1x1"
+                    style="aspect-ratio: 1/1; width: 80%;"
+                    alt="Image for product"
+                />
             </div>
-        </div>
-        <div class="col-sm-2 card-body d-flex card-body justify-content-center">
-            <div class="card-text">
-            <form asp-action="Delete" asp-route-id="@item.ProductId">
-                <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto" style="font-size: clamp(1em, 1.5vw, 1.25em);">Remove from cart</button>
-            </form>
+            <div class="col-sm-2 card-body d-flex flex-column card-body justify-content-center align-items-center">
+               <div class="card-title"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>
+               <div class="card-text">@Html.DisplayFor(model => item.ProductName)</div>
             </div>
-        </div>
+            <div class="col-sm-3 card-body d-flex card-body justify-content-center">
+                <div class="card-text card-text-fixer">
+                <form asp-action="Edit" asp-route-id="@item.ProductId" class="d-flex flex-row justify-content-center gap-2">
+                    <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" style="width: 4em;" />
+                    <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+                </form>
+                </div>
+            </div>
+            <div class="col-sm-2 card-body d-flex flex-column card-body justify-content-center align-items-center">
+                <div class="card-text card-text-fixer">
+                    @((item.Price * item.Count).ToString("C"))
+                </div>
+            </div>
+            <div class="col-sm-2 card-body d-flex card-body justify-content-center">
+                <div class="card-text">
+                <form asp-action="Delete" asp-route-id="@item.ProductId">
+                    <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto">Remove from cart</button>
+                </form>
+                </div>
+            </div>
         </div>
     </div>
     }
