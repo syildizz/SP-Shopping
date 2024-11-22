@@ -41,3 +41,10 @@ body {
 *:checked + label > .my-bi-sort-checking::before {
     content: "\f57b";
 }
+
+/* Unstylized anchor tag */
+a.unstyled {
+    text-decoration: none;
+    color: inherit;
+}
+

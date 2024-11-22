@@ -8,7 +8,7 @@
     @foreach (var product in Model)
     {
         <div class="card" style="text-align: left;">
-            <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" style="text-decoration: none; color: inherit;">
+            <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" class="unstyled">
             <img 
                 src="@_productImageHandler.GetImageOrDefaultURL(new(product.Id))"
                 class="card-img-top ratio-1x1"
@@ -16,7 +16,7 @@
             />
             </a>
             <div class="card-body py-2">
-                <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" style="text-decoration: none; color: inherit;">
+                <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" class="unstyled">
                 <div class="card-title card-text-fixer my-1"><strong>@Html.DisplayFor(model => product.Name)</strong></div>    
                 <div class="card-text card-text-fixer my-1">@Html.DisplayFor(model => product.Price)</div>    
                 <div class="card-text card-text-fixer my-1">@Html.DisplayFor(model => product.CategoryName)</div>    

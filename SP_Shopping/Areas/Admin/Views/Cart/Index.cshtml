@@ -62,22 +62,34 @@
     @foreach (var item in Model) {
         <tr>
             <td>
+                <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId" class="unstyled">
                 @Html.DisplayFor(modelItem => item.ProductId)
+                </a>
             </td>
             <td>
+                <a asp-area="" asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId" class="unstyled">
                 @Html.DisplayFor(modelItem => item.ProductName)
+                </a>
             </td>
             <td>
+                <a asp-area="" asp-controller="User" asp-action="Index" asp-route-id="@item.UserId" class="unstyled">
                 @Html.DisplayFor(modelItem => item.UserId) 
+                </a>
             </td>
             <td>
+                <a asp-area="" asp-controller="User" asp-action="Index" asp-route-id="@item.UserId" class="unstyled">
                 @Html.DisplayFor(modelItem => item.UserName) 
+                </a>
             </td>
             <td>
+                <a asp-area="" asp-controller="User" asp-action="Index" asp-route-id="@item.SubmitterId" class="unstyled">
                 @Html.DisplayFor(modelItem => item.SubmitterId) 
+                </a>
             </td>
             <td>
+                <a asp-area="" asp-controller="User" asp-action="Index" asp-route-id="@item.SubmitterId" class="unstyled">
                 @Html.DisplayFor(modelItem => item.SubmitterName) 
+                </a>
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Count) 

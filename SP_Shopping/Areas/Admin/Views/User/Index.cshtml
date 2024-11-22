@@ -73,13 +73,19 @@
     @foreach (var item in Model) {
         <tr>
             <td>
+                <a asp-area="" asp-controller="User" asp-action="Index" asp-route-id="@item.Id" class="unstyled">
                 <img class="img-fluid" src="@_imageHandler.GetImageOrDefaultURL(new(item.Id))" />
+                </a>
             </td>
             <td>
+                <a asp-area="" asp-controller="User" asp-action="Index" asp-route-id="@item.Id" class="unstyled">
                 @Html.DisplayFor(modelItem => item.Id)
+                </a>
             </td>
             <td>
+                <a asp-area="" asp-controller="User" asp-action="Index" asp-route-id="@item.Id" class="unstyled">
                 @Html.DisplayFor(modelItem => item.UserName)
+                </a>
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.PhoneNumber)
