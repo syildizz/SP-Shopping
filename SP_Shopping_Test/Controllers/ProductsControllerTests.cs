@@ -91,8 +91,8 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id exists, read succeeds
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto?>>>._))!
-            .Returns(Task.FromResult(A.Fake<ProductDetailsDto>()));
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+            .Returns(A.Fake<ProductDetailsDto>());
         // Act
         IActionResult result = await _productsController.Details(id);
         // Assert
@@ -125,7 +125,7 @@ public class ProductsControllerTests
         const int id = 0;
             // Id does NOT exist, read NOT succeeds.
         A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
-            .Returns(Task.FromResult((ProductDetailsDto?)null));
+            .Returns((ProductDetailsDto?)null);
         // Act
         IActionResult result = await _productsController.Details(id);
         // Assert
@@ -147,7 +147,7 @@ public class ProductsControllerTests
             // SelectList exists
         List<SelectListItem> selectListItems = (List<SelectListItem>)A.CollectionOfFake<SelectListItem>(4);
         A.CallTo(() => _categoryRepository.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
-            .Returns(Task.FromResult(selectListItems));
+            .Returns(selectListItems);
         // Act
         IActionResult result = await _productsController.Create();
         // Assert
@@ -169,7 +169,7 @@ public class ProductsControllerTests
             // Modelstate is correct
             // Create succeeds
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(Task.FromResult(true));
+            .Returns(true);
         // Act
         IActionResult result = await _productsController.Create(A.Fake<ProductCreateDto>());
         // Assert
@@ -189,7 +189,7 @@ public class ProductsControllerTests
             // SelectList exists
         List<SelectListItem> selectListItems = (List<SelectListItem>)A.CollectionOfFake<SelectListItem>(4);
         A.CallTo(() => _categoryRepository.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
-            .Returns(Task.FromResult(selectListItems));
+            .Returns(selectListItems);
         // Act
         IActionResult result = await _productsController.Create(A.Fake<ProductCreateDto>());
         // Assert
@@ -217,7 +217,7 @@ public class ProductsControllerTests
             // Modelstate is correct
             // Create NOT succeeds
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(Task.FromResult(false));
+            .Returns(false);
         // Act
         IActionResult result = await _productsController.Create(A.Fake<ProductCreateDto>());
         // Assert
@@ -243,12 +243,12 @@ public class ProductsControllerTests
             // SelectList exists
         List<SelectListItem> selectListItems = Enumerable.Range(0, 4).Select(s => new SelectListItem()).ToList();
         A.CallTo(() => _categoryRepository.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
-            .Returns(Task.FromResult(selectListItems));
+            .Returns(selectListItems);
             // Id exists, Product is found
         A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .Returns(A.Fake<ProductCreateDto>());
             // Product.SubmitterId is the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string?>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns(_productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
         // Act
         IActionResult result = await _productsController.Edit(id);
@@ -286,15 +286,15 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id does NOT exist, product is NOT found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto?>>>._))
-            .Returns(Task.FromResult((ProductCreateDto?)null));
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
+            .Returns((ProductCreateDto?)null);
         // Act
         IActionResult result = await _productsController.Edit(id);
         // Assert
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
             // Must have accessed the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto?>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .MustHaveHappenedOnceExactly();
     }
 
@@ -305,10 +305,10 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id does exist, product is found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto?>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .Returns(A.Fake<ProductCreateDto>());
             // Product.Submitter is NOT the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string?>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns("not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
         // Act
         IActionResult result = await _productsController.Edit(id);
@@ -316,7 +316,7 @@ public class ProductsControllerTests
             // Result is true
         Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
             // Must have accessed the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto?>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .MustHaveHappenedOnceOrMore();
     }
 
@@ -330,7 +330,7 @@ public class ProductsControllerTests
         A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
             // Modelstate is valid
             // Product.SubmitterId is the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string?>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns(_productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
             // Update succeeds
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
@@ -418,7 +418,7 @@ public class ProductsControllerTests
         A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
             // Modelstate is valid
             // Product.SubmitterId is NOT the same as User is
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string?>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns("not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
         // Act
         IActionResult result = await _productsController.Edit(0, A.Fake<ProductCreateDto>());
@@ -440,7 +440,7 @@ public class ProductsControllerTests
         A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
             // Modelstate is valid
             // Product.SubmitterId is the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string?>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns(_productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
             // Update does NOT succeed
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))

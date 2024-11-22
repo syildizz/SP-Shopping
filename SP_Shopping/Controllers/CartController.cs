@@ -38,12 +38,6 @@ public class CartController
         _logger.LogInformation("GET: Cart/Index");
 
         string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            _logger.LogError("UserId does not exist i.e. no user is logged in.");
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "You need to log in to see your cart" });
-            return RedirectToAction("Index", "Home");
-        }
 
         IEnumerable<CartItemDetailsDto> cidtos = await _cartItemRepository.GetAllAsync(q => 
             _mapper.ProjectTo<CartItemDetailsDto>(q
@@ -57,9 +51,15 @@ public class CartController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(int id)
+    public async Task<IActionResult> Create(int? id)
     {
         _logger.LogInformation("POST: Cart/Create.");
+        
+        if (id is null)
+        {
+            _logger.LogError("id is null");
+            return BadRequest("id is null");
+        }
 
         _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", id);
         bool productExists = await _productRepository.ExistsAsync(q => q.Where(p => p.Id == id));
@@ -67,13 +67,13 @@ public class CartController
         if (!productExists)
         {
             _logger.LogError("The product id of \"{ProductId}\" does not exist in the database.", id);
-            return BadRequest("Invalid product id specified.");
+            return NotFound("Product not found");
         }
 
         CartItem cartItem = new()
         {
             UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!,
-            ProductId = id,
+            ProductId = (int)id,
             Count = 0
         };
 
@@ -81,24 +81,7 @@ public class CartController
         if (!(await _cartItemService.TryCreateAsync(cartItem)).TryOut(out var errMsgs))
         {
             _messageHandler.Add(TempData, errMsgs!);
-        }
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost]
-    [ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id)
-    {
-        _logger.LogInformation("POST: Cart/Delete.");
-
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        CartItem cartItem = new() { ProductId = id, UserId = userId };
-        _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
-        if (!(await _cartItemService.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
-        {
-            _messageHandler.Add(TempData, errMsgs!);
+            return RedirectToAction(nameof(Index));
         }
 
         return RedirectToAction(nameof(Index));
@@ -106,24 +89,52 @@ public class CartController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, CartItemCreateDto cidto)
+    public async Task<IActionResult> Edit(int? id, CartItemCreateDto cidto)
     {
         _logger.LogInformation("POST: Cart/Edit.");
+
+        if (id is null)
+        {
+            _logger.LogError("id is null");
+            return BadRequest("id is null");
+        }
 
         if (ModelState.IsValid)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            CartItem cartItem = new() { ProductId = id, UserId = userId, Count = cidto.Count };
+            CartItem cartItem = new() { ProductId = (int)id, UserId = userId, Count = cidto.Count };
             _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
             if (!(await _cartItemService.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
             }
+            return RedirectToAction(nameof(Index));
         }
-        else
+
+        _logger.LogError("ModelState is invalid");
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int? id)
+    {
+        _logger.LogInformation("POST: Cart/Delete.");
+
+        if (id is null)
         {
-            _logger.LogError("ModelState is invalid");
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
+            _logger.LogError("id is null");
+            return BadRequest("id is null");
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        CartItem cartItem = new() { ProductId = (int)id, UserId = userId };
+        _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
+        if (!(await _cartItemService.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
+        {
+            _messageHandler.Add(TempData, errMsgs!);
+            return RedirectToAction(nameof(Index));
         }
 
         return RedirectToAction(nameof(Index));
