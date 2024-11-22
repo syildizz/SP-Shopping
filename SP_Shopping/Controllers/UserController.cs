@@ -1,12 +1,10 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Dtos.User;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.MessageHandler;
-using System.Security.Claims;
 
 namespace SP_Shopping.Controllers;
 public class UserController
@@ -27,9 +25,16 @@ public class UserController
     private readonly ILogger<UserController> _logger = logger;
     private readonly IMapper _mapper = mapper;
 
-    public async Task<IActionResult> Index(string id)
+    public async Task<IActionResult> Index(string? id)
     {
         _logger.LogInformation("GET: Entering User/Index");
+
+        if (id is null)
+        {
+            _logger.LogError("Id is null");
+            return BadRequest("Id is null");
+        }
+
         UserPageDto? udto = await _userRepository.GetSingleAsync(q => 
             _mapper.ProjectTo<UserPageDto>(q
                 .Where(u => u.Id == id)
