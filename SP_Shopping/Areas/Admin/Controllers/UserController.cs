@@ -198,7 +198,7 @@ public class UserController
 
         _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Success, Content = "Succesfully made admin" });
 
-        return RedirectToAction(nameof(Index), new { id });
+        return RedirectToAction("Index", "User", new { id, area = "" });
 
     }
 
@@ -231,7 +231,7 @@ public class UserController
         }
 
         _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Success, Content = "Succesfully made not admin" });
-        return RedirectToAction(nameof(Index), new { id });
+        return RedirectToAction("Index", "User", new { id, area = "" });
     }
 
     [ValidateAntiForgeryToken]

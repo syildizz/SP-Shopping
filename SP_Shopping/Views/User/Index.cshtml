@@ -32,13 +32,13 @@ else
 {
     @if (!requestedUserIsAdmin)
     {
-        <form asp-controller="User" asp-action="Adminize" asp-route-Id="@Model.Id">
+        <form asp-area="Admin" asp-controller="User" asp-action="Adminize" asp-route-Id="@Model.Id">
             <button type="submit" class="btn btn-success">Give Admin Privileges</button> 
         </form>
     }
     else
     {
-        <form asp-controller="User" asp-action="Unadminize" asp-route-Id="@Model.Id">
+        <form asp-area="Admin" asp-controller="User" asp-action="Unadminize" asp-route-Id="@Model.Id">
             <button type="submit" class="btn btn-danger">Revoke Admin Privileges</button> 
         </form>
     }
