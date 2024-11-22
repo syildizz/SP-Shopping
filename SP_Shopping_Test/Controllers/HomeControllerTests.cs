@@ -57,7 +57,7 @@ public class HomeControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_Details_Succeeds_WithViewResult()
+    public async Task HomeController_Index_Succeeds_WithViewResult()
     {
         // Arrange 
             // Get Products
