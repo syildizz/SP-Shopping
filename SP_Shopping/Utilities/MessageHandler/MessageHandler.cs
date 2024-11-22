@@ -4,9 +4,9 @@ using NuGet.Protocol;
 
 namespace SP_Shopping.Utilities.MessageHandler;
 
-public class MessageHandler : IMessageHandler
+public class MessageHandler(string messageKey = "Messages") : IMessageHandler
 {
-    private readonly string _messageKey = "Messages";
+    private readonly string _messageKey = messageKey;
 
     public void Add(ITempDataDictionary tempData, Message message)
     {

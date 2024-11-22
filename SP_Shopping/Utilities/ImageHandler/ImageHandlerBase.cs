@@ -197,6 +197,7 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
         {
             if (Directory.GetParent(imagePath)?.FullName is string parentDirectory) {
                 Directory.CreateDirectory(parentDirectory);
+                DeleteImage(key);
             } 
             else
             {

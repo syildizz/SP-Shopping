@@ -10,6 +10,7 @@ using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 
 namespace SP_Shopping.Controllers;
@@ -126,12 +127,8 @@ public class ProductsController : Controller
             _logger.LogDebug($"Creating product.");
             Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
 
-            string? submitterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == submitterId)))
-            {
-                return BadRequest("UserId is invalid. Contact developer");
-            }
-            product.SubmitterId = submitterId;
+            product.SubmitterId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+                ?? throw new Exception("ClaimTypes.NameIdentifier doesn't exist somehow. Should be unreachable code");
 
             if (!(await _productService.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
             {
@@ -159,10 +156,10 @@ public class ProductsController : Controller
         if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
 
         _logger.LogInformation($"GET: Entering Products/Edit.");
-        if (id == null)
+        if (id is null)
         {
             _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
-            return BadRequest();
+            return BadRequest("id field cannot be empty");
         }
 
         //var product = await _context.Products.FindAsync(id);
@@ -205,10 +202,17 @@ public class ProductsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize]
-    public async Task<IActionResult> Edit(int id, ProductCreateDto pdto)
+    public async Task<IActionResult> Edit(int? id, ProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Edit.");
-        if (!_productRepository.Exists(q => q.Where(p => p.Id == id)))
+
+        if (id is null)
+        {
+            _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
+            return BadRequest("id field cannot be empty");
+        }
+
+        if (!await _productRepository.ExistsAsync(q => q.Where(p => p.Id == id)))
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
@@ -217,7 +221,7 @@ public class ProductsController : Controller
         if (ModelState.IsValid)
         {
             var product = _mapper.Map<ProductCreateDto, Product>(pdto);
-            product.Id = id;
+            product.Id = (int)id;
 
             // Get user argument from session and edit if the user owns the product.
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -247,7 +251,7 @@ public class ProductsController : Controller
         {
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid" });
         }
-        return RedirectToAction(nameof(Details), new { id });
+        return RedirectToAction(nameof(Edit), new { id });
 
     }
 
@@ -262,7 +266,7 @@ public class ProductsController : Controller
         if (id == null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
-            return BadRequest();
+            return BadRequest("id field cannot be empty");
         }
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
@@ -292,10 +296,16 @@ public class ProductsController : Controller
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     [Authorize]
-    public async Task<IActionResult> DeleteConfirmed(int id)
+    public async Task<IActionResult> DeleteConfirmed(int? id)
     {
         _logger.LogInformation($"POST: Entering Products/Delete.");
-        //var product = await _context.Products.FindAsync(id);
+
+        if (id is null)
+        {
+            _logger.LogError("Null passed for id");
+            return BadRequest();
+        }
+
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         Product? product = await _productRepository.GetSingleAsync(q => q
             .Where(q => q.Id == id)
@@ -323,6 +333,7 @@ public class ProductsController : Controller
         if (!(await _productService.TryDeleteAsync(product)).TryOut(out var errMsgs))
         {
             _messageHandler.Add(TempData, errMsgs!);
+            return RedirectToAction(nameof(Delete), new { id });
         }
 
         return RedirectToAction("Index", "User", new { Id = userId });
@@ -331,37 +342,52 @@ public class ProductsController : Controller
     [Authorize]
     [ValidateAntiForgeryToken]
     [HttpPost]
-    public async Task<IActionResult> ResetImage(int id)
+    public async Task<IActionResult> ResetImage(int? id)
     {
-
         _logger.LogInformation($"POST: Entering Products/ResetImage.");
+
+        if (id is null)
+        {
+            _logger.LogError("Id is null");
+            return BadRequest();
+        }
+
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var productInfo = await _productRepository.GetSingleAsync(q => q
+        var product = await _productRepository.GetSingleAsync(q => q
             .Where(p => p.Id == id)
-            .Select(p => new 
-            {
-                p.SubmitterId
-            })
+            .Select(p => new Product { SubmitterId = p.SubmitterId })
         );
 
-        if (productInfo is null)
+        if (product?.SubmitterId is null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound($"The product with the passed id of \"{id}\" does not exist.");
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (productInfo.SubmitterId != userId)
+        if (product.SubmitterId != userId)
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to reset the image of product"
-                + "belonging to user with id \"{ProductOwnerId}\"", userId, productInfo.SubmitterId);
+                + "belonging to user with id \"{ProductOwnerId}\"", userId, product.SubmitterId);
             return Unauthorized("Cannot delete the image of a product that is not yours");
         }
 
         _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);
-        _productImageHandler.DeleteImage(new(id));
+        try
+        {
+            _productImageHandler.DeleteImage(new((int)id));
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to reset image" + " " + ex.Message });
+#else
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to reset image" });
+#endif
+            return RedirectToAction(nameof(Edit), new { id });
+        }
 
-        return Redirect(Url.Action(nameof(Edit), new { id }) ?? @"/");
+        return RedirectToAction(nameof(Edit), new { id });
         
     }
 
