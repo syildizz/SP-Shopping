@@ -1,28 +1,18 @@
 using AutoMapper;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
-using SP_Shopping.Utilities.ImageHandler;
 using System.Diagnostics;
 using System.Security.Claims;
 
 namespace SP_Shopping.Controllers;
 
-public class HomeController : Controller
+public class HomeController(ILogger<HomeController> logger, IRepository<Product> productRepository, IMapper mapper) : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-    private readonly IRepository<Product> _productRepository;
-    private readonly IMapper _mapper;
-
-    public HomeController(ILogger<HomeController> logger, IRepository<Product> productRepository, IMapper mapper)
-    {
-        _logger = logger;
-        _productRepository = productRepository;
-        _mapper = mapper;
-    }
+    private readonly ILogger<HomeController> _logger = logger;
+    private readonly IRepository<Product> _productRepository = productRepository;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<IActionResult> Index()
     {
