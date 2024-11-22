@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -15,7 +16,7 @@ using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
-namespace SP_Shopping.Controllers.Tests;
+namespace SP_Shopping.Test.Controllers;
 
 [TestClass]
 public class ProductsControllerTests
