@@ -11,6 +11,7 @@ using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.User;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Test.TestingUtilities;
 using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
@@ -95,6 +96,19 @@ public class UserControllerTests
         var viewResultModel = (UserPageDto)viewResult.Model;
         Assert.IsTrue(viewResultModel.ProductDetails?.Count() == fakeUserPage.ProductDetails.Count());
     }
+
+    [TestMethod]
+    public void UserController_Index_Succeeds_WhenNotAuthorized()
+    {
+        // Arrange
+        var controller = typeof(UserController);
+        var action = controller.GetMethod("Index");
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(!hasAuthorization, "Action should not be authorized but it is");
+    }
+
 
     [TestMethod]
     public void UserController_Index_Fails_WhenIdNull_WithBadRequest()

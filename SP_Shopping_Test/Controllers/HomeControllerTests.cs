@@ -9,6 +9,7 @@ using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Test.TestingUtilities;
 using System.Security.Claims;
 
 namespace SP_Shopping.Test.Controllers;
@@ -75,6 +76,19 @@ public class HomeControllerTests
         var viewResultModel = (IEnumerable<ProductDetailsDto>)viewResult.Model;
         Assert.IsTrue(viewResultModel.Count() == products.Count);
     }
+
+    [TestMethod]
+    public void HomeController_Index_Succeeds_WhenNotAuthorized()
+    {
+        // Arrange
+        var controller = typeof(HomeController);
+        var action = controller.GetMethod("Index");
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(!hasAuthorization, "Action should not be authorized but it is");
+    }
+
 
 
 }

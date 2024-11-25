@@ -79,18 +79,6 @@ public class CartControllerTests
         _cartController.TempData = new TempDataDictionary(_cartController.HttpContext, A.Fake<ITempDataProvider>());
     }
 
-    [TestMethod]
-    public void CartController_Fails_WhenNotAuthorized_WithRedirect()
-    {
-        // Arrange
-        var controller = typeof(CartController);
-        var action = controller.GetMethod("DeleteConfirmed");
-        // Act
-        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller);
-        // Assert
-        Assert.IsTrue(hasAuthorization, "Controller does not have authorization attributes even though it should");
-    }
-
     #region Index
 
     [TestMethod]
@@ -118,12 +106,24 @@ public class CartControllerTests
         Assert.IsTrue((decimal)viewResult.ViewData["TotalPrice"]! == prices.Sum());
     }
 
+    [TestMethod]
+    public void CartController_Index_Succeeds_WhenAuthorized()
+    {
+        // Arrange
+        var controller = typeof(CartController);
+        var action = controller.GetMethod("Index");
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
+    }
+
     #endregion Index
 
     #region Create
 
     [TestMethod]
-    public async Task CartController_CreatePost_Succeeds_WithRedirectResult()
+    public async Task CartController_CreatePost_Succeeds_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -144,6 +144,18 @@ public class CartControllerTests
     }
 
     [TestMethod]
+    public void CartController_CreatePost_Succeeds_WhenAuthorized()
+    {
+        // Arrange
+        var controller = typeof(CartController);
+        var action = controller.GetMethod("Create");
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
+    }
+
+    [TestMethod]
     public void CartController_CreatePost_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
@@ -155,7 +167,7 @@ public class CartControllerTests
     }
 
     [TestMethod]
-    public async Task CartController_CreatePost_Fails_WhenIdNotExist_WithNotFoundResult()
+    public async Task CartController_CreatePost_Fails_WhenIdNotExist_WithNotFound()
     {
         // Arrange
             // Id is not null
@@ -171,7 +183,7 @@ public class CartControllerTests
     }
 
     [TestMethod]
-    public async Task CartController_CreatePost_Fails_WhenCreateNotSucceed_WithRedirectResult()
+    public async Task CartController_CreatePost_Fails_WhenCreateNotSucceed_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -202,7 +214,7 @@ public class CartControllerTests
     #region Edit
 
     [TestMethod]
-    public async Task CartController_EditPost_Succeeds_WithRedirectResult()
+    public async Task CartController_EditPost_Succeeds_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -221,6 +233,18 @@ public class CartControllerTests
     }
 
     [TestMethod]
+    public void CartController_EditPost_Succeeds_WhenAuthorized()
+    {
+        // Arrange
+        var controller = typeof(CartController);
+        var action = controller.GetMethod("Edit");
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
+    }
+
+    [TestMethod]
     public void CartController_EditPost_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
@@ -232,7 +256,7 @@ public class CartControllerTests
     }
 
     [TestMethod]
-    public async Task CartController_EditPost_Fails_WhenModelStateNotValid_WithRedirectResult()
+    public async Task CartController_EditPost_Fails_WhenModelStateNotValid_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -251,7 +275,7 @@ public class CartControllerTests
     }
 
     [TestMethod]
-    public async Task CartController_EditPost_Fails_WhenEditNotSucceed_WithRedirectResult()
+    public async Task CartController_EditPost_Fails_WhenEditNotSucceed_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -280,7 +304,7 @@ public class CartControllerTests
     #region Delete
 
     [TestMethod]
-    public async Task CartController_DeletePost_Succeeds_WithRedirectResult()
+    public async Task CartController_DeletePost_Succeeds_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -301,6 +325,18 @@ public class CartControllerTests
     }
 
     [TestMethod]
+    public void CartController_DeletePost_Succeeds_WhenAuthorized()
+    {
+        // Arrange
+        var controller = typeof(CartController);
+        var action = controller.GetMethod("Delete");
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
+    }
+
+    [TestMethod]
     public void CartController_DeletePost_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
@@ -312,7 +348,7 @@ public class CartControllerTests
     }
 
     [TestMethod]
-    public async Task CartController_DeletePost_Fails_WhenDeleteFails_WithRedirectResult()
+    public async Task CartController_DeletePost_Fails_WhenDeleteFails_WithRedirect()
     {
         // Arrange
             // Id is not null

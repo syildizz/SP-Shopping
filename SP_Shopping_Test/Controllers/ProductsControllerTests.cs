@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using FakeItEasy;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -110,7 +109,19 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductController_Details_Fails_WhenIdIsNull_WithBadRequestResponse()
+    public void ProductsController_Details_Succeeds_WhenNotAuthorized()
+    {
+        // Arrange
+        var controller = typeof(ProductsController);
+        var action = controller.GetMethod("Details");
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(!hasAuthorization, "Action should not be authorized but it is");
+    }
+
+    [TestMethod]
+    public void ProductController_Details_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
         var action = typeof(ProductsController).GetMethod("Details");
@@ -121,7 +132,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_Details_Fails_WhenProductDoesntExist_WithNotFoundResponse()
+    public async Task ProductsController_Details_Fails_WhenProductDoesntExist_WithNotFound()
     {
         // Arrange 
             // Id is not null
@@ -166,7 +177,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductController_CreateGet_Fails_WhenNotAuthorized_WithRedirect()
+    public void ProductController_CreateGet_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -174,11 +185,11 @@ public class ProductsControllerTests
         // Act
         var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
     }
 
     [TestMethod]
-    public async Task ProductsController_CreatePost_Succeeds_WithRedirectToActionResult()
+    public async Task ProductsController_CreatePost_Succeeds_WithRedirect()
     {
         // Arrange
             // Modelstate is correct
@@ -196,7 +207,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductController_CreatePost_Fails_WhenNotAuthorized_WithRedirect()
+    public void ProductController_CreatePost_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -204,7 +215,7 @@ public class ProductsControllerTests
         // Act
         var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
     }
 
 
@@ -239,7 +250,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_CreatePost_Fails_WhenProductCannotBeCreated_WithRedirectResult_WithWarningMessage()
+    public async Task ProductController_CreatePost_Fails_WhenProductCannotBeCreated_WithRedirect_WithWarningMessage()
     {
         // Arrange
             // Modelstate is correct
@@ -297,7 +308,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductController_EditGet_Fails_WhenNotAuthorized_WithRedirect()
+    public void ProductController_EditGet_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -305,7 +316,7 @@ public class ProductsControllerTests
         // Act
         var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
     }
 
     [TestMethod]
@@ -320,7 +331,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_EditGet_Fails_WhenProductDoesntExist_WithNotFoundResult()
+    public async Task ProductsController_EditGet_Fails_WhenProductDoesntExist_WithNotFound()
     {
         // Arrange 
             // Id is not null
@@ -339,7 +350,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_EditGet_Fails_WhenUserIdNotSubmitterId_WithUnauthorizedResult()
+    public async Task ProductsController_EditGet_Fails_WhenUserIdNotSubmitterId_WithUnauthorized()
     {
         // Arrange
             // Id is not null
@@ -361,7 +372,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_EditPost_Succeeds_WithRedirectResult()
+    public async Task ProductController_EditPost_Succeeds_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -389,7 +400,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductController_EditPost_Fails_WhenNotAuthorized_WithRedirect()
+    public void ProductController_EditPost_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -397,7 +408,7 @@ public class ProductsControllerTests
         // Act
         var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
     }
 
     [TestMethod]
@@ -412,7 +423,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_EditPost_Fails_WhenProductNotExist_WithNotFoundResult()
+    public async Task ProductController_EditPost_Fails_WhenProductNotExist_WithNotFound()
     {
         // Arrange
             // Id is not null
@@ -430,7 +441,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_EditPost_Fails_WhenModelStateNotValid_WithRedirectResult_WithWarningMessage()
+    public async Task ProductController_EditPost_Fails_WhenModelStateNotValid_WithRedirect_WithWarningMessage()
     {
         // Arrange
             // Id is not null
@@ -458,7 +469,7 @@ public class ProductsControllerTests
 
 
     [TestMethod]
-    public async Task ProductController_EditPost_Fails_WhenSubmitterIdNotUserId_WithRedirectResult()
+    public async Task ProductController_EditPost_Fails_WhenSubmitterIdNotUserId_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -479,7 +490,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_EditPost_Fails_WhenUpdateFails_WithRedirectResult()
+    public async Task ProductController_EditPost_Fails_WhenUpdateFails_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -535,7 +546,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductController_DeleteGet_Fails_WhenNotAuthorized_WithRedirect()
+    public void ProductController_DeleteGet_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -543,7 +554,7 @@ public class ProductsControllerTests
         // Act
         var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
     }
 
     [TestMethod]
@@ -578,7 +589,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_DeleteGet_Fails_WhenSubmitterIdNotUserId_WithUnauthorised()
+    public async Task ProductController_DeleteGet_Fails_WhenSubmitterIdNotUserId_WithUnauthorized()
     {
         // Arrange
             // Id is not null
@@ -629,7 +640,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductController_DeletePost_Fails_WhenNotAuthorized_WithRedirect()
+    public void ProductController_DeletePost_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -637,7 +648,7 @@ public class ProductsControllerTests
         // Act
         var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
     }
 
     [TestMethod]
@@ -753,15 +764,15 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductController_ResetImage_Fails_WhenNotAuthorized_WithRedirect()
+    public void ProductController_ResetImage_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
-        var action = controller.GetMethod("ResetImage", [typeof(int?), typeof(ProductCreateDto)]);
+        var action = controller.GetMethod("ResetImage");
         // Act
         var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
     }
 
     [TestMethod]
