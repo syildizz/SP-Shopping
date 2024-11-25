@@ -7,10 +7,10 @@ using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
+using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
-using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 
 namespace SP_Shopping.Controllers;
@@ -71,17 +71,13 @@ public class ProductsController : Controller
     }
 
     // GET: Products/Details/5
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Details(int? id)
     {
 
         if (User.IsInRole("Admin")) return RedirectToAction("Details", "Products", new { area = "Admin" });
 
         _logger.LogInformation("GET: Entering Products/Details.");
-        if (id == null)
-        {
-            _logger.LogError("The specified id \"{Id}\" for Product/Details does not exist.", id);
-            return BadRequest("Required parameter id not specified");
-        }
 
         _logger.LogDebug("Fetching \"{Id}\" product information.", id);
         ProductDetailsDto? pdto = await _productRepository.GetSingleAsync(q => 
@@ -150,17 +146,13 @@ public class ProductsController : Controller
 
     // GET: Products/Edit/5
     [Authorize]
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Edit(int? id)
     {
 
         if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
 
         _logger.LogInformation($"GET: Entering Products/Edit.");
-        if (id is null)
-        {
-            _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
-            return BadRequest("id field cannot be empty");
-        }
 
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
@@ -202,15 +194,10 @@ public class ProductsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize]
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Edit(int? id, ProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Edit.");
-
-        if (id is null)
-        {
-            _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
-            return BadRequest("id field cannot be empty");
-        }
 
         if (!await _productRepository.ExistsAsync(q => q.Where(p => p.Id == id)))
         {
@@ -257,17 +244,13 @@ public class ProductsController : Controller
 
     // GET: Products/Delete/5
     [Authorize]
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Delete(int? id)
     {
 
         if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
 
         _logger.LogInformation($"GET: Entering Products/Delete.");
-        if (id == null)
-        {
-            _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
-            return BadRequest("id field cannot be empty");
-        }
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var pdto = await _productRepository.GetSingleAsync(q =>
@@ -296,15 +279,10 @@ public class ProductsController : Controller
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     [Authorize]
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> DeleteConfirmed(int? id)
     {
         _logger.LogInformation($"POST: Entering Products/Delete.");
-
-        if (id is null)
-        {
-            _logger.LogError("Null passed for id");
-            return BadRequest();
-        }
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         Product? product = await _productRepository.GetSingleAsync(q => q
@@ -342,15 +320,10 @@ public class ProductsController : Controller
     [Authorize]
     [ValidateAntiForgeryToken]
     [HttpPost]
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> ResetImage(int? id)
     {
         _logger.LogInformation($"POST: Entering Products/ResetImage.");
-
-        if (id is null)
-        {
-            _logger.LogError("Id is null");
-            return BadRequest();
-        }
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var product = await _productRepository.GetSingleAsync(q => q

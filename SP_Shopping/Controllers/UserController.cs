@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Dtos.User;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.MessageHandler;
 
 namespace SP_Shopping.Controllers;
@@ -25,6 +26,7 @@ public class UserController
     private readonly ILogger<UserController> _logger = logger;
     private readonly IMapper _mapper = mapper;
 
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Index(string? id)
     {
         _logger.LogInformation("GET: Entering User/Index");

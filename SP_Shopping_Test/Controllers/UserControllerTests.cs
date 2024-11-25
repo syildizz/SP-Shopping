@@ -6,10 +6,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.IdentityModel.Tokens;
 using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.User;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
@@ -68,6 +70,8 @@ public class UserControllerTests
         };
     }
 
+    #region Index
+
     [TestMethod]
     public async Task UserController_Index_Succeeds_WithViewResult()
     {
@@ -93,15 +97,14 @@ public class UserControllerTests
     }
 
     [TestMethod]
-    public async Task UserController_Index_Fails_WhenIdNull_WithBadRequest()
+    public void UserController_Index_Fails_WhenIdNull_WithBadRequest()
     {
-        // Arrange 
-            // Id IS null
+        // Arrange
+        var action = typeof(UserController).GetMethod("Index");
         // Act
-        IActionResult result = await _userController.Index(null);
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
         // Assert
-        // Result is correct
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult);
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]
@@ -120,4 +123,7 @@ public class UserControllerTests
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
     }
 
+#endregion Index
+
 }
+

@@ -5,11 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.IdentityModel.Tokens;
 using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.Cart;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Service;
+using SP_Shopping.Test.TestingUtilities;
+using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
@@ -76,6 +79,18 @@ public class CartControllerTests
         _cartController.TempData = new TempDataDictionary(_cartController.HttpContext, A.Fake<ITempDataProvider>());
     }
 
+    [TestMethod]
+    public void CartController_Fails_WhenNotAuthorized_WithRedirect()
+    {
+        // Arrange
+        var controller = typeof(CartController);
+        var action = controller.GetMethod("DeleteConfirmed");
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller);
+        // Assert
+        Assert.IsTrue(hasAuthorization, "Controller does not have authorization attributes even though it should");
+    }
+
     #region Index
 
     [TestMethod]
@@ -129,16 +144,14 @@ public class CartControllerTests
     }
 
     [TestMethod]
-    public async Task CartController_CreatePost_Fails_WhenIdIsNull_WithBadRequest()
+    public void CartController_CreatePost_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
-            // Id IS null
-            // Id exists, Product found
+        var action = typeof(CartController).GetMethod("Create");
         // Act
-        IActionResult result = await _cartController.Create(null);
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
         // Assert
-            // Result is correct
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult);
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]
@@ -208,15 +221,14 @@ public class CartControllerTests
     }
 
     [TestMethod]
-    public async Task CartController_EditPost_Fails_WhenIdIsNull_WithBadRequest()
+    public void CartController_EditPost_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
-            // Id IS null
+        var action = typeof(CartController).GetMethod("Edit");
         // Act
-        IActionResult result = await _cartController.Edit(null, A.Fake<CartItemCreateDto>());
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
         // Assert
-            // Result is correct
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult, "Action result is not BadRequest");
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]
@@ -289,17 +301,14 @@ public class CartControllerTests
     }
 
     [TestMethod]
-    public async Task CartController_DeletePost_Fails_WhenIdIsNull_WithBadRequest()
+    public void CartController_DeletePost_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
-            // Id IS null
+        var action = typeof(CartController).GetMethod("Delete");
         // Act
-        IActionResult result = await _cartController.Delete(null);
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
         // Assert
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult, "Action result is not BadRequest");
-            // Mustn't have called the database
-        A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]

@@ -6,6 +6,7 @@ using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
+using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
@@ -51,6 +52,7 @@ public class CartController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Create(int? id)
     {
         _logger.LogInformation("POST: Cart/Create.");
@@ -89,6 +91,7 @@ public class CartController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Edit(int? id, CartItemCreateDto cidto)
     {
         _logger.LogInformation("POST: Cart/Edit.");
@@ -118,6 +121,7 @@ public class CartController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Delete(int? id)
     {
         _logger.LogInformation("POST: Cart/Delete.");

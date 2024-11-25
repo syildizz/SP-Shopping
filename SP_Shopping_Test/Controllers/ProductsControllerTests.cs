@@ -1,16 +1,20 @@
 ﻿using AutoMapper;
 using FakeItEasy;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.IdentityModel.Tokens;
 using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Service;
+using SP_Shopping.Test.TestingUtilities;
+using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
@@ -106,15 +110,14 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_Details_Fails_WhenIdIsNull_WithBadRequestResponse()
+    public void ProductController_Details_Fails_WhenIdIsNull_WithBadRequestResponse()
     {
         // Arrange
-            // Id IS null
+        var action = typeof(ProductsController).GetMethod("Details");
         // Act
-        IActionResult result = await _productsController.Details(null);
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
         // Assert
-            // Result is correct
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult);
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]
@@ -163,6 +166,18 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
+    public void ProductController_CreateGet_Fails_WhenNotAuthorized_WithRedirect()
+    {
+        // Arrange
+        var controller = typeof(ProductsController);
+        var action = controller.GetMethod("Create", []);
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+    }
+
+    [TestMethod]
     public async Task ProductsController_CreatePost_Succeeds_WithRedirectToActionResult()
     {
         // Arrange
@@ -179,6 +194,19 @@ public class ProductsControllerTests
         Assert.IsTrue(redirectResult.ActionName == "Details");
         Assert.IsNotNull((int?)redirectResult.RouteValues?["id"]);
     }
+
+    [TestMethod]
+    public void ProductController_CreatePost_Fails_WhenNotAuthorized_WithRedirect()
+    {
+        // Arrange
+        var controller = typeof(ProductsController);
+        var action = controller.GetMethod("Create", [typeof(ProductCreateDto)]);
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+    }
+
 
     [TestMethod]
     public async Task ProductController_CreatePost_Fails_WhenModelStateIsNotValid_WithViewResult_WithWarningMessage()
@@ -269,14 +297,26 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_EditGet_Fails_WhenIdIsNull_WithBadRequestResult()
+    public void ProductController_EditGet_Fails_WhenNotAuthorized_WithRedirect()
     {
         // Arrange
-            // Id IS null
+        var controller = typeof(ProductsController);
+        var action = controller.GetMethod("Edit", [typeof(int?)]);
         // Act
-        IActionResult result = await _productsController.Edit(null);
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult);
+        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+    }
+
+    [TestMethod]
+    public void ProductController_EditGet_Fails_WhenIdIsNull_WithBadRequest()
+    {
+        // Arrange
+        var action = typeof(ProductsController).GetMethod("Edit", [typeof(int?)]);
+        // Act
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
+        // Assert
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]
@@ -349,18 +389,26 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_EditPost_Fails_WhenIdIsNull_WithBadRequestResult()
+    public void ProductController_EditPost_Fails_WhenNotAuthorized_WithRedirect()
     {
         // Arrange
-        // Id IS null
+        var controller = typeof(ProductsController);
+        var action = controller.GetMethod("Edit", [typeof(int?), typeof(ProductCreateDto)]);
         // Act
-        IActionResult result = await _productsController.Edit(null, A.Fake<ProductCreateDto>());
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-            // Result is correct
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult);
-            // Must have accessed database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
+        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+    }
+
+    [TestMethod]
+    public void ProductController_EditPost_Fails_WhenIdIsNull_WithBadRequest()
+    {
+        // Arrange
+        var action = typeof(ProductsController).GetMethod("Edit", [typeof(int?), typeof(ProductCreateDto)]);
+        // Act
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
+        // Assert
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]
@@ -487,19 +535,28 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_DeleteGet_Fails_WhenIdIsNull_WithBadRequest()
+    public void ProductController_DeleteGet_Fails_WhenNotAuthorized_WithRedirect()
     {
         // Arrange
-            // Id IS null
+        var controller = typeof(ProductsController);
+        var action = controller.GetMethod("Delete");
         // Act
-        IActionResult result = await _productsController.Delete(null);
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-            // Result is correct
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult);
-            // Mustn't have called the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
-            .MustNotHaveHappened();
+        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
     }
+
+    [TestMethod]
+    public void ProductController_DeleteGet_Fails_WhenIdIsNull_WithBadRequest()
+    {
+        // Arrange
+        var action = typeof(ProductsController).GetMethod("Delete");
+        // Act
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
+        // Assert
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
+    }
+
 
     [TestMethod]
     public async Task ProductController_DeleteGet_Fails_WhenProductNotFound_WithNotFound()
@@ -572,18 +629,26 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_DeletePost_Fails_WhenIdIsNull_WithBadRequest()
+    public void ProductController_DeletePost_Fails_WhenNotAuthorized_WithRedirect()
     {
         // Arrange
-            // Id IS null
+        var controller = typeof(ProductsController);
+        var action = controller.GetMethod("DeleteConfirmed");
         // Act
-        IActionResult result = await _productsController.DeleteConfirmed(null);
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-        // Result is correct
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult);
-        // Mustn't have called the database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
+        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+    }
+
+    [TestMethod]
+    public void ProductController_DeletePost_Fails_WhenIdIsNull_WithBadRequest()
+    {
+        // Arrange
+        var action = typeof(ProductsController).GetMethod("DeleteConfirmed");
+        // Act
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
+        // Assert
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]
@@ -688,18 +753,26 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductController_ResetImage_Fails_WhenIdIsNull_WithBadRequest()
+    public void ProductController_ResetImage_Fails_WhenNotAuthorized_WithRedirect()
     {
         // Arrange
-            // Id IS null
+        var controller = typeof(ProductsController);
+        var action = controller.GetMethod("ResetImage", [typeof(int?), typeof(ProductCreateDto)]);
         // Act
-        IActionResult result = await _productsController.ResetImage(null);
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
-            // Result is correct
-        Assert.IsTrue(result is BadRequestResult or BadRequestObjectResult);
-            // Mustn't have attempted image delete
-        A.CallTo(() => _productImageHandler.DeleteImage(A<ProductImageKey>._))
-            .MustNotHaveHappened();
+        Assert.IsTrue(hasAuthorization, "Action does not have authorization attributes even though it should");
+    }
+
+    [TestMethod]
+    public void ProductController_ResetImage_Fails_WhenIdIsNull_WithBadRequest()
+    {
+        // Arrange
+        var action = typeof(ProductsController).GetMethod("ResetImage");
+        // Act
+        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
+        // Assert
+        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]
