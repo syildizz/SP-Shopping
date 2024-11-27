@@ -11,6 +11,7 @@ using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
+using SP_Shopping.Utilities.ModelStateHandler;
 using System.Security.Claims;
 
 namespace SP_Shopping.Controllers;
@@ -147,6 +148,7 @@ public class ProductsController : Controller
     // GET: Products/Edit/5
     [Authorize]
     [IfArgNullBadRequestFilter(nameof(id))]
+    [ImportModelState]
     public async Task<IActionResult> Edit(int? id)
     {
 
@@ -195,6 +197,7 @@ public class ProductsController : Controller
     [ValidateAntiForgeryToken]
     [Authorize]
     [IfArgNullBadRequestFilter(nameof(id))]
+    [ExportModelState]
     public async Task<IActionResult> Edit(int? id, ProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Edit.");
@@ -208,7 +211,7 @@ public class ProductsController : Controller
         if (ModelState.IsValid)
         {
             var product = _mapper.Map<ProductCreateDto, Product>(pdto);
-            product.Id = (int)id;
+            product.Id = (int)id!;
 
             // Get user argument from session and edit if the user owns the product.
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -234,10 +237,9 @@ public class ProductsController : Controller
             }
             return RedirectToAction(nameof(Details), new { id });
         }
-        else
-        {
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid" });
-        }
+
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid" });
+
         return RedirectToAction(nameof(Edit), new { id });
 
     }
@@ -370,4 +372,6 @@ public class ProductsController : Controller
             .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
         );
     }
+
+
 }

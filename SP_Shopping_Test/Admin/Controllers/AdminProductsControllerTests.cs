@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.IdentityModel.Tokens;
-using SP_Shopping.Controllers;
-using SP_Shopping.Dtos.Product;
+using SP_Shopping.Areas.Admin.Controllers;
+using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Service;
@@ -19,10 +19,10 @@ using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
-namespace SP_Shopping.Test.Controllers;
+namespace SP_Shopping.Test.Admin.Controllers;
 
 [TestClass]
-public class ProductsControllerTests
+public class AdminProductsControllerTests
 {
 
     private readonly IRepository<Product> _productRepository;
@@ -33,9 +33,9 @@ public class ProductsControllerTests
     private readonly ILogger<ProductsController> _logger;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
     private readonly IMessageHandler _messageHandler;
-    private readonly ProductsController _productsController;
+    private readonly ProductsController _adminProductsController;
 
-    public ProductsControllerTests()
+    public AdminProductsControllerTests()
     {
         _productRepository = A.Fake<IRepository<Product>>();
         _categoryRepository = A.Fake<IRepositoryCaching<Category>>();
@@ -48,7 +48,7 @@ public class ProductsControllerTests
 
         // SUT
 
-        _productsController = new ProductsController
+        _adminProductsController = new ProductsController
         (
             logger: _logger,
             mapper: _mapper,
@@ -67,12 +67,12 @@ public class ProductsControllerTests
                 new Claim(ClaimTypes.NameIdentifier, "8008-12213-absd-32h9-blablabla"),
                 new Claim(ClaimTypes.Name, "Faker"),
                 new Claim(ClaimTypes.Email, "faker@faker.fk"),
-                new Claim(ClaimTypes.Role, "NotAdmin")
+                new Claim(ClaimTypes.Role, "Admin")
                 // other required and custom claims
            ],"TestAuthentication")
         ]);
 
-        _productsController.ControllerContext = new ControllerContext()
+        _adminProductsController.ControllerContext = new ControllerContext()
         {
             HttpContext = new DefaultHttpContext()
             {
@@ -82,46 +82,46 @@ public class ProductsControllerTests
         };
 
         // Set fake TempData
-        _productsController.TempData = new TempDataDictionary(_productsController.HttpContext, A.Fake<ITempDataProvider>());
+        _adminProductsController.TempData = new TempDataDictionary(_adminProductsController.HttpContext, A.Fake<ITempDataProvider>());
     }
 
     #region Details
 
     [TestMethod]
-    public async Task ProductsController_Details_Succeeds_WithViewResult()
+    public async Task AdminProductsController_Details_Succeeds_WithViewResult()
     {
         // Arrange 
             // Id is not null
         const int id = 0;
             // Id exists, read succeeds
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
-            .Returns(A.Fake<ProductDetailsDto>());
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductDetailsDto>>>._))
+            .Returns(A.Fake<AdminProductDetailsDto>());
         // Act
-        IActionResult result = await _productsController.Details(id);
+        IActionResult result = await _adminProductsController.Details(id);
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<ViewResult>(result);
         var viewResult = (ViewResult)result;
-        Assert.IsInstanceOfType<ProductDetailsDto>(viewResult.Model);
+        Assert.IsInstanceOfType<AdminProductDetailsDto>(viewResult.Model);
             // Must have accessed database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductDetailsDto>>>._))
             .MustHaveHappenedOnceExactly();
     }
 
     [TestMethod]
-    public void ProductsController_Details_Succeeds_WhenNotAuthorized()
+    public void AdminProductsController_Details_Succeeds_WhenAuthorizedAsAdmin()
     {
         // Arrange
         var controller = typeof(ProductsController);
         var action = controller.GetMethod("Details");
         // Act
-        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action, "Admin");
         // Assert
-        Assert.IsTrue(!hasAuthorization, "Action should not be authorized but it is");
+        Assert.IsTrue(hasAuthorization, "Action should not be authorized but it is");
     }
 
     [TestMethod]
-    public void ProductsController_Details_Fails_WhenIdIsNull_WithBadRequest()
+    public void AdminProductsController_Details_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
         var action = typeof(ProductsController).GetMethod("Details");
@@ -132,21 +132,21 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_Details_Fails_WhenProductDoesntExist_WithNotFound()
+    public async Task AdminProductsController_Details_Fails_WhenProductDoesntExist_WithNotFound()
     {
         // Arrange 
             // Id is not null
         const int id = 0;
             // Id does NOT exist, read NOT succeeds.
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
-            .Returns((ProductDetailsDto?)null);
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductDetailsDto>>>._))
+            .Returns((AdminProductDetailsDto?)null);
         // Act
-        IActionResult result = await _productsController.Details(id);
+        IActionResult result = await _adminProductsController.Details(id);
         // Assert
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
             // Must have called database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductDetailsDto>>>._))
             .MustHaveHappenedOnceExactly();
     }
 
@@ -155,7 +155,7 @@ public class ProductsControllerTests
     #region Create
 
     [TestMethod]
-    public async Task ProductsController_CreateGet_Succeeds_WithViewResult()
+    public async Task AdminProductsController_CreateGet_Succeeds_WithViewResult()
     {
         // Arrange
             // SelectList exists
@@ -163,12 +163,12 @@ public class ProductsControllerTests
         A.CallTo(() => _categoryRepository.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
             .Returns(selectListItems);
         // Act
-        IActionResult result = await _productsController.Create();
+        IActionResult result = await _adminProductsController.Create();
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<ViewResult>(result);
         ViewResult viewResult = (ViewResult)result;
-        Assert.IsInstanceOfType<ProductCreateDto>(viewResult.Model);
+        Assert.IsInstanceOfType<AdminProductCreateDto>(viewResult.Model);
 
             // ViewData is correct
         Assert.IsInstanceOfType<IEnumerable<SelectListItem>>(viewResult.ViewData["categorySelectList"]);
@@ -177,19 +177,19 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_CreateGet_Succeeds_WhenAuthorized()
+    public void AdminProductsController_CreateGet_Succeeds_WhenAuthorizedAsAdmin()
     {
         // Arrange
         var controller = typeof(ProductsController);
         var action = controller.GetMethod("Create", []);
         // Act
-        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action, checkRole: "Admin");
         // Assert
-        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
+        Assert.IsTrue(hasAuthorization, "Action should be authorized as admin but it isn't");
     }
 
     [TestMethod]
-    public async Task ProductsController_CreatePost_Succeeds_WithRedirect()
+    public async Task AdminProductsController_CreatePost_Succeeds_WithRedirect()
     {
         // Arrange
             // Modelstate is correct
@@ -197,7 +197,7 @@ public class ProductsControllerTests
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
             .Returns(true);
         // Act
-        IActionResult result = await _productsController.Create(A.Fake<ProductCreateDto>());
+        IActionResult result = await _adminProductsController.Create(A.Fake<AdminProductCreateDto>());
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
@@ -207,11 +207,11 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_CreatePost_Succeeds_WhenAuthorized()
+    public void AdminProductsController_CreatePost_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
-        var action = controller.GetMethod("Create", [typeof(ProductCreateDto)]);
+        var action = controller.GetMethod("Create", [typeof(AdminProductCreateDto)]);
         // Act
         var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
@@ -220,22 +220,22 @@ public class ProductsControllerTests
 
 
     [TestMethod]
-    public async Task ProductsController_CreatePost_Fails_WhenModelStateIsNotValid_WithViewResult_WithWarningMessage()
+    public async Task AdminProductsController_CreatePost_Fails_WhenModelStateIsNotValid_WithViewResult_WithWarningMessage()
     {
         // Arrange
             // Modelstate is NOT correct
-        _productsController.ModelState.AddModelError("CategoryId", "The CategoryId for this product is invalid");
+        _adminProductsController.ModelState.AddModelError("CategoryId", "The CategoryId for this product is invalid");
             // SelectList exists
         List<SelectListItem> selectListItems = (List<SelectListItem>)A.CollectionOfFake<SelectListItem>(4);
         A.CallTo(() => _categoryRepository.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
             .Returns(selectListItems);
         // Act
-        IActionResult result = await _productsController.Create(A.Fake<ProductCreateDto>());
+        IActionResult result = await _adminProductsController.Create(A.Fake<AdminProductCreateDto>());
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<ViewResult>(result);
         var viewResult = (ViewResult)result;
-        Assert.IsInstanceOfType<ProductCreateDto>(viewResult.Model);
+        Assert.IsInstanceOfType<AdminProductCreateDto>(viewResult.Model);
             // Must have accessed database
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
             .MustNotHaveHappened();
@@ -250,7 +250,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_CreatePost_Fails_WhenProductCannotBeCreated_WithRedirect_WithWarningMessage()
+    public async Task AdminProductsController_CreatePost_Fails_WhenProductCannotBeCreated_WithRedirect_WithWarningMessage()
     {
         // Arrange
             // Modelstate is correct
@@ -258,7 +258,7 @@ public class ProductsControllerTests
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
             .Returns(false);
         // Act
-        IActionResult result = await _productsController.Create(A.Fake<ProductCreateDto>());
+        IActionResult result = await _adminProductsController.Create(A.Fake<AdminProductCreateDto>());
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
@@ -274,7 +274,7 @@ public class ProductsControllerTests
     #region Edit
 
     [TestMethod]
-    public async Task ProductsController_EditGet_Succeeds_WithViewResult()
+    public async Task AdminProductsController_EditGet_Succeeds_WithViewResult()
     {
         // Arrange
             // Id is not null
@@ -284,21 +284,18 @@ public class ProductsControllerTests
         A.CallTo(() => _categoryRepository.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
             .Returns(selectListItems);
             // Id exists, Product is found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
-            .Returns(A.Fake<ProductCreateDto>());
-            // Product.SubmitterId is the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
-            .Returns(_productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductCreateDto>>>._))
+            .Returns(A.Fake<AdminProductCreateDto>());
         // Act
-        IActionResult result = await _productsController.Edit(id);
+        IActionResult result = await _adminProductsController.Edit(id);
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<ViewResult>(result);
         var viewResult = (ViewResult)result;
-        Assert.IsInstanceOfType<ProductCreateDto>(viewResult.Model);
+        Assert.IsInstanceOfType<AdminProductCreateDto>(viewResult.Model);
 
             // Must have called the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductCreateDto>>>._))
             .MustHaveHappenedOnceOrMore();
 
             // ViewData is valid
@@ -308,7 +305,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_EditGet_Succeeds_WhenAuthorized()
+    public void AdminProductsController_EditGet_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -320,7 +317,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_EditGet_Fails_WhenIdIsNull_WithBadRequest()
+    public void AdminProductsController_EditGet_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
         var action = typeof(ProductsController).GetMethod("Edit", [typeof(int?)]);
@@ -331,48 +328,26 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_EditGet_Fails_WhenProductDoesntExist_WithNotFound()
+    public async Task AdminProductsController_EditGet_Fails_WhenProductDoesntExist_WithNotFound()
     {
         // Arrange 
             // Id is not null
         const int id = 0;
             // Id does NOT exist, product is NOT found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
-            .Returns((ProductCreateDto?)null);
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductCreateDto>>>._))
+            .Returns((AdminProductCreateDto?)null);
         // Act
-        IActionResult result = await _productsController.Edit(id);
+        IActionResult result = await _adminProductsController.Edit(id);
         // Assert
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
             // Must have accessed the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductCreateDto>>>._))
             .MustHaveHappenedOnceExactly();
     }
 
     [TestMethod]
-    public async Task ProductsController_EditGet_Fails_WhenUserIdNotSubmitterId_WithUnauthorized()
-    {
-        // Arrange
-            // Id is not null
-        const int id = 0;
-            // Id does exist, product is found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
-            .Returns(A.Fake<ProductCreateDto>());
-            // Product.Submitter is NOT the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
-            .Returns("not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
-        // Act
-        IActionResult result = await _productsController.Edit(id);
-        // Assert
-            // Result is true
-        Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
-            // Must have accessed the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
-            .MustHaveHappenedOnceOrMore();
-    }
-
-    [TestMethod]
-    public async Task ProductsController_EditPost_Succeeds_WithRedirect()
+    public async Task AdminProductsController_EditPost_Succeeds_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -380,14 +355,11 @@ public class ProductsControllerTests
             // Id exists
         A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
             // Modelstate is valid
-            // Product.SubmitterId is the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
-            .Returns(_productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
             // Update succeeds
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
             .Returns(true);
         // Act
-        IActionResult result = await _productsController.Edit(id, A.Fake<ProductCreateDto>());
+        IActionResult result = await _adminProductsController.Edit(id, A.Fake<AdminProductCreateDto>());
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
@@ -400,11 +372,11 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_EditPost_Succeeds_WhenAuthorized()
+    public void AdminProductsController_EditPost_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
-        var action = controller.GetMethod("Edit", [typeof(int?), typeof(ProductCreateDto)]);
+        var action = controller.GetMethod("Edit", [typeof(int?), typeof(AdminProductCreateDto)]);
         // Act
         var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
         // Assert
@@ -412,10 +384,10 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_EditPost_Fails_WhenIdIsNull_WithBadRequest()
+    public void AdminProductsController_EditPost_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
-        var action = typeof(ProductsController).GetMethod("Edit", [typeof(int?), typeof(ProductCreateDto)]);
+        var action = typeof(ProductsController).GetMethod("Edit", [typeof(int?), typeof(AdminProductCreateDto)]);
         // Act
         var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
         // Assert
@@ -423,7 +395,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_EditPost_Fails_WhenProductNotExist_WithNotFound()
+    public async Task AdminProductsController_EditPost_Fails_WhenProductNotExist_WithNotFound()
     {
         // Arrange
             // Id is not null
@@ -431,7 +403,7 @@ public class ProductsControllerTests
             // Id does NOT exist
         A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(false);
         // Act
-        IActionResult result = await _productsController.Edit(id, A.Fake<ProductCreateDto>());
+        IActionResult result = await _adminProductsController.Edit(id, A.Fake<AdminProductCreateDto>());
         // Assert
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
@@ -441,7 +413,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_EditPost_Fails_WhenModelStateNotValid_WithRedirect_WithWarningMessage()
+    public async Task AdminProductsController_EditPost_Fails_WhenModelStateNotValid_WithRedirect_WithWarningMessage()
     {
         // Arrange
             // Id is not null
@@ -449,9 +421,9 @@ public class ProductsControllerTests
             // Id exists
         A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
             // Modelstate is NOT valid
-        _productsController.ModelState.AddModelError("CategoryId", "The CategoryId for this product is invalid");
+        _adminProductsController.ModelState.AddModelError("CategoryId", "The CategoryId for this product is invalid");
         // Act
-        IActionResult result = await _productsController.Edit(id, A.Fake<ProductCreateDto>());
+        IActionResult result = await _adminProductsController.Edit(id, A.Fake<AdminProductCreateDto>());
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
@@ -459,7 +431,7 @@ public class ProductsControllerTests
         Assert.IsTrue(redirectResult.ActionName == "Edit");
         Assert.IsTrue((int?)redirectResult.RouteValues?["id"] is not null and id);
             // Check message exists
-        var messages = _messageHandler.Peek(_productsController.TempData);
+        var messages = _messageHandler.Peek(_adminProductsController.TempData);
         Assert.IsNotNull(messages);
         Assert.IsTrue(messages.Any(m => m.Type is Message.MessageType.Warning));
             // Musn't have accessed database
@@ -467,30 +439,8 @@ public class ProductsControllerTests
             .MustNotHaveHappened();
     }
 
-
     [TestMethod]
-    public async Task ProductsController_EditPost_Fails_WhenSubmitterIdNotUserId_WithRedirect()
-    {
-        // Arrange
-            // Id is not null
-            // Id exists
-        A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
-            // Modelstate is valid
-            // Product.SubmitterId is NOT the same as User is
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
-            .Returns("not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
-        // Act
-        IActionResult result = await _productsController.Edit(0, A.Fake<ProductCreateDto>());
-        // Assert
-            // Result is correct
-        Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
-            // Musn't have accessed database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
-    }
-
-    [TestMethod]
-    public async Task ProductsController_EditPost_Fails_WhenUpdateFails_WithRedirect()
+    public async Task AdminProductsController_EditPost_Fails_WhenUpdateFails_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -498,14 +448,11 @@ public class ProductsControllerTests
             // Id exists
         A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
             // Modelstate is valid
-            // Product.SubmitterId is the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
-            .Returns(_productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
             // Update does NOT succeed
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
             .Returns(false);
         // Act
-        IActionResult result = await _productsController.Edit(id, A.Fake<ProductCreateDto>());
+        IActionResult result = await _adminProductsController.Edit(id, A.Fake<AdminProductCreateDto>());
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
@@ -522,31 +469,30 @@ public class ProductsControllerTests
     #region Delete
 
     [TestMethod]
-    public async Task ProductsController_DeleteGet_Succeeds_WithViewResult()
+    public async Task AdminProductsController_DeleteGet_Succeeds_WithViewResult()
     {
         // Arrange
             // Id is not null
         const int id = 0;
             // Id exists, Product is found
             // Product.SubmitterId is the same as User id
-        var fakeProduct = A.Fake<ProductDetailsDto>();
-        fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        var fakeProduct = A.Fake<AdminProductDetailsDto>();
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductDetailsDto>>>._))
             .Returns(fakeProduct);
         // Act
-        IActionResult result = await _productsController.Delete(id);
+        IActionResult result = await _adminProductsController.Delete(id);
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<ViewResult>(result);
         var viewResult = (ViewResult)result;
-        Assert.IsInstanceOfType<ProductDetailsDto>(viewResult.Model);
+        Assert.IsInstanceOfType<AdminProductDetailsDto>(viewResult.Model);
             // Must have called the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductDetailsDto>>>._))
             .MustHaveHappenedOnceOrMore();
     }
 
     [TestMethod]
-    public void ProductsController_DeleteGet_Succeeds_WhenAuthorized()
+    public void AdminProductsController_DeleteGet_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -558,7 +504,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_DeleteGet_Fails_WhenIdIsNull_WithBadRequest()
+    public void AdminProductsController_DeleteGet_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
         var action = typeof(ProductsController).GetMethod("Delete");
@@ -570,48 +516,26 @@ public class ProductsControllerTests
 
 
     [TestMethod]
-    public async Task ProductsController_DeleteGet_Fails_WhenProductNotFound_WithNotFound()
+    public async Task AdminProductsController_DeleteGet_Fails_WhenProductNotFound_WithNotFound()
     {
         // Arrange
             // Id is not null
         const int id = 0;
             // Id does NOT exists, Product is NOT found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
-            .Returns((ProductDetailsDto?)null);
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductDetailsDto>>>._))
+            .Returns((AdminProductDetailsDto?)null);
         // Act
-        IActionResult result = await _productsController.Delete(id);
+        IActionResult result = await _adminProductsController.Delete(id);
         // Assert
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
         // Must have called the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<AdminProductDetailsDto>>>._))
             .MustHaveHappenedOnceOrMore();
     }
 
     [TestMethod]
-    public async Task ProductsController_DeleteGet_Fails_WhenSubmitterIdNotUserId_WithUnauthorized()
-    {
-        // Arrange
-            // Id is not null
-        const int id = 0;
-            // Id exists, Product is found
-            // Product.SubmitterId is NOT the same as User id
-        var fakeProduct = A.Fake<ProductDetailsDto>();
-        fakeProduct.SubmitterId = "Not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
-            .Returns(fakeProduct);
-        // Act
-        IActionResult result = await _productsController.Delete(id);
-        // Assert
-            // Result is correct
-        Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
-            // Must have called the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
-            .MustHaveHappenedOnceOrMore();
-    }
-
-    [TestMethod]
-    public async Task ProductsController_DeletePost_Succeeds_WithViewResult()
+    public async Task AdminProductsController_DeletePost_Succeeds_WithViewResult()
     {
         // Arrange
             // Id is not null
@@ -619,28 +543,27 @@ public class ProductsControllerTests
             // Id exists, Product is found
             // Product.SubmitterId is the same as User id
         var fakeProduct = A.Fake<Product>();
-        fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
         A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
             // Delete succeeds
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
             .Returns(true);
         // Act
-        IActionResult result = await _productsController.DeleteConfirmed(id);
+        IActionResult result = await _adminProductsController.DeleteConfirmed(id);
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName is "Index");
         Assert.IsTrue(redirectResult.ControllerName is "User");
-        Assert.IsTrue(redirectResult.RouteValues?["id"] as string == _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
+        Assert.IsTrue(redirectResult.RouteValues?["id"] as string == _adminProductsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
         // Must have called the database
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
             .MustHaveHappenedOnceExactly();
     }
 
     [TestMethod]
-    public void ProductsController_DeletePost_Succeeds_WhenAuthorized()
+    public void AdminProductsController_DeletePost_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -652,7 +575,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_DeletePost_Fails_WhenIdIsNull_WithBadRequest()
+    public void AdminProductsController_DeletePost_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
         var action = typeof(ProductsController).GetMethod("DeleteConfirmed");
@@ -663,7 +586,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_DeletePost_Fails_WhenIdNotExist_WithNotFound()
+    public async Task AdminProductsController_DeletePost_Fails_WhenIdNotExist_WithNotFound()
     {
         // Arrange
             // Id is not null
@@ -672,7 +595,7 @@ public class ProductsControllerTests
         A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns((Product?)null);
         // Act
-        IActionResult result = await _productsController.DeleteConfirmed(id);
+        IActionResult result = await _adminProductsController.DeleteConfirmed(id);
         // Assert
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
@@ -682,44 +605,20 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_DeletePost_Fails_WhenSubmitterIdNotUserId_WithUnauthorized()
+    public async Task AdminProductsController_DeletePost_Fails_WhenDeleteNotSucceeds_WithRedirect()
     {
         // Arrange
             // Id is not null
         const int id = 0;
             // Id exists, Product is found
-            // Product.SubmitterId is NOT the same as User id
         var fakeProduct = A.Fake<Product>();
-        fakeProduct.SubmitterId = "Not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
-            .Returns(fakeProduct);
-        // Act
-        IActionResult result = await _productsController.DeleteConfirmed(id);
-        // Assert
-            // Result is correct
-        Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
-        // Mustn't have called the database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
-    }
-
-    [TestMethod]
-    public async Task ProductsController_DeletePost_Fails_WhenDeleteNotSucceeds_WithRedirect()
-    {
-        // Arrange
-            // Id is not null
-        const int id = 0;
-            // Id exists, Product is found
-            // Product.SubmitterId is the same as User id
-        var fakeProduct = A.Fake<Product>();
-        fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
         A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
             // Delete does NOT succeed
         A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
             .Returns(false);
         // Act
-        IActionResult result = await _productsController.DeleteConfirmed(id);
+        IActionResult result = await _adminProductsController.DeleteConfirmed(id);
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
@@ -736,22 +635,20 @@ public class ProductsControllerTests
     #region Image
 
     [TestMethod]
-    public async Task ProductsController_ResetImage_Succeeds_WithRedirect()
+    public async Task AdminProductsController_ResetImage_Succeeds_WithRedirect()
     {
         // Arrange
             // Id is not null
         const int id = 0;
             // Id exists, Product is found
-            // Product.SubmitterId is the same as User id
         var fakeProduct = A.Fake<Product>();
-        fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
         A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
             // Delete image successful
         A.CallTo(() => _productImageHandler.DeleteImage(A<ProductImageKey>._))
             .DoesNothing();
         // Act
-        IActionResult result = await _productsController.ResetImage(id);
+        IActionResult result = await _adminProductsController.ResetImage(id);
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
@@ -764,7 +661,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_ResetImage_Succeeds_WhenAuthorized()
+    public void AdminProductsController_ResetImage_Succeeds_WhenAuthorized()
     {
         // Arrange
         var controller = typeof(ProductsController);
@@ -776,7 +673,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public void ProductsController_ResetImage_Fails_WhenIdIsNull_WithBadRequest()
+    public void AdminProductsController_ResetImage_Fails_WhenIdIsNull_WithBadRequest()
     {
         // Arrange
         var action = typeof(ProductsController).GetMethod("ResetImage");
@@ -787,7 +684,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_ResetImage_Fails_WhenIdNotExist_WithNotFound()
+    public async Task AdminProductsController_ResetImage_Fails_WhenIdNotExist_WithNotFound()
     {
         // Arrange
             // Id is not null
@@ -796,7 +693,7 @@ public class ProductsControllerTests
         A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns((Product?)null);
         // Act
-        IActionResult result = await _productsController.ResetImage(id);
+        IActionResult result = await _adminProductsController.ResetImage(id);
         // Assert
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
@@ -806,7 +703,7 @@ public class ProductsControllerTests
     }
 
     [TestMethod]
-    public async Task ProductsController_ResetImage_Fails_WithSubmitterIdNotUserId_WithUnauthorized()
+    public async Task AdminProductsController_ResetImage_Fails_WhenDeleteImageFails_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -814,36 +711,13 @@ public class ProductsControllerTests
             // Id exists, Product is found
             // Product.SubmitterId is the same as User id
         var fakeProduct = A.Fake<Product>();
-        fakeProduct.SubmitterId = "Not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
-            .Returns(fakeProduct);
-        // Act
-        IActionResult result = await _productsController.ResetImage(id);
-        // Assert
-            // Result is correct
-        Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
-            // Mustn't have attempted image delete
-        A.CallTo(() => _productImageHandler.DeleteImage(A<ProductImageKey>._))
-            .MustNotHaveHappened();
-    }
-
-    [TestMethod]
-    public async Task ProductsController_ResetImage_Fails_WhenDeleteImageFails_WithRedirect()
-    {
-        // Arrange
-            // Id is not null
-        const int id = 0;
-            // Id exists, Product is found
-            // Product.SubmitterId is the same as User id
-        var fakeProduct = A.Fake<Product>();
-        fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
         A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
             // Delete image NOT successful
         A.CallTo(() => _productImageHandler.DeleteImage(A<ProductImageKey>._))
             .Throws<Exception>(e => new Exception("Test exception", e));
         // Act
-        IActionResult result = await _productsController.ResetImage(id);
+        IActionResult result = await _adminProductsController.ResetImage(id);
         // Assert
             // Result is correct
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
@@ -851,7 +725,7 @@ public class ProductsControllerTests
         Assert.IsTrue(redirectResult.ActionName is "Edit");
         Assert.IsTrue(redirectResult.RouteValues?["id"] is id);
             // Message not success
-        Assert.IsTrue(_messageHandler.Peek(_productsController.TempData)?.Any(m => m.Type is Message.MessageType.Error));
+        Assert.IsTrue(_messageHandler.Peek(_adminProductsController.TempData)?.Any(m => m.Type is Message.MessageType.Error));
             // Must have attempted image delete
         A.CallTo(() => _productImageHandler.DeleteImage(A<ProductImageKey>._))
             .MustHaveHappenedOnceOrMore();
