@@ -25,6 +25,6 @@ public class AdminProductCreateDto
     [DataType(DataType.Upload)]
     public IFormFile? ProductImage { get; set; }
     [DisplayName("Submitter")]
-    public string SubmitterId { get; set; }
+    public string? SubmitterId { get; set; }
 }
 

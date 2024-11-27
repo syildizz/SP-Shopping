@@ -148,9 +148,7 @@ public class ProductsController : Controller
         var pdto = _mapper.Map<Product, AdminProductCreateDto>(new Product());
         _logger.LogDebug($"Fetching all categories and users.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
-        IEnumerable<SelectListItem> userSelectList = await GetUsersSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
-        ViewBag.userSelectList = userSelectList;
         return View(pdto);
     }
 
@@ -164,45 +162,41 @@ public class ProductsController : Controller
         _logger.LogInformation($"POST: Entering Admin/Products/Create.");
         if (ModelState.IsValid)
         {
-                _logger.LogDebug($"Creating product.");
-                Product product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
+            _logger.LogDebug($"Creating product.");
 
-                if (product.SubmitterId is null)
+            if (string.IsNullOrWhiteSpace(pdto.SubmitterId))
+            {
+                var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                pdto.SubmitterId = UserId;
+            }
+            else
+            {
+                if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == pdto.SubmitterId)))
                 {
-                    var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == UserId)))
-                    {
-                        return BadRequest("UserId is invalid. Contact developer");
-                    }
-                    product.SubmitterId = UserId;
+                    _logger.LogDebug("{SubmitterId} is not a valid user id.", pdto.SubmitterId);
+                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"{pdto.SubmitterId} is not a valid user id" });
+                    _logger.LogDebug($"Fetching all categories.");
+                    ViewBag.categorySelectList = await GetCategoriesSelectListAsync();
+                    return View(pdto);
                 }
-                else
-                {
-                    if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == product.SubmitterId)))
-                    {
-                        return BadRequest("UserId is invalid. Contact developer");
-                    }
-                }
+            }
 
+            Product product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
+            if (!(await _productService.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+            {
+                _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
+                _messageHandler.Add(TempData, errMsgs!);
+                return RedirectToAction(nameof(Create));
+            }
 
-                if (!(await _productService.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
-                {
-                    _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
-                    _messageHandler.Add(TempData, errMsgs!);
-                    return RedirectToAction(nameof(Create));
-                }
-
-                return RedirectToAction(nameof(Details), new { id = product.Id });
+            return RedirectToAction(nameof(Details), new { id = product.Id });
 
         }
         _logger.LogError("ModelState is not valid.");
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid. Please try again" });
-        // Create view instead of redirecting to GET to save current form field states.
-        _logger.LogDebug($"Fetching all categories and users.");
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Unable to create product" });
+        _logger.LogDebug($"Fetching all categories.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
-        IEnumerable<SelectListItem> userSelectList = await GetUsersSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
-        ViewBag.userSelectList = userSelectList;
         return View(pdto);
     }
 
@@ -230,16 +224,10 @@ public class ProductsController : Controller
             return NotFound($"Product with id {id} does not exist.");
         }
 
-        string? productSubmitterId = await _productRepository.GetSingleAsync(q => q
-            .Where(p => p.Id == id)
-            .Select(p => p.SubmitterId)
-        );
-
         _logger.LogDebug($"Fetching all categories and users.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
-        IEnumerable<SelectListItem> userSelectList = await GetUsersSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
-        ViewBag.userSelectList = userSelectList;
+
 
         return View(pdto);
     }
@@ -273,13 +261,11 @@ public class ProductsController : Controller
                 return RedirectToAction(nameof(Edit), new { id });
             }
             return RedirectToAction(nameof(Edit), new { id });
+        }
 
-        }
-        else
-        {
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid" });
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Unable to update product" });
+        return RedirectToAction(nameof(Edit), new { id });
             return RedirectToAction(nameof(Edit), new { id });
-        }
         
     }
 
