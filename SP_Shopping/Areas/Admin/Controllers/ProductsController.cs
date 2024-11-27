@@ -117,14 +117,10 @@ public class ProductsController : Controller
     }
 
     // GET: Products/Details/5
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Details(int? id)
     {
         _logger.LogInformation("GET: Entering Admin/Products/Details.");
-        if (id == null)
-        {
-            _logger.LogError("The specified id \"{Id}\" for Product/Details does not exist.", id);
-            return BadRequest("Required parameter id not specified");
-        }
 
         AdminProductDetailsDto? pdto = await _productRepository.GetSingleAsync(q => 
             _mapper.ProjectTo<AdminProductDetailsDto>(q
@@ -201,14 +197,10 @@ public class ProductsController : Controller
     }
 
     // GET: Products/Edit/5
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Edit(int? id)
     {
         _logger.LogInformation($"GET: Entering Admin/Products/Edit.");
-        if (id == null)
-        {
-            _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
-            return BadRequest();
-        }
 
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
@@ -237,7 +229,8 @@ public class ProductsController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, AdminProductCreateDto pdto)
+    [IfArgNullBadRequestFilter(nameof(id))]
+    public async Task<IActionResult> Edit(int? id, AdminProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Admin/Products/Edit.");
         if (!_productRepository.Exists(q => q.Where(p => p.Id == id)))
@@ -249,7 +242,7 @@ public class ProductsController : Controller
         if (ModelState.IsValid)
         {
             var product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
-            product.Id = id;
+            product.Id = (int)id!;
 
             _logger.LogDebug("Updating product.");
 
@@ -265,19 +258,14 @@ public class ProductsController : Controller
 
         _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Unable to update product" });
         return RedirectToAction(nameof(Edit), new { id });
-            return RedirectToAction(nameof(Edit), new { id });
         
     }
 
     // GET: Products/Delete/5
+    [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Delete(int? id)
     {
         _logger.LogInformation($"GET: Entering Admin/Products/Delete.");
-        if (id == null)
-        {
-            _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
-            return BadRequest();
-        }
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
         var pdto = await _productRepository.GetSingleAsync(q =>
@@ -298,7 +286,8 @@ public class ProductsController : Controller
     // POST: Products/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
+    [IfArgNullBadRequestFilter(nameof(id))]
+    public async Task<IActionResult> DeleteConfirmed(int? id)
     {
         _logger.LogInformation($"POST: Entering Admin/Products/Delete.");
         //var product = await _context.Products.FindAsync(id);
@@ -328,7 +317,8 @@ public class ProductsController : Controller
 
     [ValidateAntiForgeryToken]
     [HttpPost]
-    public async Task<IActionResult> ResetImage(int id)
+    [IfArgNullBadRequestFilter(nameof(id))]
+    public async Task<IActionResult> ResetImage(int? id)
     {
 
         _logger.LogInformation($"POST: Entering Admin/Products/ResetImage.");
@@ -344,7 +334,7 @@ public class ProductsController : Controller
         }
 
         _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);
-        _productImageHandler.DeleteImage(new(id));
+        _productImageHandler.DeleteImage(new((int)id!));
 
         return Redirect(Url.Action(nameof(Edit), new { id }) ?? @"/");
         
