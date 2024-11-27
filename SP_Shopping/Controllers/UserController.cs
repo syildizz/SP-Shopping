@@ -31,12 +31,6 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering User/Index");
 
-        if (id is null)
-        {
-            _logger.LogError("Id is null");
-            return BadRequest("Id is null");
-        }
-
         UserPageDto? udto = await _userRepository.GetSingleAsync(q => 
             _mapper.ProjectTo<UserPageDto>(q
                 .Where(u => u.Id == id)

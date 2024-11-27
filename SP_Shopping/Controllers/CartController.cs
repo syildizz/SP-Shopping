@@ -57,12 +57,6 @@ public class CartController
     public async Task<IActionResult> Create(int? id)
     {
         _logger.LogInformation("POST: Cart/Create.");
-        
-        if (id is null)
-        {
-            _logger.LogError("id is null");
-            return BadRequest("id is null");
-        }
 
         _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", id);
         bool productExists = await _productRepository.ExistsAsync(q => q.Where(p => p.Id == id));
@@ -97,12 +91,6 @@ public class CartController
     {
         _logger.LogInformation("POST: Cart/Edit.");
 
-        if (id is null)
-        {
-            _logger.LogError("id is null");
-            return BadRequest("id is null");
-        }
-
         if (ModelState.IsValid)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -130,12 +118,6 @@ public class CartController
     public async Task<IActionResult> Delete(int? id)
     {
         _logger.LogInformation("POST: Cart/Delete.");
-
-        if (id is null)
-        {
-            _logger.LogError("id is null");
-            return BadRequest("id is null");
-        }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         CartItem cartItem = new() { ProductId = (int)id, UserId = userId };
