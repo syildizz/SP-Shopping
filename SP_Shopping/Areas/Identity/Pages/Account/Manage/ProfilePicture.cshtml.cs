@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SP_Shopping.Attributes;
 using SP_Shopping.Models;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
@@ -18,9 +19,7 @@ public class ProfilePictureModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _userProfileImageHandler;
-    private readonly IImageValidator _imageValidator;
     private readonly IMessageHandler _messageHandler;
-    private const int MAX_FILESIZE_BYTE = 1_500_000;
 
     public ProfilePictureModel
     (
@@ -31,7 +30,6 @@ public class ProfilePictureModel : PageModel
     {
         _userManager = userManager;
         _userProfileImageHandler = userProfileImageHandler;
-        _imageValidator = new ImageValidator(MAX_FILESIZE_BYTE);
         _messageHandler = messageHandler;
     }
 
@@ -46,7 +44,6 @@ public class ProfilePictureModel : PageModel
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    [RequestSizeLimit(MAX_FILESIZE_BYTE)]
     public class InputModel
     {
         /// <summary>
@@ -54,6 +51,7 @@ public class ProfilePictureModel : PageModel
         /// </summary>
         [Display(Name = "New Profile Picture")]
         [DataType(DataType.Upload)]
+        [IsImageFile]
         public IFormFile NewProfilePicture { get; set; }
     }
 
@@ -94,14 +92,6 @@ public class ProfilePictureModel : PageModel
 
         if (Input.NewProfilePicture is null)
         {
-            return RedirectToPage();
-        }
-
-        var result = _imageValidator.Validate(Input.NewProfilePicture);
-
-        if (result.Type is not ImageValidatorResultType.Success)
-        {
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });;
             return RedirectToPage();
         }
 

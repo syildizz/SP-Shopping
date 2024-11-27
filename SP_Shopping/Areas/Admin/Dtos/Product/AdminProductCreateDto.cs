@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Attributes;
-using SP_Shopping.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -23,6 +22,7 @@ public class AdminProductCreateDto
     public string? Description { get; set; }
     [Display(Name = "Product Picture")]
     [DataType(DataType.Upload)]
+    [IsImageFile]
     public IFormFile? ProductImage { get; set; }
     [DisplayName("Submitter")]
     public string? SubmitterId { get; set; }

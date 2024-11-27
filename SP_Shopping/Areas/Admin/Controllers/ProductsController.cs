@@ -1,16 +1,21 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using NuGet.Protocol;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
+using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
+using SP_Shopping.Utilities.ModelStateHandler;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
 
@@ -197,6 +202,7 @@ public class ProductsController : Controller
     }
 
     // GET: Products/Edit/5
+    [ImportModelState]
     [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Edit(int? id)
     {
@@ -230,6 +236,7 @@ public class ProductsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [IfArgNullBadRequestFilter(nameof(id))]
+    [ExportModelState]
     public async Task<IActionResult> Edit(int? id, AdminProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Admin/Products/Edit.");

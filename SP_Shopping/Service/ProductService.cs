@@ -4,7 +4,6 @@ using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
-using SP_Shopping.Utilities.ImageValidator;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Data;
 using System.Linq.Expressions;
@@ -20,7 +19,6 @@ public class ProductService
 
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler = productImageHandler;
-    private readonly IImageValidator _imageValidator = new ImageValidator();
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Product product, IFormFile? image)
     {
@@ -59,13 +57,6 @@ public class ProductService
 
             if (image is not null)
             {
-                var result = _imageValidator.Validate(image);
-                if (result.Type is not ImageValidatorResultType.Success)
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
-                    return false;
-                }
-
                 using var ImageStream = image.OpenReadStream();
                 if (!_productImageHandler.SetImage(new(product.Id), ImageStream))
                 {
@@ -125,13 +116,6 @@ public class ProductService
 
             if (image is not null)
             {
-                var result = _imageValidator.Validate(image);
-                if (result.Type is not ImageValidatorResultType.Success)
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
-                    return false;
-                }
-
                 using var ImageStream = image.OpenReadStream();
                 if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
                 {
@@ -216,13 +200,6 @@ public class ProductService
 
             if (image is not null)
             {
-                var result = _imageValidator.Validate(image);
-                if (result.Type is not ImageValidatorResultType.Success)
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
-                    return false;
-                }
-
                 using var ImageStream = image.OpenReadStream();
                 if (!_productImageHandler.SetImage(new(product.Id), ImageStream))
                 {
@@ -308,13 +285,6 @@ public class ProductService
 
             if (image is not null)
             {
-                var result = _imageValidator.Validate(image);
-                if (result.Type is not ImageValidatorResultType.Success)
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Warning, Content = result.DefaultMessage });
-                    return false;
-                }
-
                 using var ImageStream = image.OpenReadStream();
                 if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
                 {

@@ -1,13 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
-using SP_Shopping.Utilities.ImageValidator;
 using SP_Shopping.Utilities.MessageHandler;
-using System.ComponentModel;
 using System.Data;
 
 namespace SP_Shopping.Service;
@@ -26,7 +22,6 @@ public class UserService
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
-    private readonly IImageValidator _imageValidator = new ImageValidator();
     private readonly IMessageHandler _messageHandler = messageHandler;
     private readonly ProductService _productService = productService;
 
@@ -139,12 +134,6 @@ public class UserService
 
             if (image is not null)
             {
-                var result3 = _imageValidator.Validate(image);
-                if (result3.Type is not ImageValidatorResultType.Success)
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = result3.DefaultMessage });
-                    return false;
-                }
                 using var imageStream = image.OpenReadStream();
                 if (!await _profileImageHandler.SetImageAsync(new(user.Id), imageStream))
                 {

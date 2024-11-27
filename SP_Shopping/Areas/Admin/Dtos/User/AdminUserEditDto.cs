@@ -1,4 +1,6 @@
 ﻿
+using SP_Shopping.Attributes;
+
 namespace SP_Shopping.Areas.Admin.Dtos.User;
 
 public class AdminUserEditDto
@@ -9,5 +11,6 @@ public class AdminUserEditDto
     public string? Email { get; set; }
     public string? Roles { get; set; }
     public string? Description { get; set; }
+    [IsImageFile]
     public IFormFile? ProfilePicture { get; set; }
 }

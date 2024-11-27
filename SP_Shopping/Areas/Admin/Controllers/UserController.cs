@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.User;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
@@ -11,7 +10,6 @@ using SP_Shopping.Service;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
-using SP_Shopping.Utilities.ImageValidator;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
@@ -40,7 +38,6 @@ public class UserController
     private readonly ILogger<UserController> _logger = logger;
     private readonly IMapper _mapper = mapper;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
-    private readonly IImageValidator _imageValidator = new ImageValidator();
     private readonly UserService _userService = userService;
 
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
