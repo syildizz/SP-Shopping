@@ -1,4 +1,7 @@
-﻿namespace SP_Shopping.Utilities;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using SP_Shopping.Utilities.MessageHandler;
+
+namespace SP_Shopping.Utilities;
 
 public static class Meta
 {
@@ -33,4 +36,20 @@ public static class TupleExtensions
     }
 
     // continue to support larger tuples...
+}
+
+public static class ModelStateErrorMessagesToListOfMessages
+{
+    public static IEnumerable<string> GetErrorMessages(this ModelStateDictionary modelState)
+    {
+        return modelState
+            .Where(ms =>
+                ms.Value is not null
+                &&
+                ms.Value.ValidationState is ModelValidationState.Invalid
+            )
+            .SelectMany(ms => ms.Value!.Errors
+                .Select(es => es.ErrorMessage)
+            );
+    }
 }

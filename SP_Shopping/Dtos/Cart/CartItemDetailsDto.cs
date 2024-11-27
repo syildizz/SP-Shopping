@@ -13,8 +13,6 @@ public class CartItemDetailsDto
     public string SubmitterName { get; set; }
     [DisplayName("Product Name")]
     public string ProductName { get; set; }
-    [RegularExpression("([0-9]+)", ErrorMessage = "Please enter valid Number")]
-    [Range(0, int.MaxValue)]
     public int Count { get; set; }
     [DataType(DataType.Currency)]
     public decimal Price { get; set; }

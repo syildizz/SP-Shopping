@@ -9,6 +9,7 @@ using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace SP_Shopping.Controllers;
 
@@ -76,7 +77,7 @@ public class CartController
         {
             UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!,
             ProductId = (int)id,
-            Count = 0
+            Count = 1
         };
 
         _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
@@ -115,7 +116,11 @@ public class CartController
         }
 
         _logger.LogError("ModelState is invalid");
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
+        _messageHandler.Add(TempData, [.. ModelState.GetErrorMessages().Select(em => new Message
+        {
+            Type = Message.MessageType.Warning,
+            Content = em
+        })]);
         return RedirectToAction(nameof(Index));
     }
 
