@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.IdentityModel.Tokens;
 using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.Cart;
 using SP_Shopping.Models;
@@ -14,6 +13,7 @@ using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
 using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.MessageHandler;
+using System.Reflection;
 using System.Security.Claims;
 
 namespace SP_Shopping.Test.Controllers;
@@ -79,6 +79,40 @@ public class CartControllerTests
         _cartController.TempData = new TempDataDictionary(_cartController.HttpContext, A.Fake<ITempDataProvider>());
     }
 
+    [DataRow("Index", (Type[])[])]
+    [DataRow("Create",  (Type[])[typeof(int?)])]
+    [DataRow("Edit",  (Type[])[typeof(int?), typeof(CartItemCreateDto)])]
+    [DataRow("Delete",  (Type[])[typeof(int?)])]
+    [DataTestMethod]
+    public void CartController_All_Succeeds_WhenAuthorized(string methodName, Type[] types)
+    {
+        // Arrange
+        var controller = typeof(CartController);
+        var action = controller.GetMethod(methodName, types);
+        // Act
+        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
+        // Assert
+        Assert.IsTrue(hasAuthorization, $"Action {methodName} should be authorized but it isn't");
+    }
+
+    [DataRow("Create", (Type[])[typeof(int?)])]
+    [DataRow("Edit", (Type[])[typeof(int?), typeof(CartItemCreateDto)])]
+    [DataRow("Delete", (Type[])[typeof(int?)])]
+    [DataTestMethod]
+    public void CartController_Some_Fails_WhenIdIsNull_WithBadRequest(string methodName, Type[] types)
+    {
+        // Arrange
+        var controller = typeof(CartController);
+        var action = controller.GetMethod(methodName, types);
+        const string checkedArgument = "id";
+        // Act
+        var attributes = action?.GetCustomAttribute<IfArgNullBadRequestFilter>(false);
+        // Assert
+        Assert.IsTrue(attributes is not null and IfArgNullBadRequestFilter, $"Action {methodName} does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
+        Assert.IsTrue(attributes.argument is checkedArgument, $"Action {methodName} has {nameof(IfArgNullBadRequestFilter)} attribute but it checks for {checkedArgument} instead of id");
+    }
+
+
     #region Index
 
     [TestMethod]
@@ -106,18 +140,6 @@ public class CartControllerTests
         Assert.IsTrue((decimal)viewResult.ViewData["TotalPrice"]! == prices.Sum());
     }
 
-    [TestMethod]
-    public void CartController_Index_Succeeds_WhenAuthorized()
-    {
-        // Arrange
-        var controller = typeof(CartController);
-        var action = controller.GetMethod("Index");
-        // Act
-        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
-        // Assert
-        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
-    }
-
     #endregion Index
 
     #region Create
@@ -141,29 +163,6 @@ public class CartControllerTests
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Index");
-    }
-
-    [TestMethod]
-    public void CartController_CreatePost_Succeeds_WhenAuthorized()
-    {
-        // Arrange
-        var controller = typeof(CartController);
-        var action = controller.GetMethod("Create");
-        // Act
-        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
-        // Assert
-        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
-    }
-
-    [TestMethod]
-    public void CartController_CreatePost_Fails_WhenIdIsNull_WithBadRequest()
-    {
-        // Arrange
-        var action = typeof(CartController).GetMethod("Create");
-        // Act
-        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
-        // Assert
-        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]
@@ -233,29 +232,6 @@ public class CartControllerTests
     }
 
     [TestMethod]
-    public void CartController_EditPost_Succeeds_WhenAuthorized()
-    {
-        // Arrange
-        var controller = typeof(CartController);
-        var action = controller.GetMethod("Edit");
-        // Act
-        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
-        // Assert
-        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
-    }
-
-    [TestMethod]
-    public void CartController_EditPost_Fails_WhenIdIsNull_WithBadRequest()
-    {
-        // Arrange
-        var action = typeof(CartController).GetMethod("Edit");
-        // Act
-        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
-        // Assert
-        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
-    }
-
-    [TestMethod]
     public async Task CartController_EditPost_Fails_WhenModelStateNotValid_WithRedirect()
     {
         // Arrange
@@ -322,29 +298,6 @@ public class CartControllerTests
             // Must have called the database
         A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
             .MustHaveHappenedOnceExactly();
-    }
-
-    [TestMethod]
-    public void CartController_DeletePost_Succeeds_WhenAuthorized()
-    {
-        // Arrange
-        var controller = typeof(CartController);
-        var action = controller.GetMethod("Delete");
-        // Act
-        var hasAuthorization = AttributeHandler.HasAuthorizationAttributes(controller, action);
-        // Assert
-        Assert.IsTrue(hasAuthorization, "Action should be authorized but it isn't");
-    }
-
-    [TestMethod]
-    public void CartController_DeletePost_Fails_WhenIdIsNull_WithBadRequest()
-    {
-        // Arrange
-        var action = typeof(CartController).GetMethod("Delete");
-        // Act
-        var attributes = action?.GetCustomAttributes(typeof(IfArgNullBadRequestFilter), false);
-        // Assert
-        Assert.IsTrue(!attributes.IsNullOrEmpty(), $"Action does not have {nameof(IfArgNullBadRequestFilter)} attribute even though it should");
     }
 
     [TestMethod]

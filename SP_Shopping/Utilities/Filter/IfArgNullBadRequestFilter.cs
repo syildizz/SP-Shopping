@@ -11,6 +11,8 @@ public class IfArgNullBadRequestFilter
 {
     public bool IsReusable => false;
 
+    public readonly string argument = argument;
+
     public IFilterMetadata CreateInstance(IServiceProvider serviceProvider)
     {
         var logger = serviceProvider.GetRequiredService<ILogger<IfArgNullBadRequestFilter>>();
@@ -32,8 +34,9 @@ public class IfArgNullBadRequestFilter
         {
             if
             (
-                   context.ActionArguments.TryGetValue(_argument, out var argumentValue) 
-                && argumentValue is not null
+                context.ActionArguments.TryGetValue(_argument, out var argumentValue) 
+                && 
+                argumentValue is not null
             )
             {
                 base.OnActionExecuting(context);
