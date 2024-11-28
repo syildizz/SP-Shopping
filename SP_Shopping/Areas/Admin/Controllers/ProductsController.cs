@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using NuGet.Protocol;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -15,7 +13,6 @@ using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using SP_Shopping.Utilities.ModelStateHandler;
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
 
@@ -240,7 +237,7 @@ public class ProductsController : Controller
     public async Task<IActionResult> Edit(int? id, AdminProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Admin/Products/Edit.");
-        if (!_productRepository.Exists(q => q.Where(p => p.Id == id)))
+        if (!await _productRepository.ExistsAsync(q => q.Where(p => p.Id == id)))
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
@@ -316,7 +313,7 @@ public class ProductsController : Controller
             _logger.LogError("The product with the id of \"{Id}\" could not be deleted.", id);
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't delete product" });
             _messageHandler.Add(TempData, errMsgs!);
-            return RedirectToAction(nameof(Edit), new { id });
+            return RedirectToAction(nameof(Delete), new { id });
         }
 
         return RedirectToAction("Index");
@@ -341,9 +338,21 @@ public class ProductsController : Controller
         }
 
         _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);
-        _productImageHandler.DeleteImage(new((int)id!));
+        try
+        {
+            _productImageHandler.DeleteImage(new((int)id!));
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to reset image" + " " + ex.Message });
+#else
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to reset image" });
+#endif
+            return RedirectToAction(nameof(Edit), new { id });
+        }
 
-        return Redirect(Url.Action(nameof(Edit), new { id }) ?? @"/");
+        return RedirectToAction(nameof(Edit), new { id });
         
     }
 
