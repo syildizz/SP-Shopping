@@ -43,7 +43,7 @@ public class IfArgNullBadRequestFilter
             }
             else
             {
-                _logger.LogWarning("{Argument} argument was null, returning {TypeName}", _argument, nameof(BadRequestObjectResult));
+                _logger.LogWarning("{Argument} argument is null, returning {TypeName}", _argument, nameof(BadRequestObjectResult));
                 context.Result = new BadRequestObjectResult(_errorMessage);
             }
         }
