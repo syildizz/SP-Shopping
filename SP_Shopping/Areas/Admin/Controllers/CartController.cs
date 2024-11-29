@@ -133,40 +133,14 @@ public class CartController
             if (!(await _cartItemService.TryCreateAsync(cartItem)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
+                return View(cidto);
             }
+            return RedirectToAction(nameof(Index));
 
         }
-        else
-        {
-            _logger.LogError("ModeState is invalid");
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to add product to cart" });
-        }
 
-        return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost]
-    [ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(AdminCartItemCreateDto cidto)
-    {
-        if (ModelState.IsValid)
-        {
-            _logger.LogInformation("POST: Admin/Cart/Delete.");
-
-            var cartItem = _mapper.Map<CartItem>(cidto);
-
-            _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            if (!(await _cartItemService.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
-            {
-                _messageHandler.Add(TempData, errMsgs!);
-            }
-        }
-        else
-        {
-            _logger.LogError("ModeState is invalid");
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
-        }
+        _logger.LogError("ModeState is invalid");
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to add product to cart" });
 
         return RedirectToAction(nameof(Index));
     }
@@ -185,16 +159,43 @@ public class CartController
             if (!(await _cartItemService.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
+                return View(cidto);
             }
+            return RedirectToAction(nameof(Index));
         }
-        else
-        {
-            _logger.LogError("ModeState is invalid");
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
-        }
+
+        _logger.LogError("ModeState is invalid");
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
 
         return RedirectToAction(nameof(Index));
         
+    }
+
+    [HttpPost]
+    [ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(AdminCartItemCreateDto cidto)
+    {
+        if (ModelState.IsValid)
+        {
+            _logger.LogInformation("POST: Admin/Cart/Delete.");
+
+            var cartItem = _mapper.Map<CartItem>(cidto);
+
+            _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+            if (!(await _cartItemService.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
+            {
+                _messageHandler.Add(TempData, errMsgs!);
+                return View(cidto);
+            }
+            return RedirectToAction(nameof(Index));
+
+        }
+
+        _logger.LogError("ModeState is invalid");
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
+
+        return RedirectToAction(nameof(Index));
     }
 
 }
