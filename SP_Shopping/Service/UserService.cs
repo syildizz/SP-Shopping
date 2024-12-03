@@ -29,16 +29,16 @@ public class UserService
     {
         ICollection<Message> errorMessages = [];
 
-        ApplicationUser? _user = _userRepository.GetByKey(user.Id);
-        if (_user is null)
-        {
-            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "User doesn't exist but should. Code should be unreachable. Contact developer" });
-            return (false, errorMessages);
-        }
-
         bool transactionSucceeded = await _userRepository.DoInTransactionAsync(async () =>
         {
             IdentityResult result;
+
+            ApplicationUser? _user = _userRepository.GetByKey(user.Id);
+            if (_user is null)
+            {
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "User doesn't exist but should. Code should be unreachable. Contact developer" });
+                return false;
+            }
 
             result = await _userManager.SetUserNameAsync(_user, user.UserName);
             if (!result.Succeeded)

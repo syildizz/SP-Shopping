@@ -50,4 +50,3 @@ public class IfArgNullBadRequestFilter
     }
 }
 
-// Copilot

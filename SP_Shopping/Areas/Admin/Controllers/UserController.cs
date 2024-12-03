@@ -3,14 +3,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Areas.Admin.Dtos.User;
-using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
+using SP_Shopping.Utilities.Filter;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
+using SP_Shopping.Utilities.ModelStateHandler;
 using System.Security.Claims;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
@@ -19,7 +20,6 @@ namespace SP_Shopping.Areas.Admin.Controllers;
 [Authorize(Roles = "Admin")]
 public class UserController
 (
-    ApplicationDbContext context,
     IRepository<ApplicationUser> userRepository,
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
@@ -105,7 +105,9 @@ public class UserController
         
     }
 
-    public async Task<IActionResult> Edit(string id)
+    [IfArgNullBadRequestFilter(nameof(id))]
+    [ImportModelState]
+    public async Task<IActionResult> Edit(string? id)
     {
         _logger.LogInformation("GET: Entering Admin/Edit.");
 
@@ -125,29 +127,38 @@ public class UserController
     }
 
     [HttpPost]
+    [ExportModelState]
     public async Task<IActionResult> Edit(AdminUserEditDto udto)
     {
         _logger.LogInformation("POST: Entering Admin/Edit.");
 
-        var user = _mapper.Map<ApplicationUser>(udto);
-
-        if (user is null)
+        if (ModelState.IsValid)
         {
-            return NotFound("The user is not found");
+            var user = _mapper.Map<ApplicationUser>(udto);
+
+            if (user is null)
+            {
+                return NotFound("The user is not found");
+            }
+
+
+            if (!(await _userService.TryUpdateAsync(user, udto.ProfilePicture, udto.Roles?.Split(' '))).TryOut(out var errMsgs))
+            {
+               _messageHandler.Add(TempData, errMsgs!); 
+               return RedirectToAction("Edit", new { id = udto.Id });
+            }
+           return RedirectToAction(nameof(Index));
         }
-
-
-        if (!(await _userService.TryUpdateAsync(user, udto.ProfilePicture, udto.Roles?.Split(' '))).TryOut(out var errMsgs))
+        else
         {
-           _messageHandler.Add(TempData, errMsgs!); 
-           return RedirectToAction("Edit", new { id = udto.Id });
+            return RedirectToAction(nameof(Edit), new { id = udto.Id });
         }
-       return RedirectToAction(nameof(Index));
 
     }
 
     [HttpPost]
-    public async Task<IActionResult> Delete(string id)
+    [IfArgNullBadRequestFilter(nameof(id))]
+    public async Task<IActionResult> Delete(string? id)
     {
         var user = await _userRepository.GetSingleAsync(q => q
             .Where(u => u.Id == id)
@@ -158,7 +169,7 @@ public class UserController
             if (!(await _userService.TryDeleteAsync(user)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
-               return RedirectToAction("Edit", new { id });
+               return RedirectToAction("Index");
             }
         }
 
@@ -167,7 +178,8 @@ public class UserController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Adminize(string id)
+    [IfArgNullBadRequestFilter(nameof(id))]
+    public async Task<IActionResult> Adminize(string? id)
     {
         _logger.LogInformation("GET: Entering Admin/User/Adminize");
 
@@ -201,7 +213,8 @@ public class UserController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Unadminize(string id)
+    [IfArgNullBadRequestFilter(nameof(id))]
+    public async Task<IActionResult> Unadminize(string? id)
     {
         _logger.LogInformation("GET: Entering Admin/User/Unadminize");
 
@@ -233,7 +246,8 @@ public class UserController
 
     [ValidateAntiForgeryToken]
     [HttpPost]
-    public async Task<IActionResult> ResetImage(string id)
+    [IfArgNullBadRequestFilter(nameof(id))]
+    public async Task<IActionResult> ResetImage(string? id)
     {
         _logger.LogInformation($"POST: Entering Admin/User/ResetImage.");
         _logger.LogDebug("Fetching user for id \"{Id}\".", id);
@@ -248,9 +262,9 @@ public class UserController
         }
 
         _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);
-        _profileImageHandler.DeleteImage(new(id));
+        _profileImageHandler.DeleteImage(new(id!));
 
-        return Redirect(Url.Action(nameof(Edit), new { id }) ?? @"/");
+        return RedirectToAction(nameof(Edit), new { id });
         
     }
 
