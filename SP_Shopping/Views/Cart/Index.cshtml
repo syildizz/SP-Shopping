@@ -6,6 +6,14 @@
 
 <h1>@message</h1>
 
-<partial name="_CartIndexCardsPartial" model="Model"/>
+<div class="row gap-5">
+    <div class="col-lg-8">
+        <partial name="_CartIndexCardsPartial" model="Model"/>
+    </div>
+    <div class="col">
+        <h1>Your order</h1>
+        <h3 class="my-3 p-3">Total price: @totalPrice.ToString("C")</h3>
+    </div>
 
-<h3 class="my-3 p-3 border bg-info bg-opacity-10 border border-info">Total price: @totalPrice.ToString("C")</h3>
+</div>
+

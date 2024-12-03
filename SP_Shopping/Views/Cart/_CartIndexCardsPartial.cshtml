@@ -3,13 +3,12 @@
 @model IEnumerable<CartItemDetailsDto>
 @inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
 
-<div class="d-flex flex-column gap-2 align-items-center align-items-sm-start md-justify-content-md-start">
-@* <div> *@
+<div>
     @foreach (var item in Model)
     {
-    <div class="card justify-content-around" style="min-height: 10em; width: 50em; max-width: 80%">
+    <div class="card justify-content-around m-3" style="min-height: 10em;">
         <div class="row g-0 align-items-center h-100">
-            <div class="col-sm-3 d-flex card-body justify-content-center h-100">
+            <div class="col-sm-3 d-flex card-body justify-content-center">
                 <img 
                     src="@_productImageHandler.GetImageOrDefaultURL(new(item.ProductId))"
                     class="img-fluid ratio-1x1"
@@ -24,7 +23,7 @@
             <div class="col-sm-3 card-body d-flex card-body justify-content-center">
                 <div class="card-text card-text-fixer">
                 <form asp-action="Edit" asp-route-id="@item.ProductId" class="d-flex flex-row justify-content-center gap-2">
-                    <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" style="width: 4em;" />
+                    <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" class="form-control" style="min-width: 5em;" />
                     <button type="submit" class="btn btn-secondary btn-sm">Update</button>
                 </form>
                 </div>
