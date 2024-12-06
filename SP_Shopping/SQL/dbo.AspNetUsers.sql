@@ -1,5 +1,4 @@
-﻿GO
-CREATE TRIGGER trg_DeleteUsers
+﻿CREATE TRIGGER trg_DeleteUsers
 ON dbo.[AspNetUsers]
 INSTEAD OF DELETE
 AS
