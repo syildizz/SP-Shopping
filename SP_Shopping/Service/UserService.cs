@@ -79,7 +79,7 @@ public class UserService
                 {
                     result = await _userManager.AddToRolesAsync(_user, requestDifferenceUserRoles);
                 }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.Message; }
+                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.StackTrace; }
                 if (wentToCatch || !result.Succeeded)
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
@@ -91,7 +91,7 @@ public class UserService
                 {
                     result = await _userManager.RemoveFromRolesAsync(_user, userDifferenceRequestRoles);
                 }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.Message; }
+                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.StackTrace; }
                 if (wentToCatch || !result.Succeeded)
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
@@ -107,7 +107,7 @@ public class UserService
                 {
                     result = await _userManager.RemoveFromRolesAsync(_user, await _userManager.GetRolesAsync(_user));
                 }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.Message; }
+                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.StackTrace; }
                 if (wentToCatch || !result.Succeeded)
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
@@ -185,7 +185,7 @@ public class UserService
             catch (Exception ex)
             {
                 #if DEBUG
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.Message}" });
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.StackTrace}" });
                 #else
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
                 #endif

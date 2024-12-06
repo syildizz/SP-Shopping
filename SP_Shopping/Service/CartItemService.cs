@@ -34,7 +34,7 @@ public class CartItemService
                 if (ex is DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
                     #else
                     errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
@@ -88,7 +88,7 @@ public class CartItemService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
                     #else
                     errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
@@ -135,7 +135,7 @@ public class CartItemService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
                     #else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
@@ -183,7 +183,7 @@ public class CartItemService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
                     #else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
@@ -228,7 +228,7 @@ public class CartItemService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
                     #else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
@@ -272,7 +272,7 @@ public class CartItemService
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
                     #if DEBUG
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.Message}" });
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
                     #else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
                     #endif
