@@ -123,8 +123,6 @@ public class Program
             };
         });
 
-
-
         var app = builder.Build();
 
         app.UseRequestLocalization("tr-TR");
@@ -160,19 +158,20 @@ public class Program
         );
         app.MapRazorPages();
 
-        await AddRoles(app.Services);
+        await AddRoles(app);
 
         app.Run();
     }
 
     // https://stackoverflow.com/a/73410638
-    private static async Task AddRoles(IServiceProvider serviceProvider)
+    private static async Task AddRoles(WebApplication app)
     {
-        using var scope = serviceProvider.CreateScope();
+
+        using var scope = app.Services.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        var roles = GetRoleNames();
+        var roles = GetRoleNames(app);
         if (roles is null) return;
         foreach (string role in roles)
         {
@@ -188,13 +187,11 @@ public class Program
         }
     }
 
-    private static List<string>? GetRoleNames()
+    private static List<string>? GetRoleNames(WebApplication app)
     {
-        //var roles = configuration.GetSection("Roles").Get<List<string>>();
-        List<string> roles = 
-        [
-            "Admin"
-        ];
+        const string roleSectionName = "Roles";
+        List<string> roles = app.Configuration.GetSection(roleSectionName).Get<List<string>>() 
+            ?? throw new Exception($"Section {roleSectionName} does not exist in config");
         return roles;
     }
 
