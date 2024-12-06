@@ -23,7 +23,9 @@ public class Program
         // Add services to the container.
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString)
+            options
+                .UseSqlServer(connectionString)
+                
             );
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -159,6 +161,12 @@ public class Program
         app.MapRazorPages();
 
         await AddRoles(app);
+
+        const bool seedDatabase = false;
+        if (seedDatabase)
+        {
+            await new DbSeeder().Seed(app);
+        }
 
         app.Run();
     }
