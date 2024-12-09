@@ -49,7 +49,6 @@ public class AdminUserControllerTests
             A.Fake<IRepository<Product>>(),
             _userManager,
             _profileImageHandler,
-            _messageHandler,
             new ProductService
             (
                 A.Fake<IRepository<Product>>(),

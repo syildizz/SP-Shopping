@@ -14,7 +14,6 @@ public class UserService
     IRepository<Product> productRepository,
     UserManager<ApplicationUser> userManager,
     IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler,
-    IMessageHandler messageHandler,
     ProductService productService
 )
 {
@@ -22,7 +21,6 @@ public class UserService
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
-    private readonly IMessageHandler _messageHandler = messageHandler;
     private readonly ProductService _productService = productService;
 
     public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(ApplicationUser user, IFormFile? image, IEnumerable<string>? roles)
