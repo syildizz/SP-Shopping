@@ -160,47 +160,12 @@ public class Program
         );
         app.MapRazorPages();
 
-        await AddRoles(app);
-
-        const bool seedDatabase = false;
-        if (seedDatabase)
+        if (app.Configuration.GetSection("SeedDatabase").Get<bool?>() is not null and true)
         {
-            await new DbSeeder().Seed(app);
+            await new DbSeeder(app).Seed();
         }
 
         app.Run();
-    }
-
-    // https://stackoverflow.com/a/73410638
-    private static async Task AddRoles(WebApplication app)
-    {
-
-        using var scope = app.Services.CreateScope();
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        var roles = GetRoleNames(app);
-        if (roles is null) return;
-        foreach (string role in roles)
-        {
-            if (!await roleManager.RoleExistsAsync(role))
-            {
-                var result = await roleManager.CreateAsync(new IdentityRole(role));
-                if (!result.Succeeded)
-                {
-                    logger.LogError("Failed to create role for role \"{Role}\"", role);
-                    return;
-                }
-            }
-        }
-    }
-
-    private static List<string>? GetRoleNames(WebApplication app)
-    {
-        const string roleSectionName = "Roles";
-        List<string> roles = app.Configuration.GetSection(roleSectionName).Get<List<string>>() 
-            ?? throw new Exception($"Section {roleSectionName} does not exist in config");
-        return roles;
     }
 
 }
