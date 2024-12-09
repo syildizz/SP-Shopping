@@ -118,6 +118,7 @@ public class DbSeeder : IDisposable
         {
             foreach (var file in Directory.GetFiles(Path.Combine(_seedFolder, "images")))
             {
+                if (file.Contains(".gitkeep")) continue;
                 imageStreams.Add(File.OpenRead(file));
             }
         }
