@@ -253,7 +253,7 @@ namespace SP_Shopping.Data.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("SP_Shopping.Models.Category", b =>
@@ -274,7 +274,7 @@ namespace SP_Shopping.Data.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("SP_Shopping.Models.Product", b =>
@@ -319,7 +319,7 @@ namespace SP_Shopping.Data.Migrations
 
                     b.HasIndex("SubmitterId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

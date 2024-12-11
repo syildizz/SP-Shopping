@@ -40,7 +40,7 @@ public class DbSeeder : IDisposable
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler;
     private readonly UserService _userService;
 
-    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly RoleManager<ApplicationRole> _roleManager;
 
     private readonly IRepository<CartItem> _cartItemRepository;
     private readonly CartItemService _cartItemService;
@@ -72,7 +72,7 @@ public class DbSeeder : IDisposable
         _profileImageHandler = _scope.ServiceProvider.GetRequiredService<IImageHandlerDefaulting<UserProfileImageKey>>();
         _userService = new UserService(_userRepository, _productRepository, _userManager, _profileImageHandler, _productService);
 
-        _roleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        _roleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
         _cartItemRepository = _scope.ServiceProvider.GetRequiredService<IRepository<CartItem>>();
         _cartItemService = new CartItemService(_cartItemRepository);
@@ -247,7 +247,7 @@ public class DbSeeder : IDisposable
         {
             if (!await _roleManager.RoleExistsAsync(role))
             {
-                var succeed = await _roleManager.CreateAsync(new IdentityRole(role));
+                var succeed = await _roleManager.CreateAsync(new ApplicationRole(role));
                 if (!succeed.Succeeded)
                 {
                     _logger.LogError("Failed to create role for role \"{Role}\" due to {ErrMsgs}", role, succeed.Errors);

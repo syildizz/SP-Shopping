@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using SP_Shopping.Models;
@@ -7,7 +8,7 @@ using SP_Shopping.Utilities.ImageHandlerKeys;
 
 namespace SP_Shopping.Data;
 
-public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
 {
     public ApplicationDbContext
     (
@@ -29,10 +30,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        base.OnModelCreating(builder);
+
         builder.Entity<ApplicationUser>()
             .ToTable(tb => tb.HasTrigger("trg_DeleteUsers"));
 
-        base.OnModelCreating(builder);
+        // Many-to-Many: Users <-> Roles
+        builder.Entity<ApplicationUser>()
+            .HasMany(u => u.Roles)
+            .WithMany(r => r.Users)
+            .UsingEntity<IdentityUserRole<string>>(
+                j => j.HasOne<ApplicationRole>().WithMany().HasForeignKey(ur => ur.RoleId),
+                j => j.HasOne<ApplicationUser>().WithMany().HasForeignKey(ur => ur.UserId),
+                j =>
+                {
+                    j.HasKey(ur => new { ur.UserId, ur.RoleId });
+                    j.ToTable("AspNetUserRoles"); // Default Identity table
+                }
+            );    
     }
 
 }
