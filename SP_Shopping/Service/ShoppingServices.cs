@@ -6,7 +6,7 @@ using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 namespace SP_Shopping.Service;
 
-public class ShoppingServices : IServices
+public class ShoppingServices : IShoppingServices
 {
     public ProductService Product { get; }
     public CategoryService Category { get; }

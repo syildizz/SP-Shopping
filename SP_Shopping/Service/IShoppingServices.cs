@@ -1,7 +1,7 @@
 ﻿
 namespace SP_Shopping.Service;
 
-public interface IServices
+public interface IShoppingServices
 {
     CartItemService CartItem { get; }
     CategoryService Category { get; }
