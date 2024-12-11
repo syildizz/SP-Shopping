@@ -73,6 +73,20 @@ public class RepositoryBaseCaching<TEntity>
         return await _memoryCacher.GetOrCreate(_cacheKey, () => base.GetSingleAsync(query));
     }
 
+    public bool Exists(string cacheKey, Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    {
+        var _cacheKey = $"{typeof(TEntity).FullName}_{cacheKey}";
+        _logger.LogInformation("Adding key {key}", _cacheKey);
+        return _memoryCacher.GetOrCreate(_cacheKey, () => base.Exists(query));
+    }
+
+    public async Task<bool> ExistsAsync(string cacheKey, Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    {
+        var _cacheKey = $"{typeof(TEntity).FullName}_{cacheKey}";
+        _logger.LogInformation("Adding key {key}", _cacheKey);
+        return await _memoryCacher.GetOrCreate(_cacheKey, () => base.ExistsAsync(query));
+    }
+
     public override void Create(TEntity entity)
     {
         base.Create(entity);
@@ -130,20 +144,6 @@ public class RepositoryBaseCaching<TEntity>
         _logger.LogInformation("Clearing cache for {Type}", typeof(TEntity).FullName);
         _memoryCacher.ClearWith(k => k.StartsWith(typeof(TEntity).FullName!));
         return result;
-    }
-
-    public bool Exists(string cacheKey, Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
-    {
-        var _cacheKey = $"{typeof(TEntity).FullName}_{cacheKey}";
-        _logger.LogInformation("Adding key {key}", _cacheKey);
-        return _memoryCacher.GetOrCreate(_cacheKey, () => base.Exists(query));
-    }
-
-    public async Task<bool> ExistsAsync(string cacheKey, Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
-    {
-        var _cacheKey = $"{typeof(TEntity).FullName}_{cacheKey}";
-        _logger.LogInformation("Adding key {key}", _cacheKey);
-        return await _memoryCacher.GetOrCreate(_cacheKey, () => base.ExistsAsync(query));
     }
 
     public override int SaveChanges()

@@ -43,14 +43,6 @@ public class UserController
     private readonly IMapper _mapper = mapper;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
     private readonly UserService _userService = userService;
-    private class SortRoles : IComparer<List<string>>
-    {
-        public int Compare(List<string> x, List<string> y)
-        {
-            return string.Join(' ', x).CompareTo(string.Join(' ', y));
-        }
-    }
-
 
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {

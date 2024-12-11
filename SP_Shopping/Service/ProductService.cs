@@ -59,6 +59,16 @@ public class ProductService
         return await _productRepository.GetSingleAsync(query);
     }
 
+    public virtual bool Exists(Func<IQueryable<Product>, IQueryable<Product>> query)
+    {
+        return _productRepository.Exists(query);
+    }
+
+    public virtual async Task<bool> ExistsAsync(Func<IQueryable<Product>, IQueryable<Product>> query)
+    {
+        return await _productRepository.ExistsAsync(query);
+    }
+
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Product product, IFormFile? image)
     {
 

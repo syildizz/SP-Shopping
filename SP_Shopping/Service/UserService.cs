@@ -63,6 +63,16 @@ public class UserService
         return await _userRepository.GetSingleAsync(query);
     }
 
+    public virtual bool Exists(Func<IQueryable<ApplicationUser>, IQueryable<ApplicationUser>> query)
+    {
+        return _userRepository.Exists(query);
+    }
+
+    public virtual async Task<bool> ExistsAsync(Func<IQueryable<ApplicationUser>, IQueryable<ApplicationUser>> query)
+    {
+        return await _userRepository.ExistsAsync(query);
+    }
+
     public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(ApplicationUser user, IFormFile? image, IEnumerable<string>? roles)
     {
         ICollection<Message> errorMessages = [];

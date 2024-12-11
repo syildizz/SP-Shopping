@@ -57,6 +57,15 @@ public class CategoryService
         return await (_categoryRepository.GetSingleAsync(cacheKey, query));
     }
 
+    public virtual bool Exists(Func<IQueryable<Category>, IQueryable<Category>> query)
+    {
+        return _categoryRepository.Exists(query);
+    }
+
+    public virtual async Task<bool> ExistsAsync(Func<IQueryable<Category>, IQueryable<Category>> query)
+    {
+        return await _categoryRepository.ExistsAsync(query);
+    }
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Category category)
     {

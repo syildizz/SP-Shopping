@@ -54,6 +54,16 @@ public class CartItemService
         return await _cartItemRepository.GetSingleAsync(query);
     }
 
+    public virtual bool Exists(Func<IQueryable<CartItem>, IQueryable<CartItem>> query)
+    {
+        return _cartItemRepository.Exists(query);
+    }
+
+    public virtual async Task<bool> ExistsAsync(Func<IQueryable<CartItem>, IQueryable<CartItem>> query)
+    {
+        return await _cartItemRepository.ExistsAsync(query);
+    }
+
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(CartItem cartItem)
     {
 

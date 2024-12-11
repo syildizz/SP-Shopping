@@ -57,6 +57,15 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
         return await query(_context.Set<TEntity>()).SingleOrDefaultAsync();
     }
 
+    public virtual bool Exists(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    {
+        return query(_context.Set<TEntity>()).Any();
+    }
+
+    public virtual async Task<bool> ExistsAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
+    {
+        return await query(_context.Set<TEntity>()).AnyAsync();
+    }
 
     public virtual void Create(TEntity entity)
     {
@@ -108,16 +117,6 @@ public class RepositoryBase<TEntity>(ApplicationDbContext context) : IRepository
     {
         return await query(_context.Set<TEntity>())
             .ExecuteDeleteAsync();
-    }
-
-    public virtual bool Exists(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
-    {
-        return query(_context.Set<TEntity>()).Any();
-    }
-
-    public virtual async Task<bool> ExistsAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> query)
-    {
-        return await query(_context.Set<TEntity>()).AnyAsync();
     }
 
     public virtual int SaveChanges()
