@@ -32,7 +32,7 @@ public class RepositoryBaseCaching<TEntity>
         return _memoryCacher.GetOrCreate(_cacheKey, () => base.GetAll(query));
     }
 
-    public async Task<List<TEntity>> GetAllAsync(string cacheKey)
+    public override async Task<List<TEntity>> GetAllAsync()
     {
         var _cacheKey = $"{typeof(TEntity).FullName}_All";
         _logger.LogInformation("Adding key {key}", _cacheKey);

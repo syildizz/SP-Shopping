@@ -94,6 +94,8 @@ public class Program
 
         builder.Services.AddScoped<CartItemService>();
 
+        builder.Services.AddScoped<IServices, ShoppingServices>();
+
         builder.Services.AddScoped<IMessageHandler, MessageHandler>();
 
         builder.Services.AddImageSharp(options =>

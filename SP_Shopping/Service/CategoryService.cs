@@ -18,6 +18,46 @@ public class CategoryService
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly ProductService _productService = productService;
 
+    public List<Category> GetAll()
+    {
+        return _categoryRepository.GetAll();
+    }
+
+    public List<TResult> GetAll<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
+    {
+        return _categoryRepository.GetAll(cacheKey, query);
+    }
+
+    public async Task<List<Category>> GetAllAsync()
+    {
+        return await _categoryRepository.GetAllAsync();
+    }
+
+    public async Task<List<TResult>> GetAllAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
+    {
+        return await _categoryRepository.GetAllAsync(cacheKey, query);
+    }
+
+    public Category? GetByKey(string cacheKey, params object?[]? keyValues)
+    {
+        return _categoryRepository.GetByKey(cacheKey, keyValues);
+    }
+
+    public async Task<Category?> GetByKeyAsync(string cacheKey, params object?[]? keyValues)
+    {
+        return await _categoryRepository.GetByKeyAsync(cacheKey, keyValues);
+    }
+
+    public TResult? GetSingle<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
+    {
+        return _categoryRepository.GetSingle(cacheKey, query);
+    }
+    public async Task<TResult?> GetSingleAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
+    {
+        return await (_categoryRepository.GetSingleAsync(cacheKey, query));
+    }
+
+
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Category category)
     {
 

@@ -23,6 +23,46 @@ public class UserService
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
     private readonly ProductService _productService = productService;
 
+    public virtual List<ApplicationUser> GetAll()
+    {
+        return _userRepository.GetAll();
+    }
+
+    public virtual List<TResult> GetAll<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query)
+    {
+        return _userRepository.GetAll(query);
+    }
+
+    public virtual async Task<List<ApplicationUser>> GetAllAsync()
+    {
+        return await _userRepository.GetAllAsync();
+    }
+
+    public virtual async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query)
+    {
+        return await _userRepository.GetAllAsync(query);
+    }
+
+    public virtual ApplicationUser? GetByKey(params object?[]? keyValues)
+    {
+        return _userRepository.GetByKey(keyValues);
+    }
+
+    public virtual async Task<ApplicationUser?> GetByKeyAsync(params object?[]? keyValues)
+    {
+        return await _userRepository.GetByKeyAsync(keyValues);
+    }
+
+    public virtual TResult? GetSingle<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query)
+    {
+        return _userRepository.GetSingle(query);
+    }
+
+    public virtual async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query)
+    {
+        return await _userRepository.GetSingleAsync(query);
+    }
+
     public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(ApplicationUser user, IFormFile? image, IEnumerable<string>? roles)
     {
         ICollection<Message> errorMessages = [];

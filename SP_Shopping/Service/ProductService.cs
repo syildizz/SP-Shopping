@@ -19,6 +19,45 @@ public class ProductService
 
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler = productImageHandler;
+    public virtual List<Product> GetAll()
+    {
+        return _productRepository.GetAll();
+    }
+
+    public virtual List<TResult> GetAll<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
+    {
+        return _productRepository.GetAll(query);
+    }
+
+    public virtual async Task<List<Product>> GetAllAsync()
+    {
+        return await _productRepository.GetAllAsync();
+    }
+
+    public virtual async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
+    {
+        return await _productRepository.GetAllAsync(query);
+    }
+
+    public virtual Product? GetByKey(params object?[]? keyValues)
+    {
+        return _productRepository.GetByKey(keyValues);
+    }
+
+    public virtual async Task<Product?> GetByKeyAsync(params object?[]? keyValues)
+    {
+        return await _productRepository.GetByKeyAsync(keyValues);
+    }
+
+    public virtual TResult? GetSingle<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
+    {
+        return _productRepository.GetSingle(query);
+    }
+
+    public virtual async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
+    {
+        return await _productRepository.GetSingleAsync(query);
+    }
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Product product, IFormFile? image)
     {

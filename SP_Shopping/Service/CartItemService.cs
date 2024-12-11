@@ -14,6 +14,46 @@ public class CartItemService
 
     private readonly IRepository<CartItem> _cartItemRepository = cartItemRepository;
 
+    public virtual List<CartItem> GetAll()
+    {
+        return _cartItemRepository.GetAll();
+    }
+
+    public virtual List<TResult> GetAll<TResult>(Func<IQueryable<CartItem>, IQueryable<TResult>> query)
+    {
+        return _cartItemRepository.GetAll(query);
+    }
+
+    public virtual async Task<List<CartItem>> GetAllAsync()
+    {
+        return await _cartItemRepository.GetAllAsync();
+    }
+
+    public virtual async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<CartItem>, IQueryable<TResult>> query)
+    {
+        return await _cartItemRepository.GetAllAsync(query);
+    }
+
+    public virtual CartItem? GetByKey(params object?[]? keyValues)
+    {
+        return _cartItemRepository.GetByKey(keyValues);
+    }
+
+    public virtual async Task<CartItem?> GetByKeyAsync(params object?[]? keyValues)
+    {
+        return await _cartItemRepository.GetByKeyAsync(keyValues);
+    }
+
+    public virtual TResult? GetSingle<TResult>(Func<IQueryable<CartItem>, IQueryable<TResult>> query)
+    {
+        return _cartItemRepository.GetSingle(query);
+    }
+
+    public virtual async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<CartItem>, IQueryable<TResult>> query)
+    {
+        return await _cartItemRepository.GetSingleAsync(query);
+    }
+
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(CartItem cartItem)
     {
 
