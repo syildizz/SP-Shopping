@@ -15,30 +15,20 @@ using System.Security.Claims;
 
 namespace SP_Shopping.Controllers;
 
-public class ProductsController : Controller
+public class ProductsController(
+    ILogger<ProductsController> logger,
+    IMapper mapper,
+    IShoppingServices shoppingServices,
+    IImageHandlerDefaulting<ProductImageKey> productImageHandler,
+    IMessageHandler messageHandler
+    ) : Controller
 {
-    private readonly ILogger<ProductsController> _logger;
-    private readonly IMapper _mapper;
-    private readonly IShoppingServices _shoppingServices;
-    private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
-    private readonly IMessageHandler _messageHandler;
+    private readonly ILogger<ProductsController> _logger = logger;
+    private readonly IMapper _mapper = mapper;
+    private readonly IShoppingServices _shoppingServices = shoppingServices;
+    private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler = productImageHandler;
+    private readonly IMessageHandler _messageHandler = messageHandler;
     private readonly int paginationCount = 5;
-
-    public ProductsController
-    (
-        ILogger<ProductsController> logger,
-        IMapper mapper,
-        IShoppingServices shoppingServices,
-        IImageHandlerDefaulting<ProductImageKey> productImageHandler,
-        IMessageHandler messageHandler
-    )
-    {
-        _logger = logger;
-        _mapper = mapper;
-        _shoppingServices = shoppingServices;
-        _productImageHandler = productImageHandler;
-        _messageHandler = messageHandler;
-    }
 
     public async Task<IActionResult> Search(string? query)
     {
@@ -341,7 +331,7 @@ public class ProductsController : Controller
         _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);
         try
         {
-            _productImageHandler.DeleteImage(new((int)id));
+            _productImageHandler.DeleteImage(new((int)id!));
         }
         catch (Exception ex)
         {

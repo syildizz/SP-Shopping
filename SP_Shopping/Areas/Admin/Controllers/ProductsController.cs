@@ -58,7 +58,7 @@ public class ProductsController
                         nameof(AdminProductDetailsDto.SubmitterId) => q => q.Where(p => p.SubmitterName.Contains(query)),
                         nameof(AdminProductDetailsDto.SubmitterName) => q => q.Where(p => p.SubmitterName.Contains(query)),
                         nameof(AdminProductDetailsDto.InsertionDate) => q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
-                        nameof(AdminProductDetailsDto.ModificationDate) => q => q.Where(p => p.ModificationDate != null && p.ModificationDate.ToString().Contains(query)),
+                        nameof(AdminProductDetailsDto.ModificationDate) => q => q.Where(p => p.ModificationDate != null && p.ModificationDate.ToString()!.Contains(query)),
                         _ => throw new NotImplementedException($"{type} is invalid")
                     };
                 }

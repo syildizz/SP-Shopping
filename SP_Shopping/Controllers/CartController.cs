@@ -60,7 +60,7 @@ public class CartController
         CartItem cartItem = new()
         {
             UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!,
-            ProductId = (int)id,
+            ProductId = (int)id!,
             Count = 1
         };
 

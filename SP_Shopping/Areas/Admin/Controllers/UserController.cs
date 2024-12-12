@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.User;
 using SP_Shopping.Models;
 using SP_Shopping.Service;

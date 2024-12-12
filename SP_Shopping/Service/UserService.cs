@@ -92,21 +92,23 @@ public class UserService
 
             if (roles is not null)
             {
-                var errorMessage = "Failed to set roles";
+                var errorMessage = "Failed to set user's roles";
                 bool wentToCatch = false;
                 try
                 {
                     succeeded = await _userManager.AddToRolesAsync(user, roles);
                 }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.StackTrace; }
+                catch (InvalidOperationException ex) 
+                { 
+                    wentToCatch = true;
+                    #if DEBUG
+                    errorMessage = $"{errorMessage}: {ex.StackTrace}";
+                    #endif
+                }
                 if (wentToCatch || !succeeded.Succeeded)
                 {
-                        #if DEBUG
-                        errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage ?? "Failed to set roles" });
-                        #else
-                        errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set roles" });
-                        #endif
-                        return false;
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
+                    return false;
                 }
 
             }
@@ -206,12 +208,18 @@ public class UserService
                 var requestDifferenceUserRoles = requestRoles.Except(userRoles);
 
                 var wentToCatch = false;
-                var errorMessage = "Failed to set roles";
+                string errorMessage = "Failed to set roles";
                 try
                 {
                     result = await _userManager.AddToRolesAsync(_user, requestDifferenceUserRoles);
                 }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.StackTrace; }
+                catch (InvalidOperationException ex) 
+                { 
+                    wentToCatch = true;
+                    #if DEBUG
+                        errorMessage = $"{errorMessage}: {ex.StackTrace}";
+                    #endif
+                }
                 if (wentToCatch || !result.Succeeded)
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
@@ -223,7 +231,13 @@ public class UserService
                 {
                     result = await _userManager.RemoveFromRolesAsync(_user, userDifferenceRequestRoles);
                 }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.StackTrace; }
+                catch (InvalidOperationException ex) 
+                { 
+                    wentToCatch = true;
+                    #if DEBUG
+                        errorMessage = $"{errorMessage}: {ex.StackTrace}";
+                    #endif
+                }
                 if (wentToCatch || !result.Succeeded)
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
@@ -234,12 +248,18 @@ public class UserService
             else
             {
                 var wentToCatch = false;
-                var errorMessage = "Failed to set roles";
+                string errorMessage = "Failed to set roles";
                 try
                 {
                     result = await _userManager.RemoveFromRolesAsync(_user, await _userManager.GetRolesAsync(_user));
                 }
-                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.StackTrace; }
+                catch (InvalidOperationException ex) 
+                { 
+                    wentToCatch = true;
+                    #if DEBUG
+                        errorMessage = $"{errorMessage} : {ex.StackTrace}";
+                    #endif
+                }
                 if (wentToCatch || !result.Succeeded)
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
