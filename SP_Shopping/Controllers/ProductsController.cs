@@ -109,30 +109,32 @@ public class ProductsController : Controller
     public async Task<IActionResult> Create(ProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Create.");
-        if (ModelState.IsValid)
+
+        if (!ModelState.IsValid)
         {
-            _logger.LogDebug($"Creating product.");
-            Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
-
-            product.SubmitterId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
-                ?? throw new Exception("ClaimTypes.NameIdentifier doesn't exist somehow. Should be unreachable code");
-
-            if (!(await _shoppingServices.Product.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
-            {
-                _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
-                _messageHandler.Add(TempData, errMsgs!);
-                return RedirectToAction(nameof(Create));
-            }
-
-            return RedirectToAction(nameof(Details), new { id = product.Id });
+            _logger.LogError("ModelState is not valid.");
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid. Please try again" });
+            // Create view instead of redirecting to GET to save current form field states.
+            _logger.LogDebug($"Fetching all categories.");
+            IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
+            ViewBag.categorySelectList = categorySelectList;
+            return View(pdto);
         }
-        _logger.LogError("ModelState is not valid.");
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid. Please try again" });
-        // Create view instead of redirecting to GET to save current form field states.
-        _logger.LogDebug($"Fetching all categories.");
-        IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
-        ViewBag.categorySelectList = categorySelectList;
-        return View(pdto);
+
+        _logger.LogDebug($"Creating product.");
+        Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
+
+        product.SubmitterId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+            ?? throw new Exception("ClaimTypes.NameIdentifier doesn't exist somehow. Should be unreachable code");
+
+        if (!(await _shoppingServices.Product.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+        {
+            _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
+            _messageHandler.Add(TempData, errMsgs!);
+            return RedirectToAction(nameof(Create));
+        }
+
+        return RedirectToAction(nameof(Details), new { id = product.Id });
     }
 
     // GET: Products/Edit/5
@@ -198,39 +200,38 @@ public class ProductsController : Controller
             return NotFound();
         }
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var product = _mapper.Map<ProductCreateDto, Product>(pdto);
-            product.Id = (int)id!;
-
-            // Get user argument from session and edit if the user owns the product.
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            // Get the existing submitter id for the product from the database.
-            string? productExistingSubmitterId = await _shoppingServices.Product.GetSingleAsync(q => q
-                .Where(p => p.Id == id)
-                .Select(p => p.SubmitterId)
-            );
-            if (productExistingSubmitterId != userId)
-            {
-                _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
-                    + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
-                return Unauthorized("Cannot edit product that is not yours");
-            }
-            
-            _logger.LogDebug("Updating product.");
-            if(!(await _shoppingServices.Product.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
-            {
-                _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
-                _messageHandler.Add(TempData, errMsgs!);
-                return RedirectToAction(nameof(Edit), new { id });
-            }
-            return RedirectToAction(nameof(Details), new { id });
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid" });
+            return RedirectToAction(nameof(Edit), new { id });
         }
 
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Form is invalid" });
+        var product = _mapper.Map<ProductCreateDto, Product>(pdto);
+        product.Id = (int)id!;
 
-        return RedirectToAction(nameof(Edit), new { id });
+        // Get user argument from session and edit if the user owns the product.
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // Get the existing submitter id for the product from the database.
+        string? productExistingSubmitterId = await _shoppingServices.Product.GetSingleAsync(q => q
+            .Where(p => p.Id == id)
+            .Select(p => p.SubmitterId)
+        );
+        if (productExistingSubmitterId != userId)
+        {
+            _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
+                + "belonging to user with id \"{ProductOwnerId}\"", userId, productExistingSubmitterId);
+            return Unauthorized("Cannot edit product that is not yours");
+        }
+        
+        _logger.LogDebug("Updating product.");
+        if(!(await _shoppingServices.Product.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+        {
+            _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
+            _messageHandler.Add(TempData, errMsgs!);
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+        return RedirectToAction(nameof(Details), new { id });
 
     }
 

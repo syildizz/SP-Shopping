@@ -99,41 +99,40 @@ public class CartController
     {
         _logger.LogInformation("POST: Admin/Cart/Create.");
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
+            _logger.LogError("ModeState is invalid");
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to add product to cart" });
 
-            CartItem cartItem = _mapper.Map<CartItem>(cidto);
-
-            // Check that the keys are valid.
-
-            _logger.LogDebug("Checking if user with \"{userId}\" exists in database.", cartItem.UserId);
-            bool userExists = await _shoppingServices.User.ExistsAsync(q => q.Where(u => u.Id == cartItem.UserId));
-            if (!userExists)
-            {
-                _logger.LogError("The user id of \"{UserId}\" does not exist in the database.", cartItem.UserId);
-                return BadRequest("Invalid user id specified.");
-            }
-
-            _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", cartItem.ProductId);
-            bool productExists = await _shoppingServices.Product.ExistsAsync(q => q.Where(p => p.Id == cartItem.ProductId));
-            if (!productExists)
-            {
-                _logger.LogError("The product id of \"{ProductId}\" does not exist in the database.", cartItem.ProductId);
-                return BadRequest("Invalid product id specified.");
-            }
-
-            _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            if (!(await _shoppingServices.CartItem.TryCreateAsync(cartItem)).TryOut(out var errMsgs))
-            {
-                _messageHandler.Add(TempData, errMsgs!);
-                return View(cidto);
-            }
             return RedirectToAction(nameof(Index));
-
         }
 
-        _logger.LogError("ModeState is invalid");
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to add product to cart" });
+        CartItem cartItem = _mapper.Map<CartItem>(cidto);
+
+        // Check that the keys are valid.
+
+        _logger.LogDebug("Checking if user with \"{userId}\" exists in database.", cartItem.UserId);
+        bool userExists = await _shoppingServices.User.ExistsAsync(q => q.Where(u => u.Id == cartItem.UserId));
+        if (!userExists)
+        {
+            _logger.LogError("The user id of \"{UserId}\" does not exist in the database.", cartItem.UserId);
+            return BadRequest("Invalid user id specified.");
+        }
+
+        _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", cartItem.ProductId);
+        bool productExists = await _shoppingServices.Product.ExistsAsync(q => q.Where(p => p.Id == cartItem.ProductId));
+        if (!productExists)
+        {
+            _logger.LogError("The product id of \"{ProductId}\" does not exist in the database.", cartItem.ProductId);
+            return BadRequest("Invalid product id specified.");
+        }
+
+        _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+        if (!(await _shoppingServices.CartItem.TryCreateAsync(cartItem)).TryOut(out var errMsgs))
+        {
+            _messageHandler.Add(TempData, errMsgs!);
+            return View(cidto);
+        }
 
         return RedirectToAction(nameof(Index));
     }
@@ -144,24 +143,25 @@ public class CartController
     {
         _logger.LogInformation("POST: Admin/Cart/Edit.");
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var cartItem = _mapper.Map<CartItem>(cidto);
+            _logger.LogError("ModeState is invalid");
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
 
-            _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            if (!(await _shoppingServices.CartItem.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
-            {
-                _messageHandler.Add(TempData, errMsgs!);
-                return View(cidto);
-            }
             return RedirectToAction(nameof(Index));
         }
 
-        _logger.LogError("ModeState is invalid");
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to change count of product in cart" });
+        var cartItem = _mapper.Map<CartItem>(cidto);
+
+        _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+        if (!(await _shoppingServices.CartItem.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
+        {
+            _messageHandler.Add(TempData, errMsgs!);
+            return View(cidto);
+        }
 
         return RedirectToAction(nameof(Index));
-        
+
     }
 
     [HttpPost]
@@ -169,24 +169,24 @@ public class CartController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(AdminCartItemCreateDto cidto)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            _logger.LogInformation("POST: Admin/Cart/Delete.");
+            _logger.LogError("ModeState is invalid");
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
 
-            var cartItem = _mapper.Map<CartItem>(cidto);
-
-            _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            if (!(await _shoppingServices.CartItem.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
-            {
-                _messageHandler.Add(TempData, errMsgs!);
-                return View(cidto);
-            }
             return RedirectToAction(nameof(Index));
-
         }
 
-        _logger.LogError("ModeState is invalid");
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Failed to remove product from cart" });
+        _logger.LogInformation("POST: Admin/Cart/Delete.");
+
+        var cartItem = _mapper.Map<CartItem>(cidto);
+
+        _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+        if (!(await _shoppingServices.CartItem.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
+        {
+            _messageHandler.Add(TempData, errMsgs!);
+            return View(cidto);
+        }
 
         return RedirectToAction(nameof(Index));
     }

@@ -81,24 +81,32 @@ public class CartController
     {
         _logger.LogInformation("POST: Cart/Edit.");
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            CartItem cartItem = new() { ProductId = (int)id, UserId = userId, Count = cidto.Count };
-            _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
-            if (!(await _shoppingServices.CartItem.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
+            _logger.LogError("ModelState is invalid");
+            _messageHandler.Add(TempData, [.. ModelState.GetErrorMessages().Select(em => new Message
             {
-                _messageHandler.Add(TempData, errMsgs!);
-            }
+                Type = Message.MessageType.Warning,
+                Content = em
+            })]);
             return RedirectToAction(nameof(Index));
         }
 
-        _logger.LogError("ModelState is invalid");
-        _messageHandler.Add(TempData, [.. ModelState.GetErrorMessages().Select(em => new Message
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        CartItem cartItem = new() 
+        { 
+            ProductId = (int)id, 
+            UserId = userId, 
+            Count = cidto.Count 
+        };
+
+        _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", userId, id);
+        if (!(await _shoppingServices.CartItem.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
         {
-            Type = Message.MessageType.Warning,
-            Content = em
-        })]);
+            _messageHandler.Add(TempData, errMsgs!);
+        }
+
         return RedirectToAction(nameof(Index));
     }
 

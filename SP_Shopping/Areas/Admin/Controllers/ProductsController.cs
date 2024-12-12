@@ -138,44 +138,45 @@ public class ProductsController
     public async Task<IActionResult> Create(AdminProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Admin/Products/Create.");
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            _logger.LogDebug($"Creating product.");
+            _logger.LogError("ModelState is not valid.");
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Unable to create product" });
 
-            if (string.IsNullOrWhiteSpace(pdto.SubmitterId))
-            {
-                var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                pdto.SubmitterId = UserId;
-            }
-            else
-            {
-                if (!await _shoppingServices.User.ExistsAsync(q => q.Where(u => u.Id == pdto.SubmitterId)))
-                {
-                    _logger.LogDebug("{SubmitterId} is not a valid user id.", pdto.SubmitterId);
-                    _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"{pdto.SubmitterId} is not a valid user id" });
-                    _logger.LogDebug($"Fetching all categories.");
-                    ViewBag.categorySelectList = await GetCategoriesSelectListAsync();
-                    return View(pdto);
-                }
-            }
+            _logger.LogDebug($"Fetching all categories.");
+            IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
+            ViewBag.categorySelectList = categorySelectList;
 
-            Product product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
-            if (!(await _shoppingServices.Product.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
-            {
-                _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
-                _messageHandler.Add(TempData, errMsgs!);
-                return RedirectToAction(nameof(Create));
-            }
-
-            return RedirectToAction(nameof(Details), new { id = product.Id });
-
+            return View(pdto);
         }
-        _logger.LogError("ModelState is not valid.");
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Unable to create product" });
-        _logger.LogDebug($"Fetching all categories.");
-        IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
-        ViewBag.categorySelectList = categorySelectList;
-        return View(pdto);
+
+        _logger.LogDebug($"Creating product.");
+        if (string.IsNullOrWhiteSpace(pdto.SubmitterId))
+        {
+            var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            pdto.SubmitterId = UserId;
+        }
+        else
+        {
+            if (!await _shoppingServices.User.ExistsAsync(q => q.Where(u => u.Id == pdto.SubmitterId)))
+            {
+                _logger.LogDebug("{SubmitterId} is not a valid user id.", pdto.SubmitterId);
+                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"{pdto.SubmitterId} is not a valid user id" });
+                _logger.LogDebug($"Fetching all categories.");
+                ViewBag.categorySelectList = await GetCategoriesSelectListAsync();
+                return View(pdto);
+            }
+        }
+
+        Product product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
+        if (!(await _shoppingServices.Product.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+        {
+            _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
+            _messageHandler.Add(TempData, errMsgs!);
+            return RedirectToAction(nameof(Create));
+        }
+
+        return RedirectToAction(nameof(Details), new { id = product.Id });
     }
 
     // GET: Products/Edit/5
@@ -203,7 +204,6 @@ public class ProductsController
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
 
-
         return View(pdto);
     }
 
@@ -223,26 +223,27 @@ public class ProductsController
             return NotFound();
         }
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
-            product.Id = (int)id!;
-
-            _logger.LogDebug("Updating product.");
-
-            if (!(await _shoppingServices.Product.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
-            {
-                _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
-                _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't update product" });
-                _messageHandler.Add(TempData, errMsgs!);
-                return RedirectToAction(nameof(Edit), new { id });
-            }
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Unable to update product" });
             return RedirectToAction(nameof(Edit), new { id });
         }
 
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = "Unable to update product" });
+        var product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
+        product.Id = (int)id!;
+
+        _logger.LogDebug("Updating product.");
+
+        if (!(await _shoppingServices.Product.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+        {
+            _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't update product" });
+            _messageHandler.Add(TempData, errMsgs!);
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
         return RedirectToAction(nameof(Edit), new { id });
-        
+
     }
 
     // GET: Products/Delete/5

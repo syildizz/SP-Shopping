@@ -101,16 +101,18 @@ public class CategoriesController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,Name")] Category category)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            if (!(await _shoppingServices.Category.TryCreateAsync(category)).TryOut(out var errMsgs))
-            {
-                _messageHandler.Add(TempData, errMsgs!);
-                return View(category);
-            }
-            return RedirectToAction(nameof(Index));
+            return View(category);
         }
-        return View(category);
+
+        if (!(await _shoppingServices.Category.TryCreateAsync(category)).TryOut(out var errMsgs))
+        {
+            _messageHandler.Add(TempData, errMsgs!);
+            return View(category);
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     // GET: Categories/Edit/5
@@ -141,16 +143,18 @@ public class CategoriesController
             return NotFound();
         }
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            if (!(await _shoppingServices.Category.TryUpdateAsync(category)).TryOut(out var errMsgs))
-            {
-                _messageHandler.Add(TempData, errMsgs!);
-                return View(category);
-            }
-            return RedirectToAction(nameof(Index));
+            return View(category);
         }
-        return View(category);
+
+        if (!(await _shoppingServices.Category.TryUpdateAsync(category)).TryOut(out var errMsgs))
+        {
+            _messageHandler.Add(TempData, errMsgs!);
+            return View(category);
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     // GET: Categories/Delete/5
