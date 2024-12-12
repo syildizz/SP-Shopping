@@ -9,7 +9,7 @@ namespace SP_Shopping.Service;
 public class CartItemService
 (
     IRepository<CartItem> cartItemRepository
-)
+) : ICartItemService
 {
 
     private readonly IRepository<CartItem> _cartItemRepository = cartItemRepository;
@@ -83,15 +83,15 @@ public class CartItemService
             {
                 if (ex is DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else if (ex is DbUpdateException)
-                { 
+                {
                     // Exception occurs when adding same product to same users cart.
                     // This is a desired effect, therefore the below codoe is commented out.
                     // TODO: Analyze update exception for the above mentioned exception and throw 
@@ -137,11 +137,11 @@ public class CartItemService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -175,7 +175,7 @@ public class CartItemService
             {
                 _cartItemRepository.UpdateCertainFields(
                 q => q
-                    .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId), 
+                    .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId),
                 s => s
                     .SetProperty(c => c.Count, cartItem.Count)
                 );
@@ -184,11 +184,11 @@ public class CartItemService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -223,7 +223,7 @@ public class CartItemService
             {
                 await _cartItemRepository.UpdateCertainFieldsAsync(
                 q => q
-                    .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId), 
+                    .Where(c => c.UserId == cartItem.UserId && c.ProductId == cartItem.ProductId),
                 s => s
                     .SetProperty(c => c.Count, cartItem.Count)
                 );
@@ -232,11 +232,11 @@ public class CartItemService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -277,11 +277,11 @@ public class CartItemService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -321,11 +321,11 @@ public class CartItemService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else

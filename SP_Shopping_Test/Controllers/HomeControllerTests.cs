@@ -9,6 +9,7 @@ using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
 using System.Security.Claims;
 
@@ -18,22 +19,22 @@ namespace SP_Shopping.Test.Controllers;
 public class HomeControllerTests
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly IRepository<Product> _productRepository;
     private readonly IMapper _mapper;
+    private readonly IShoppingServices _shoppingServices;
     private readonly HomeController _homeController;
     public HomeControllerTests()
     {
         _logger = new NullLogger<HomeController>();
-        _productRepository = A.Fake<IRepository<Product>>();
         _mapper = A.Fake<IMapper>();
+        _shoppingServices = A.Fake<IShoppingServices>();
 
         // SUT
 
         _homeController = new HomeController
         (
             logger: _logger,
-            productRepository: _productRepository,
-            mapper: _mapper
+            mapper: _mapper,
+            shoppingServices: _shoppingServices
         );
         var fakeUser = new ClaimsPrincipal
         ([
@@ -63,7 +64,7 @@ public class HomeControllerTests
         // Arrange 
             // Get Products
         List<ProductDetailsDto> products = (List<ProductDetailsDto>)A.CollectionOfFake<ProductDetailsDto>(5);
-        A.CallTo(() => _productRepository.GetAllAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetAllAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .Returns(products);
         // Act
         IActionResult result = await _homeController.Index();

@@ -1,8 +1,6 @@
-﻿
-using AutoMapper;
+﻿using AutoMapper;
 using FakeItEasy;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,10 +8,9 @@ using Microsoft.IdentityModel.Tokens;
 using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.User;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
+using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
 using SP_Shopping.Utilities.Filter;
-using SP_Shopping.Utilities.MessageHandler;
 using System.Security.Claims;
 
 namespace SP_Shopping.Test.Controllers;
@@ -21,33 +18,26 @@ namespace SP_Shopping.Test.Controllers;
 [TestClass]
 public class UserControllerTests
 {
-    private readonly IRepository<ApplicationUser> _userRepository;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly IMessageHandler _messageHandler;
     private readonly ILogger<UserController> _logger;
     private readonly IMapper _mapper;
+    private readonly IShoppingServices _shoppingServices;
     private readonly UserController _userController;
 
     public UserControllerTests()
     {
-        _userRepository = A.Fake<IRepository<ApplicationUser>>();
-        _userManager = A.Fake<UserManager<ApplicationUser>>();
-        _signInManager = A.Fake<SignInManager<ApplicationUser>>();
-        _messageHandler = new MessageHandler();
         _logger = new NullLogger<UserController>();
         _mapper = A.Fake<IMapper>();
+        _shoppingServices = A.Fake<IShoppingServices>();
+
 
         // SUT
 
         _userController = new UserController
         (
-            userRepository: _userRepository,
-            userManager: _userManager,
-            signInManager: _signInManager,
-            messageHander: _messageHandler,
             logger: _logger,
-            mapper: _mapper
+            mapper: _mapper,
+            shoppingServices: _shoppingServices
+
         );
         var fakeUser = new ClaimsPrincipal
         ([
@@ -83,7 +73,7 @@ public class UserControllerTests
         var fakeUserPage = A.Fake<UserPageDto>();
         fakeUserPage.Id = id;
         fakeUserPage.ProductDetails = (List<UserPageDto.UserPageProductDto>)A.CollectionOfFake<UserPageDto.UserPageProductDto>(5);
-        A.CallTo(() => _userRepository.GetSingleAsync(A<Func<IQueryable<ApplicationUser>, IQueryable<UserPageDto>>>._))
+        A.CallTo(() => _shoppingServices.User.GetSingleAsync(A<Func<IQueryable<ApplicationUser>, IQueryable<UserPageDto>>>._))
             .Returns(fakeUserPage);
         // Act
         IActionResult result = await _userController.Index(id);
@@ -128,7 +118,7 @@ public class UserControllerTests
             // Id is not null
         const string id = "0";
             // Id does NOT exist, User is NOT found
-        A.CallTo(() => _userRepository.GetSingleAsync(A<Func<IQueryable<ApplicationUser>, IQueryable<UserPageDto>>>._))
+        A.CallTo(() => _shoppingServices.User.GetSingleAsync(A<Func<IQueryable<ApplicationUser>, IQueryable<UserPageDto>>>._))
             .Returns((UserPageDto?)null);
         // Act
         IActionResult result = await _userController.Index(id);
@@ -137,7 +127,7 @@ public class UserControllerTests
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
     }
 
-#endregion Index
+    #endregion Index
 
 }
 

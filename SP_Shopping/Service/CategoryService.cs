@@ -10,49 +10,49 @@ public class CategoryService
 (
     IRepositoryCaching<Category> categoryRepository,
     IRepository<Product> productRepository,
-    ProductService productService
-)
+    IProductService productService
+) : ICategoryService
 {
 
     private readonly IRepositoryCaching<Category> _categoryRepository = categoryRepository;
     private readonly IRepository<Product> _productRepository = productRepository;
-    private readonly ProductService _productService = productService;
+    private readonly IProductService _productService = productService;
 
-    public List<Category> GetAll()
+    public virtual List<Category> GetAll()
     {
         return _categoryRepository.GetAll();
     }
 
-    public List<TResult> GetAll<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
+    public virtual List<TResult> GetAll<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
     {
         return _categoryRepository.GetAll(cacheKey, query);
     }
 
-    public async Task<List<Category>> GetAllAsync()
+    public virtual async Task<List<Category>> GetAllAsync()
     {
         return await _categoryRepository.GetAllAsync();
     }
 
-    public async Task<List<TResult>> GetAllAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
+    public virtual async Task<List<TResult>> GetAllAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
     {
         return await _categoryRepository.GetAllAsync(cacheKey, query);
     }
 
-    public Category? GetByKey(string cacheKey, params object?[]? keyValues)
+    public virtual Category? GetByKey(string cacheKey, params object?[]? keyValues)
     {
         return _categoryRepository.GetByKey(cacheKey, keyValues);
     }
 
-    public async Task<Category?> GetByKeyAsync(string cacheKey, params object?[]? keyValues)
+    public virtual async Task<Category?> GetByKeyAsync(string cacheKey, params object?[]? keyValues)
     {
         return await _categoryRepository.GetByKeyAsync(cacheKey, keyValues);
     }
 
-    public TResult? GetSingle<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
+    public virtual TResult? GetSingle<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
     {
         return _categoryRepository.GetSingle(cacheKey, query);
     }
-    public async Task<TResult?> GetSingleAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
+    public virtual async Task<TResult?> GetSingleAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
     {
         return await (_categoryRepository.GetSingleAsync(cacheKey, query));
     }
@@ -85,15 +85,15 @@ public class CategoryService
             {
                 if (ex is DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else if (ex is DbUpdateException)
-                { 
+                {
                     // Exception occurs when adding same product to same users cart.
                     // This is a desired effect, therefore the below codoe is commented out.
                     // TODO: Analyze update exception for the above mentioned exception and throw 
@@ -139,11 +139,11 @@ public class CategoryService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -182,11 +182,11 @@ public class CategoryService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -226,11 +226,11 @@ public class CategoryService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -273,11 +273,11 @@ public class CategoryService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -323,11 +323,11 @@ public class CategoryService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else

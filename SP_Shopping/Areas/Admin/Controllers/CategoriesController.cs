@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.MessageHandler;
@@ -11,22 +10,18 @@ namespace SP_Shopping.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "Admin")]
-public class CategoriesController : Controller
+public class CategoriesController
+(
+    ApplicationDbContext context,
+    ILogger<CategoriesController> logger,
+    IShoppingServices shoppingServices,
+    IMessageHandler messageHandler
+) : Controller
 {
-    private readonly ApplicationDbContext _context;
-    private readonly IRepositoryCaching<Category> _categoryRepository;
-    private readonly CategoryService _categoryService;
-    private readonly ILogger<CategoriesController> _logger;
-    private readonly IMessageHandler _messageHandler;
-
-    public CategoriesController(ApplicationDbContext context, IRepositoryCaching<Category> categoryRepository, ILogger<CategoriesController> logger, IMessageHandler messageHandler, CategoryService categoryService)
-    {
-        _context = context;
-        _categoryRepository = categoryRepository;
-        _categoryService = categoryService;
-        _logger = logger;
-        _messageHandler = messageHandler;
-    }
+    private readonly ApplicationDbContext _context = context;
+    private readonly ILogger<CategoriesController> _logger = logger;
+    private readonly IShoppingServices _shoppingServices = shoppingServices;
+    private readonly IMessageHandler _messageHandler = messageHandler;
 
     // GET: Categories
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
@@ -66,7 +61,7 @@ public class CategoriesController : Controller
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var categoryList = await _categoryRepository.GetAllAsync(HttpContext.Request.Path, q => q
+        var categoryList = await _shoppingServices.Category.GetAllAsync(HttpContext.Request.Path, q => q
             ._(queryFilter)
             ._(sortFilter)
             .Take(20)
@@ -84,7 +79,7 @@ public class CategoriesController : Controller
             return NotFound();
         }
 
-        var category = await _categoryRepository.GetByKeyAsync(HttpContext.Request.Path, (int)id);
+        var category = await _shoppingServices.Category.GetByKeyAsync(HttpContext.Request.Path, (int)id);
         if (category == null)
         {
             return NotFound();
@@ -108,7 +103,7 @@ public class CategoriesController : Controller
     {
         if (ModelState.IsValid)
         {
-            if (!(await _categoryService.TryCreateAsync(category)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.Category.TryCreateAsync(category)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
                 return View(category);
@@ -126,7 +121,7 @@ public class CategoriesController : Controller
             return NotFound();
         }
 
-        var category = await _categoryRepository.GetByKeyAsync(HttpContext.Request.Path, (int)id);
+        var category = await _shoppingServices.Category.GetByKeyAsync(HttpContext.Request.Path, (int)id);
         if (category == null)
         {
             return NotFound();
@@ -148,7 +143,7 @@ public class CategoriesController : Controller
 
         if (ModelState.IsValid)
         {
-            if (!(await _categoryService.TryUpdateAsync(category)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.Category.TryUpdateAsync(category)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
                 return View(category);
@@ -168,7 +163,7 @@ public class CategoriesController : Controller
 
         //var category = await _context.Categories
         //    .FirstOrDefaultAsync(m => m.Id == id);
-        var category = await _categoryRepository.GetByKeyAsync(HttpContext.Request.Path, (int)id);
+        var category = await _shoppingServices.Category.GetByKeyAsync(HttpContext.Request.Path, (int)id);
         if (category == null)
         {
             return NotFound();
@@ -183,10 +178,10 @@ public class CategoriesController : Controller
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         //var category = await _context.Categories.FindAsync(id);
-        var category = await _categoryRepository.GetByKeyAsync("All", id);
+        var category = await _shoppingServices.Category.GetByKeyAsync("All", id);
         if (category != null)
         {
-            if (!(await _categoryService.TryDeleteAsync(category)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.Category.TryDeleteAsync(category)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
                 return View(category);

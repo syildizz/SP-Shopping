@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
 using SP_Shopping.Utilities.Filter;
@@ -25,25 +24,19 @@ namespace SP_Shopping.Test.Controllers;
 public class ProductsControllerTests
 {
 
-    private readonly IRepository<Product> _productRepository;
-    private readonly ProductService _productService;
-    private readonly IRepositoryCaching<Category> _categoryRepository;
-    private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ProductsController> _logger;
+    private readonly IShoppingServices _shoppingServices;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
     private readonly IMessageHandler _messageHandler;
     private readonly ProductsController _productsController;
 
     public ProductsControllerTests()
     {
-        _productRepository = A.Fake<IRepository<Product>>();
-        _categoryRepository = A.Fake<IRepositoryCaching<Category>>();
-        _userRepository = A.Fake<IRepository<ApplicationUser>>();
         _mapper = A.Fake<IMapper>();
         _logger = new NullLogger<ProductsController>();
+        _shoppingServices = A.Fake<IShoppingServices>();
         _productImageHandler = A.Fake<IImageHandlerDefaulting<ProductImageKey>>();
-        _productService = new ProductService(_productRepository, _productImageHandler);
         _messageHandler = new MessageHandler();
 
         // SUT
@@ -52,12 +45,9 @@ public class ProductsControllerTests
         (
             logger: _logger,
             mapper: _mapper,
-            productRepository: _productRepository,
-            categoryRepository: _categoryRepository,
-            userRepository: _userRepository,
+            shoppingServices: _shoppingServices,
             productImageHandler: _productImageHandler,
-            messageHandler: _messageHandler,
-            productService: _productService
+            messageHandler: _messageHandler
         );
 
         var fakeUser = new ClaimsPrincipal
@@ -134,7 +124,7 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id exists, read succeeds
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .Returns(A.Fake<ProductDetailsDto>());
         // Act
         IActionResult result = await _productsController.Details(id);
@@ -144,7 +134,7 @@ public class ProductsControllerTests
         var viewResult = (ViewResult)result;
         Assert.IsInstanceOfType<ProductDetailsDto>(viewResult.Model);
             // Must have accessed database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .MustHaveHappenedOnceExactly();
     }
 
@@ -167,7 +157,7 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id does NOT exist, read NOT succeeds.
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .Returns((ProductDetailsDto?)null);
         // Act
         IActionResult result = await _productsController.Details(id);
@@ -175,7 +165,7 @@ public class ProductsControllerTests
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
             // Must have called database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .MustHaveHappenedOnceExactly();
     }
 
@@ -189,7 +179,7 @@ public class ProductsControllerTests
         // Arrange
             // SelectList exists
         List<SelectListItem> selectListItems = (List<SelectListItem>)A.CollectionOfFake<SelectListItem>(4);
-        A.CallTo(() => _categoryRepository.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
+        A.CallTo(() => _shoppingServices.Category.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
             .Returns(selectListItems);
         // Act
         IActionResult result = await _productsController.Create();
@@ -211,8 +201,8 @@ public class ProductsControllerTests
         // Arrange
             // Modelstate is correct
             // Create succeeds
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(true);
+        A.CallTo(() => _shoppingServices.Product.TryCreateAsync(A<Product>._, An<IFormFile?>._))
+            .Returns((true, null));
         // Act
         IActionResult result = await _productsController.Create(A.Fake<ProductCreateDto>());
         // Assert
@@ -221,6 +211,9 @@ public class ProductsControllerTests
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Details");
         Assert.IsNotNull((int?)redirectResult.RouteValues?["id"]);
+            // Create attempted
+        A.CallTo(() => _shoppingServices.Product.TryCreateAsync(A<Product>._, An<IFormFile?>._))
+            .MustHaveHappened();
     }
 
     [TestMethod]
@@ -231,7 +224,7 @@ public class ProductsControllerTests
         _productsController.ModelState.AddModelError("CategoryId", "The CategoryId for this product is invalid");
             // SelectList exists
         List<SelectListItem> selectListItems = (List<SelectListItem>)A.CollectionOfFake<SelectListItem>(4);
-        A.CallTo(() => _categoryRepository.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
+        A.CallTo(() => _shoppingServices.Category.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
             .Returns(selectListItems);
         // Act
         IActionResult result = await _productsController.Create(A.Fake<ProductCreateDto>());
@@ -240,9 +233,6 @@ public class ProductsControllerTests
         Assert.IsInstanceOfType<ViewResult>(result);
         var viewResult = (ViewResult)result;
         Assert.IsInstanceOfType<ProductCreateDto>(viewResult.Model);
-            // Must have accessed database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
             // Message exists and is correct
         var messages = _messageHandler.Peek(viewResult.TempData);
         Assert.IsNotNull(messages);
@@ -259,8 +249,8 @@ public class ProductsControllerTests
         // Arrange
             // Modelstate is correct
             // Create NOT succeeds
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(false);
+        A.CallTo(() => _shoppingServices.Product.TryCreateAsync(A<Product>._, An<IFormFile?>._))
+            .Returns((false, [ new Message { Type = Message.MessageType.Error, Content = "blabla" }]));
         // Act
         IActionResult result = await _productsController.Create(A.Fake<ProductCreateDto>());
         // Assert
@@ -268,9 +258,9 @@ public class ProductsControllerTests
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Create");
-            // Must have accessed database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustHaveHappenedOnceExactly();
+            // Create attempted
+        A.CallTo(() => _shoppingServices.Product.TryCreateAsync(A<Product>._, An<IFormFile?>._))
+            .MustHaveHappened();
     }
 
     #endregion Create
@@ -285,13 +275,13 @@ public class ProductsControllerTests
         const int id = 0;
             // SelectList exists
         List<SelectListItem> selectListItems = Enumerable.Range(0, 4).Select(s => new SelectListItem()).ToList();
-        A.CallTo(() => _categoryRepository.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
+        A.CallTo(() => _shoppingServices.Category.GetAllAsync(A<string>._, A<Func<IQueryable<Category>, IQueryable<SelectListItem>>>._))
             .Returns(selectListItems);
             // Id exists, Product is found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .Returns(A.Fake<ProductCreateDto>());
             // Product.SubmitterId is the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns(_productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
         // Act
         IActionResult result = await _productsController.Edit(id);
@@ -302,7 +292,7 @@ public class ProductsControllerTests
         Assert.IsInstanceOfType<ProductCreateDto>(viewResult.Model);
 
             // Must have called the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .MustHaveHappenedOnceOrMore();
 
             // ViewData is valid
@@ -318,7 +308,7 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id does NOT exist, product is NOT found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .Returns((ProductCreateDto?)null);
         // Act
         IActionResult result = await _productsController.Edit(id);
@@ -326,7 +316,7 @@ public class ProductsControllerTests
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
             // Must have accessed the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .MustHaveHappenedOnceExactly();
     }
 
@@ -337,10 +327,10 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id does exist, product is found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .Returns(A.Fake<ProductCreateDto>());
             // Product.Submitter is NOT the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns("not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
         // Act
         IActionResult result = await _productsController.Edit(id);
@@ -348,7 +338,7 @@ public class ProductsControllerTests
             // Result is true
         Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
             // Must have accessed the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductCreateDto>>>._))
             .MustHaveHappenedOnceOrMore();
     }
 
@@ -359,14 +349,14 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 3_242_598;
             // Id exists
-        A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
+        A.CallTo(() => _shoppingServices.Product.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
             // Modelstate is valid
             // Product.SubmitterId is the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns(_productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
             // Update succeeds
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(true);
+        A.CallTo(() => _shoppingServices.Product.TryUpdateAsync(A<Product>._, An<IFormFile?>._))
+            .Returns((true, null));
         // Act
         IActionResult result = await _productsController.Edit(id, A.Fake<ProductCreateDto>());
         // Assert
@@ -375,9 +365,9 @@ public class ProductsControllerTests
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Details");
         Assert.IsTrue((int?)redirectResult.RouteValues?["id"] is not null and id);
-            // Must have accessed database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustHaveHappenedOnceExactly();
+            // Edit attempted
+        A.CallTo(() => _shoppingServices.Product.TryUpdateAsync(A<Product>._, An<IFormFile?>._))
+            .MustHaveHappened();
     }
 
     [TestMethod]
@@ -387,15 +377,13 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 3_242_598;
             // Id does NOT exist
-        A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(false);
+        A.CallTo(() => _shoppingServices.Product.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+            .Returns(false);
         // Act
         IActionResult result = await _productsController.Edit(id, A.Fake<ProductCreateDto>());
         // Assert
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
-            // Mustn't have accessed database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
     }
 
     [TestMethod]
@@ -405,7 +393,8 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 3_242_598;
             // Id exists
-        A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
+        A.CallTo(() => _shoppingServices.Product.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+            .Returns(true);
             // Modelstate is NOT valid
         _productsController.ModelState.AddModelError("CategoryId", "The CategoryId for this product is invalid");
         // Act
@@ -420,9 +409,6 @@ public class ProductsControllerTests
         var messages = _messageHandler.Peek(_productsController.TempData);
         Assert.IsNotNull(messages);
         Assert.IsTrue(messages.Any(m => m.Type is Message.MessageType.Warning));
-            // Musn't have accessed database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
     }
 
 
@@ -432,19 +418,16 @@ public class ProductsControllerTests
         // Arrange
             // Id is not null
             // Id exists
-        A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
+        A.CallTo(() => _shoppingServices.Product.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
             // Modelstate is valid
             // Product.SubmitterId is NOT the same as User is
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns("not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
         // Act
         IActionResult result = await _productsController.Edit(0, A.Fake<ProductCreateDto>());
         // Assert
             // Result is correct
         Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
-            // Musn't have accessed database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
     }
 
     [TestMethod]
@@ -454,14 +437,14 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 3_242_598;
             // Id exists
-        A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
+        A.CallTo(() => _shoppingServices.Product.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._)).Returns(true);
             // Modelstate is valid
             // Product.SubmitterId is the same as User id
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<string>>>._))
             .Returns(_productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
             // Update does NOT succeed
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(false);
+        A.CallTo(() => _shoppingServices.Product.TryUpdateAsync(A<Product>._, An<IFormFile?>._))
+            .Returns((false, [ new Message { Type = Message.MessageType.Error, Content = "blabla" }]));
         // Act
         IActionResult result = await _productsController.Edit(id, A.Fake<ProductCreateDto>());
         // Assert
@@ -470,9 +453,11 @@ public class ProductsControllerTests
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Edit");
         Assert.IsTrue((int?)redirectResult.RouteValues?["id"] is not null and id);
-            // Must have accesses database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
+            // Update attempted
+        A.CallTo(() => _shoppingServices.Product.TryUpdateAsync(A<Product>._, An<IFormFile?>._))
             .MustHaveHappenedOnceExactly();
+        // Message error
+        Assert.IsTrue(_messageHandler.Peek(_productsController.TempData)?.Any(m => m.Type is Message.MessageType.Error), "Expected error mesage was not returned");
     }
 
     #endregion Edit
@@ -489,7 +474,7 @@ public class ProductsControllerTests
             // Product.SubmitterId is the same as User id
         var fakeProduct = A.Fake<ProductDetailsDto>();
         fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .Returns(fakeProduct);
         // Act
         IActionResult result = await _productsController.Delete(id);
@@ -499,7 +484,7 @@ public class ProductsControllerTests
         var viewResult = (ViewResult)result;
         Assert.IsInstanceOfType<ProductDetailsDto>(viewResult.Model);
             // Must have called the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .MustHaveHappenedOnceOrMore();
     }
 
@@ -510,7 +495,7 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id does NOT exists, Product is NOT found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .Returns((ProductDetailsDto?)null);
         // Act
         IActionResult result = await _productsController.Delete(id);
@@ -518,7 +503,7 @@ public class ProductsControllerTests
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
         // Must have called the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .MustHaveHappenedOnceOrMore();
     }
 
@@ -532,7 +517,7 @@ public class ProductsControllerTests
             // Product.SubmitterId is NOT the same as User id
         var fakeProduct = A.Fake<ProductDetailsDto>();
         fakeProduct.SubmitterId = "Not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .Returns(fakeProduct);
         // Act
         IActionResult result = await _productsController.Delete(id);
@@ -540,7 +525,7 @@ public class ProductsControllerTests
             // Result is correct
         Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
             // Must have called the database
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
             .MustHaveHappenedOnceOrMore();
     }
 
@@ -554,11 +539,11 @@ public class ProductsControllerTests
             // Product.SubmitterId is the same as User id
         var fakeProduct = A.Fake<Product>();
         fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
             // Delete succeeds
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(true);
+        A.CallTo(() => _shoppingServices.Product.TryDeleteAsync(A<Product>._))
+            .Returns((true, null));
         // Act
         IActionResult result = await _productsController.DeleteConfirmed(id);
         // Assert
@@ -568,8 +553,8 @@ public class ProductsControllerTests
         Assert.IsTrue(redirectResult.ActionName is "Index");
         Assert.IsTrue(redirectResult.ControllerName is "User");
         Assert.IsTrue(redirectResult.RouteValues?["id"] as string == _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier));
-        // Must have called the database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
+        // Delete attempted
+        A.CallTo(() => _shoppingServices.Product.TryDeleteAsync(A<Product>._))
             .MustHaveHappenedOnceExactly();
     }
 
@@ -580,16 +565,13 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id does NOT exists, Product is NOT found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns((Product?)null);
         // Act
         IActionResult result = await _productsController.DeleteConfirmed(id);
         // Assert
             // Result is correct
         Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult);
-        // Mustn't have called the database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
     }
 
     [TestMethod]
@@ -602,16 +584,13 @@ public class ProductsControllerTests
             // Product.SubmitterId is NOT the same as User id
         var fakeProduct = A.Fake<Product>();
         fakeProduct.SubmitterId = "Not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
         // Act
         IActionResult result = await _productsController.DeleteConfirmed(id);
         // Assert
             // Result is correct
         Assert.IsTrue(result is UnauthorizedResult or UnauthorizedObjectResult);
-        // Mustn't have called the database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustNotHaveHappened();
     }
 
     [TestMethod]
@@ -624,11 +603,11 @@ public class ProductsControllerTests
             // Product.SubmitterId is the same as User id
         var fakeProduct = A.Fake<Product>();
         fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
             // Delete does NOT succeed
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(false);
+        A.CallTo(() => _shoppingServices.Product.TryDeleteAsync(A<Product>._))
+            .Returns((false, [ new Message { Type = Message.MessageType.Error, Content = "blablabla" } ]));
         // Act
         IActionResult result = await _productsController.DeleteConfirmed(id);
         // Assert
@@ -637,9 +616,11 @@ public class ProductsControllerTests
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName is "Delete");
         Assert.IsTrue(redirectResult.RouteValues?["id"] as int? == id);
-        // Must have called the database
-        A.CallTo(() => _productRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .MustHaveHappenedOnceExactly();
+            // Delete attempted
+        A.CallTo(() => _shoppingServices.Product.TryDeleteAsync(A<Product>._))
+            .MustHaveHappened();
+            // Message error
+        Assert.IsTrue(_messageHandler.Peek(_productsController.TempData)?.Any(m => m.Type is Message.MessageType.Error), "Expected error mesage was not returned");
     }
 
     #endregion Delete
@@ -656,7 +637,7 @@ public class ProductsControllerTests
             // Product.SubmitterId is the same as User id
         var fakeProduct = A.Fake<Product>();
         fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
             // Delete image successful
         A.CallTo(() => _productImageHandler.DeleteImage(A<ProductImageKey>._))
@@ -681,7 +662,7 @@ public class ProductsControllerTests
             // Id is not null
         const int id = 0;
             // Id does NOT exists, Product is NOT found
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns((Product?)null);
         // Act
         IActionResult result = await _productsController.ResetImage(id);
@@ -703,7 +684,7 @@ public class ProductsControllerTests
             // Product.SubmitterId is the same as User id
         var fakeProduct = A.Fake<Product>();
         fakeProduct.SubmitterId = "Not " + _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
         // Act
         IActionResult result = await _productsController.ResetImage(id);
@@ -725,7 +706,7 @@ public class ProductsControllerTests
             // Product.SubmitterId is the same as User id
         var fakeProduct = A.Fake<Product>();
         fakeProduct.SubmitterId = _productsController.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
-        A.CallTo(() => _productRepository.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(fakeProduct);
             // Delete image NOT successful
         A.CallTo(() => _productImageHandler.DeleteImage(A<ProductImageKey>._))

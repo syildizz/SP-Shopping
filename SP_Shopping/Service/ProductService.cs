@@ -14,7 +14,7 @@ public class ProductService
 (
     IRepository<Product> productRepository,
     IImageHandlerDefaulting<ProductImageKey> productImageHandler
-)
+) : IProductService
 {
 
     private readonly IRepository<Product> _productRepository = productRepository;
@@ -91,11 +91,11 @@ public class ProductService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -150,11 +150,11 @@ public class ProductService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -234,11 +234,11 @@ public class ProductService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -319,11 +319,11 @@ public class ProductService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -373,11 +373,11 @@ public class ProductService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -392,11 +392,11 @@ public class ProductService
             }
             catch (Exception ex)
             {
-                #if DEBUG
+#if DEBUG
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.StackTrace}" });
-                #else
+#else
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
-                #endif
+#endif
                 return false;
             }
 
@@ -431,11 +431,11 @@ public class ProductService
             {
                 if (ex is DbUpdateException or DBConcurrencyException)
                 {
-                    #if DEBUG
+#if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-                    #else
+#else
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-                    #endif
+#endif
                     return false;
                 }
                 else
@@ -450,11 +450,11 @@ public class ProductService
             }
             catch (Exception ex)
             {
-                #if DEBUG
+#if DEBUG
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.StackTrace}" });
-                #else
+#else
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
-                #endif
+#endif
                 return false;
             }
 
@@ -485,11 +485,11 @@ public class ProductService
         }
         catch (Exception ex)
         {
-            #if DEBUG
+#if DEBUG
             errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.StackTrace}" });
-            #else
+#else
             errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
-            #endif
+#endif
         }
 
         if (transactionSucceeded)

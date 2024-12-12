@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.Filter;
@@ -16,41 +15,22 @@ using System.Security.Claims;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
 
-
 [Authorize(Roles = "Admin")]
 [Area("Admin")]
-public class ProductsController : Controller
+public class ProductsController
+(
+    ILogger<ProductsController> logger,
+    IMapper mapper,
+    IShoppingServices shoppingServices,
+    IImageHandlerDefaulting<ProductImageKey> productImageHandler,
+    IMessageHandler messageHandler
+) : Controller
 {
-    private readonly ILogger<ProductsController> _logger;
-    private readonly IMapper _mapper;
-    private readonly IRepository<Product> _productRepository;
-    private readonly IRepositoryCaching<Category> _categoryRepository;
-    private readonly IRepository<ApplicationUser> _userRepository;
-    private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
-    private readonly IMessageHandler _messageHandler;
-    private readonly ProductService _productService;
-
-    public ProductsController
-    (
-        ILogger<ProductsController> logger,
-        IMapper mapper,
-        IRepository<Product> productRepository,
-        IRepositoryCaching<Category> categoryRepository,
-        IRepository<ApplicationUser> userRepository,
-        IImageHandlerDefaulting<ProductImageKey> productImageHandler,
-        IMessageHandler messageHandler,
-        ProductService productService
-    )
-    {
-        _logger = logger;
-        _mapper = mapper;
-        _productRepository = productRepository;
-        _userRepository = userRepository;
-        _productImageHandler = productImageHandler;
-        _messageHandler = messageHandler;
-        _categoryRepository = categoryRepository;
-        _productService = productService;
-    }
+    private readonly ILogger<ProductsController> _logger = logger;
+    private readonly IMapper _mapper = mapper;
+    private readonly IShoppingServices _shoppingServices = shoppingServices;
+    private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler = productImageHandler;
+    private readonly IMessageHandler _messageHandler = messageHandler;
 
     // GET: Products
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
@@ -106,7 +86,7 @@ public class ProductsController : Controller
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var pdtoList = await _productRepository.GetAllAsync(q =>
+        var pdtoList = await _shoppingServices.Product.GetAllAsync(q =>
             _mapper.ProjectTo<AdminProductDetailsDto>(q)
                 .Take(20)
                 ._(queryFilter)
@@ -124,7 +104,7 @@ public class ProductsController : Controller
     {
         _logger.LogInformation("GET: Entering Admin/Products/Details.");
 
-        AdminProductDetailsDto? pdto = await _productRepository.GetSingleAsync(q => 
+        AdminProductDetailsDto? pdto = await _shoppingServices.Product.GetSingleAsync(q => 
             _mapper.ProjectTo<AdminProductDetailsDto>(q
                 .Where(p => p.Id == id)
             )
@@ -169,7 +149,7 @@ public class ProductsController : Controller
             }
             else
             {
-                if (!await _userRepository.ExistsAsync(q => q.Where(u => u.Id == pdto.SubmitterId)))
+                if (!await _shoppingServices.User.ExistsAsync(q => q.Where(u => u.Id == pdto.SubmitterId)))
                 {
                     _logger.LogDebug("{SubmitterId} is not a valid user id.", pdto.SubmitterId);
                     _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"{pdto.SubmitterId} is not a valid user id" });
@@ -180,7 +160,7 @@ public class ProductsController : Controller
             }
 
             Product product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
-            if (!(await _productService.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.Product.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
             {
                 _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
                 _messageHandler.Add(TempData, errMsgs!);
@@ -207,7 +187,7 @@ public class ProductsController : Controller
 
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var pdto = await _productRepository.GetSingleAsync(q =>
+        var pdto = await _shoppingServices.Product.GetSingleAsync(q =>
             _mapper.ProjectTo<AdminProductCreateDto>(q
                 .Where(p => p.Id == id)
             )
@@ -237,7 +217,7 @@ public class ProductsController : Controller
     public async Task<IActionResult> Edit(int? id, AdminProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Admin/Products/Edit.");
-        if (!await _productRepository.ExistsAsync(q => q.Where(p => p.Id == id)))
+        if (!await _shoppingServices.Product.ExistsAsync(q => q.Where(p => p.Id == id)))
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
@@ -250,7 +230,7 @@ public class ProductsController : Controller
 
             _logger.LogDebug("Updating product.");
 
-            if (!(await _productService.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.Product.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
             {
                 _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
                 _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't update product" });
@@ -272,7 +252,7 @@ public class ProductsController : Controller
         _logger.LogInformation($"GET: Entering Admin/Products/Delete.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var pdto = await _productRepository.GetSingleAsync(q =>
+        var pdto = await _shoppingServices.Product.GetSingleAsync(q =>
             _mapper.ProjectTo<AdminProductDetailsDto>(q
                 .Where(p => p.Id == id)
             )
@@ -296,7 +276,7 @@ public class ProductsController : Controller
         _logger.LogInformation($"POST: Entering Admin/Products/Delete.");
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        Product? product = await _productRepository.GetSingleAsync(q => q
+        Product? product = await _shoppingServices.Product.GetSingleAsync(q => q
             .Where(q => q.Id == id)
             .Select(p => new Product() { Id = p.Id, SubmitterId = p.SubmitterId })
         );
@@ -308,7 +288,7 @@ public class ProductsController : Controller
 
         //_context.Products.Remove(product);
         _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
-        if (!(await _productService.TryDeleteAsync(product)).TryOut(out var errMsgs))
+        if (!(await _shoppingServices.Product.TryDeleteAsync(product)).TryOut(out var errMsgs))
         {
             _logger.LogError("The product with the id of \"{Id}\" could not be deleted.", id);
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't delete product" });
@@ -327,7 +307,7 @@ public class ProductsController : Controller
 
         _logger.LogInformation($"POST: Entering Admin/Products/ResetImage.");
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var productExists = await _productRepository.ExistsAsync(q => q
+        var productExists = await _shoppingServices.Product.ExistsAsync(q => q
             .Where(p => p.Id == id)
         );
 
@@ -345,7 +325,7 @@ public class ProductsController : Controller
         catch (Exception ex)
         {
 #if DEBUG
-            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to reset image" + " " + ex.Message });
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to reset image" + " " + ex.StackTrace });
 #else
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to reset image" });
 #endif
@@ -358,14 +338,14 @@ public class ProductsController : Controller
 
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
     {
-        return await _categoryRepository.GetAllAsync(nameof(GetCategoriesSelectListAsync), q => q
+        return await _shoppingServices.Category.GetAllAsync(nameof(GetCategoriesSelectListAsync), q => q
             .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
         );
     }
 
     private async Task<IEnumerable<SelectListItem>> GetUsersSelectListAsync()
     {
-        return await _userRepository.GetAllAsync(q => q
+        return await _shoppingServices.User.GetAllAsync(q => q
             .Select(u => new SelectListItem { Text = u.UserName, Value = u.Id })
         );
     }

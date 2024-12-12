@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Areas.Admin.Dtos.Cart;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.MessageHandler;
@@ -16,21 +15,15 @@ public class CartController
 (
     ILogger<CartController> logger,
     IMapper mapper,
-    IRepository<CartItem> cartItemRepository,
-    IRepository<ApplicationUser> userRepository,
-    IRepository<Product> productRepository,
-    IMessageHandler messageHandler,
-    CartItemService cartItemService
+    IShoppingServices shoppingServices,
+    IMessageHandler messageHandler
 
 ) : Controller
 {
     private readonly ILogger<CartController> _logger = logger;
     private readonly IMapper _mapper = mapper;
-    private readonly IRepository<CartItem> _cartItemRepository = cartItemRepository;
-    private readonly IRepository<ApplicationUser> _userRepository = userRepository;
-    private readonly IRepository<Product> _productRepository = productRepository;
+    private readonly IShoppingServices _shoppingServices = shoppingServices;
     private readonly IMessageHandler _messageHandler = messageHandler;
-    private readonly CartItemService _cartItemService = cartItemService;
 
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {
@@ -82,7 +75,7 @@ public class CartController
 
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var cidtoList = await _cartItemRepository.GetAllAsync(q =>
+        var cidtoList = await _shoppingServices.CartItem.GetAllAsync(q =>
             _mapper.ProjectTo<AdminCartItemDetailsDto>(q)
                 ._(queryFilter)
                 ._(sortFilter)
@@ -114,7 +107,7 @@ public class CartController
             // Check that the keys are valid.
 
             _logger.LogDebug("Checking if user with \"{userId}\" exists in database.", cartItem.UserId);
-            bool userExists = await _userRepository.ExistsAsync(q => q.Where(u => u.Id == cartItem.UserId));
+            bool userExists = await _shoppingServices.User.ExistsAsync(q => q.Where(u => u.Id == cartItem.UserId));
             if (!userExists)
             {
                 _logger.LogError("The user id of \"{UserId}\" does not exist in the database.", cartItem.UserId);
@@ -122,7 +115,7 @@ public class CartController
             }
 
             _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", cartItem.ProductId);
-            bool productExists = await _productRepository.ExistsAsync(q => q.Where(p => p.Id == cartItem.ProductId));
+            bool productExists = await _shoppingServices.Product.ExistsAsync(q => q.Where(p => p.Id == cartItem.ProductId));
             if (!productExists)
             {
                 _logger.LogError("The product id of \"{ProductId}\" does not exist in the database.", cartItem.ProductId);
@@ -130,7 +123,7 @@ public class CartController
             }
 
             _logger.LogDebug("Create CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            if (!(await _cartItemService.TryCreateAsync(cartItem)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.CartItem.TryCreateAsync(cartItem)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
                 return View(cidto);
@@ -156,7 +149,7 @@ public class CartController
             var cartItem = _mapper.Map<CartItem>(cidto);
 
             _logger.LogDebug("Update CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            if (!(await _cartItemService.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.CartItem.TryUpdateAsync(cartItem)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
                 return View(cidto);
@@ -183,7 +176,7 @@ public class CartController
             var cartItem = _mapper.Map<CartItem>(cidto);
 
             _logger.LogDebug("Delete CartItem in the database for user of id \"{UserId}\" and for product of id \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
-            if (!(await _cartItemService.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.CartItem.TryDeleteAsync(cartItem)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
                 return View(cidto);

@@ -3,11 +3,10 @@ namespace SP_Shopping.Service;
 
 public interface IShoppingServices
 {
-    CartItemService CartItem { get; }
-    CategoryService Category { get; }
-    ProductService Product { get; }
-    UserService User { get; }
-
+    ICartItemService CartItem { get; }
+    ICategoryService Category { get; }
+    IProductService Product { get; }
+    IUserService User { get; }
     bool DoInTransaction(Func<bool> action);
     Task<bool> DoInTransactionAsync(Func<Task<bool>> action);
 }

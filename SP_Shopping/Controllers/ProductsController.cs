@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.Filter;
@@ -20,34 +19,25 @@ public class ProductsController : Controller
 {
     private readonly ILogger<ProductsController> _logger;
     private readonly IMapper _mapper;
-    private readonly IRepository<Product> _productRepository;
-    private readonly IRepositoryCaching<Category> _categoryRepository;
-    private readonly IRepository<ApplicationUser> _userRepository;
+    private readonly IShoppingServices _shoppingServices;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
     private readonly IMessageHandler _messageHandler;
-    private readonly ProductService _productService;
     private readonly int paginationCount = 5;
 
     public ProductsController
     (
         ILogger<ProductsController> logger,
         IMapper mapper,
-        IRepository<Product> productRepository,
-        IRepositoryCaching<Category> categoryRepository,
-        IRepository<ApplicationUser> userRepository,
+        IShoppingServices shoppingServices,
         IImageHandlerDefaulting<ProductImageKey> productImageHandler,
-        IMessageHandler messageHandler,
-        ProductService productService
+        IMessageHandler messageHandler
     )
     {
         _logger = logger;
         _mapper = mapper;
-        _productRepository = productRepository;
-        _categoryRepository = categoryRepository;
-        _userRepository = userRepository;
+        _shoppingServices = shoppingServices;
         _productImageHandler = productImageHandler;
         _messageHandler = messageHandler;
-        _productService = productService;
     }
 
     public async Task<IActionResult> Search(string? query)
@@ -58,7 +48,7 @@ public class ProductsController : Controller
         if (!string.IsNullOrWhiteSpace(query))
         {
             _logger.LogDebug("Fetching product information matching search term.");
-            pdtoList = await _productRepository.GetAllAsync(q =>
+            pdtoList = await _shoppingServices.Product.GetAllAsync(q =>
                 _mapper.ProjectTo<ProductDetailsDto>(q
                     .Where(p => p.Name.Contains(query))
                     .OrderByDescending(p => p.InsertionDate)
@@ -81,7 +71,7 @@ public class ProductsController : Controller
         _logger.LogInformation("GET: Entering Products/Details.");
 
         _logger.LogDebug("Fetching \"{Id}\" product information.", id);
-        ProductDetailsDto? pdto = await _productRepository.GetSingleAsync(q => 
+        ProductDetailsDto? pdto = await _shoppingServices.Product.GetSingleAsync(q => 
             _mapper.ProjectTo<ProductDetailsDto>(q
                 .Where(p => p.Id == id)
             )
@@ -127,7 +117,7 @@ public class ProductsController : Controller
             product.SubmitterId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
                 ?? throw new Exception("ClaimTypes.NameIdentifier doesn't exist somehow. Should be unreachable code");
 
-            if (!(await _productService.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.Product.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
             {
                 _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
                 _messageHandler.Add(TempData, errMsgs!);
@@ -158,7 +148,7 @@ public class ProductsController : Controller
 
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var pdto = await _productRepository.GetSingleAsync(q =>
+        var pdto = await _shoppingServices.Product.GetSingleAsync(q =>
             _mapper.ProjectTo<ProductCreateDto>(q
                 .Where(p => p.Id == id)
             )
@@ -170,7 +160,7 @@ public class ProductsController : Controller
             return NotFound($"Product with id {id} does not exist.");
         }
 
-        string? productSubmitterId = await _productRepository.GetSingleAsync(q => q
+        string? productSubmitterId = await _shoppingServices.Product.GetSingleAsync(q => q
             .Where(p => p.Id == id)
             .Select(p => p.SubmitterId)
         );
@@ -202,7 +192,7 @@ public class ProductsController : Controller
     {
         _logger.LogInformation($"POST: Entering Products/Edit.");
 
-        if (!await _productRepository.ExistsAsync(q => q.Where(p => p.Id == id)))
+        if (!await _shoppingServices.Product.ExistsAsync(q => q.Where(p => p.Id == id)))
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
@@ -217,7 +207,7 @@ public class ProductsController : Controller
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             // Get the existing submitter id for the product from the database.
-            string? productExistingSubmitterId = await _productRepository.GetSingleAsync(q => q
+            string? productExistingSubmitterId = await _shoppingServices.Product.GetSingleAsync(q => q
                 .Where(p => p.Id == id)
                 .Select(p => p.SubmitterId)
             );
@@ -229,7 +219,7 @@ public class ProductsController : Controller
             }
             
             _logger.LogDebug("Updating product.");
-            if(!(await _productService.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+            if(!(await _shoppingServices.Product.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
             {
                 _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
                 _messageHandler.Add(TempData, errMsgs!);
@@ -255,7 +245,7 @@ public class ProductsController : Controller
         _logger.LogInformation($"GET: Entering Products/Delete.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var pdto = await _productRepository.GetSingleAsync(q =>
+        var pdto = await _shoppingServices.Product.GetSingleAsync(q =>
             _mapper.ProjectTo<ProductDetailsDto>(q
                 .Where(p => p.Id == id)
             )
@@ -287,7 +277,7 @@ public class ProductsController : Controller
         _logger.LogInformation($"POST: Entering Products/Delete.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        Product? product = await _productRepository.GetSingleAsync(q => q
+        Product? product = await _shoppingServices.Product.GetSingleAsync(q => q
             .Where(q => q.Id == id)
             .Select(p => new Product() { Id = p.Id, SubmitterId = p.SubmitterId })
         );
@@ -310,7 +300,7 @@ public class ProductsController : Controller
 
         //_context.Products.Remove(product);
         _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
-        if (!(await _productService.TryDeleteAsync(product)).TryOut(out var errMsgs))
+        if(!(await _shoppingServices.Product.TryDeleteAsync(product)).TryOut(out var errMsgs))
         {
             _messageHandler.Add(TempData, errMsgs!);
             return RedirectToAction(nameof(Delete), new { id });
@@ -328,7 +318,7 @@ public class ProductsController : Controller
         _logger.LogInformation($"POST: Entering Products/ResetImage.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var product = await _productRepository.GetSingleAsync(q => q
+        var product = await _shoppingServices.Product.GetSingleAsync(q => q
             .Where(p => p.Id == id)
             .Select(p => new Product { SubmitterId = p.SubmitterId })
         );
@@ -368,7 +358,7 @@ public class ProductsController : Controller
 
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
     {
-        return await _categoryRepository.GetAllAsync(nameof(GetCategoriesSelectListAsync), q => q
+        return await _shoppingServices.Category.GetAllAsync(nameof(GetCategoriesSelectListAsync), q => q
             .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
         );
     }

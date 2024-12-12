@@ -86,14 +86,6 @@ public class Program
             )
         );
 
-        builder.Services.AddScoped<CategoryService>();
-
-        builder.Services.AddScoped<ProductService>();
-
-        builder.Services.AddScoped<UserService>();
-
-        builder.Services.AddScoped<CartItemService>();
-
         builder.Services.AddScoped<IShoppingServices, ShoppingServices>();
 
         builder.Services.AddScoped<IMessageHandler, MessageHandler>();

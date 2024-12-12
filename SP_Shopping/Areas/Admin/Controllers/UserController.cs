@@ -2,11 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Razor.Language.Intermediate;
-using SixLabors.ImageSharp.PixelFormats;
 using SP_Shopping.Areas.Admin.Dtos.User;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.Filter;
@@ -14,8 +11,6 @@ using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using SP_Shopping.Utilities.ModelStateHandler;
-using System.Collections;
-using System.Drawing.Text;
 using System.Security.Claims;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
@@ -24,25 +19,23 @@ namespace SP_Shopping.Areas.Admin.Controllers;
 [Authorize(Roles = "Admin")]
 public class UserController
 (
-    IRepository<ApplicationUser> userRepository,
+	ILogger<UserController> logger,
+	IMapper mapper,
+    IShoppingServices shoppingServices,
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
     IMessageHandler messageHandler,
-	ILogger<UserController> logger,
-	IMapper mapper,
-    IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler,
-    UserService userService
+    IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler
 ) : Controller
 {
 
-    private readonly IRepository<ApplicationUser> _userRepository = userRepository;
+    private readonly ILogger<UserController> _logger = logger;
+    private readonly IMapper _mapper = mapper;
+    private readonly IShoppingServices _shoppingServices = shoppingServices;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
     private readonly IMessageHandler _messageHandler = messageHandler;
-    private readonly ILogger<UserController> _logger = logger;
-    private readonly IMapper _mapper = mapper;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
-    private readonly UserService _userService = userService;
 
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {
@@ -111,7 +104,7 @@ public class UserController
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var pdtoList = await _userRepository.GetAllAsync(q =>
+        var pdtoList = await _shoppingServices.User.GetAllAsync(q =>
             _mapper.ProjectTo<AdminUserDetailsDto>(q)
                 ._(queryFilter)
                 ._(sortFilter)
@@ -128,7 +121,7 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering Admin/Edit.");
 
-        var udto = await _userRepository.GetSingleAsync(q => 
+        var udto = await _shoppingServices.User.GetSingleAsync(q => 
             _mapper.ProjectTo<AdminUserEditDto>(q
                 .Where(u => u.Id == id)
             )
@@ -139,7 +132,6 @@ public class UserController
             return NotFound("The user is not found");
         }
 
-        udto.Roles = (await _userManager.GetRolesAsync(_mapper.Map<ApplicationUser>(udto))).Aggregate("", (acc, curr) => acc + " " + curr, fin => fin.Trim());
         return View(udto);
     }
 
@@ -159,7 +151,7 @@ public class UserController
             }
 
 
-            if (!(await _userService.TryUpdateAsync(user, udto.ProfilePicture, udto.Roles?.Split(' '))).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.User.TryUpdateAsync(user, udto.ProfilePicture, udto.Roles?.Split(' '))).TryOut(out var errMsgs))
             {
                _messageHandler.Add(TempData, errMsgs!); 
                return RedirectToAction("Edit", new { id = udto.Id });
@@ -177,13 +169,13 @@ public class UserController
     [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Delete(string? id)
     {
-        var user = await _userRepository.GetSingleAsync(q => q
+        var user = await _shoppingServices.User.GetSingleAsync(q => q
             .Where(u => u.Id == id)
         );
 
         if (user is not null)
         {
-            if (!(await _userService.TryDeleteAsync(user)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.User.TryDeleteAsync(user)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
                return RedirectToAction("Index");
@@ -200,7 +192,7 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering Admin/User/Adminize");
 
-        var user = await _userRepository.GetByKeyAsync(id);
+        var user = await _shoppingServices.User.GetByKeyAsync(id);
 
         if (user is null) return NotFound("User is not found");
         if (await _userManager.IsInRoleAsync(user, "Admin"))
@@ -235,7 +227,7 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering Admin/User/Unadminize");
 
-        var user = await _userRepository.GetByKeyAsync(id);
+        var user = await _shoppingServices.User.GetByKeyAsync(id);
         
         if (user is null) return NotFound("User is not found");
         if (!await _userManager.IsInRoleAsync(user, "Admin"))
@@ -268,7 +260,7 @@ public class UserController
     {
         _logger.LogInformation($"POST: Entering Admin/User/ResetImage.");
         _logger.LogDebug("Fetching user for id \"{Id}\".", id);
-        var userExists = await _userRepository.ExistsAsync(q => q
+        var userExists = await _shoppingServices.User.ExistsAsync(q => q
             .Where(p => p.Id == id)
         );
 
@@ -279,7 +271,19 @@ public class UserController
         }
 
         _logger.LogDebug("Deleting image for product with id \"{Id}\"", id);
-        _profileImageHandler.DeleteImage(new(id!));
+        try
+        {
+            _profileImageHandler.DeleteImage(new(id!));
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to reset image" + " " + ex.StackTrace });
+#else
+            _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Failed to reset image" });
+#endif
+            return RedirectToAction(nameof(Edit), new { id });
+        }
 
         return RedirectToAction(nameof(Edit), new { id });
         

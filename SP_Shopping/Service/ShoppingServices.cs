@@ -8,10 +8,10 @@ namespace SP_Shopping.Service;
 
 public class ShoppingServices : IShoppingServices
 {
-    public ProductService Product { get; }
-    public CategoryService Category { get; }
-    public CartItemService CartItem { get; }
-    public UserService User { get; }
+    public IProductService Product { get; }
+    public ICategoryService Category { get; }
+    public ICartItemService CartItem { get; }
+    public IUserService User { get; }
 
     private readonly ApplicationDbContext _context;
 

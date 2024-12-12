@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.Cart;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
 using SP_Shopping.Utilities.Filter;
@@ -24,22 +23,16 @@ public class CartControllerTests
 
     private readonly ILogger<CartController> _logger;
     private readonly IMapper _mapper;
-    private readonly IRepository<CartItem> _cartItemRepository;
-    private readonly IRepository<ApplicationUser> _userRepository;
-    private readonly IRepository<Product> _productRepository;
+    private readonly IShoppingServices _shoppingServices;
     private readonly IMessageHandler _messageHandler;
-    private readonly CartItemService _cartItemService;
     private readonly CartController _cartController;
 
     public CartControllerTests()
     {
         _logger = new NullLogger<CartController>();
         _mapper = A.Fake<IMapper>();
-        _cartItemRepository = A.Fake<IRepository<CartItem>>();
-        _userRepository = A.Fake<IRepository<ApplicationUser>>();
-        _productRepository = A.Fake<IRepository<Product>>();
+        _shoppingServices = A.Fake<IShoppingServices>();
         _messageHandler = new MessageHandler();
-        _cartItemService = new CartItemService(_cartItemRepository);
 
         // SUT
 
@@ -47,11 +40,8 @@ public class CartControllerTests
         (
             logger: _logger,
             mapper: _mapper,
-            cartItemRepository: _cartItemRepository,
-            userRepository: _userRepository,
-            productRepository: _productRepository,
-            messageHandler: _messageHandler,
-            cartItemService: _cartItemService
+            shoppingServices: _shoppingServices,
+            messageHandler: _messageHandler
         );
 
         var fakeUser = new ClaimsPrincipal
@@ -123,7 +113,7 @@ public class CartControllerTests
         var cartItems = (List<CartItemDetailsDto>)A.CollectionOfFake<CartItemDetailsDto>(5);
         var prices = Enumerable.Range(1, 5);
         cartItems = cartItems.Zip(prices, (c, p) => { c.Price = p; c.Count = 1; return c; }).ToList();
-        A.CallTo(() => _cartItemRepository.GetAllAsync(A<Func<IQueryable<CartItem>, IQueryable<CartItemDetailsDto>>>._))
+        A.CallTo(() => _shoppingServices.CartItem.GetAllAsync(A<Func<IQueryable<CartItem>, IQueryable<CartItemDetailsDto>>>._))
             .Returns(cartItems);
         // Act
         IActionResult result = await _cartController.Index();
@@ -151,11 +141,11 @@ public class CartControllerTests
             // Id is not null
         const int id = 0;
             // Id exists, Product found
-        A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(true);
-        // Create succeeds
-        A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(true);
+            // Create succeeds
+        A.CallTo(() => _shoppingServices.CartItem.TryCreateAsync(A<CartItem>._))
+            .Returns((true, null));
         // Act
         IActionResult result = await _cartController.Create(id);
         // Assert
@@ -163,6 +153,9 @@ public class CartControllerTests
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Index");
+            // Create attempted
+        A.CallTo(() => _shoppingServices.CartItem.TryCreateAsync(A<CartItem>._))
+            .MustHaveHappened();
     }
 
     [TestMethod]
@@ -172,7 +165,7 @@ public class CartControllerTests
             // Id is not null
         const int id = 0;
             // Id does NOT exist, Product is NOT found
-        A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(false);
         // Act
         IActionResult result = await _cartController.Create(id);
@@ -188,11 +181,11 @@ public class CartControllerTests
             // Id is not null
         const int id = 0;
             // Id exists, Product found
-        A.CallTo(() => _productRepository.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
+        A.CallTo(() => _shoppingServices.Product.ExistsAsync(A<Func<IQueryable<Product>, IQueryable<Product>>>._))
             .Returns(true);
-        // Create succeeds
-        A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(false);
+        // Create does NOT succeed
+        A.CallTo(() => _shoppingServices.CartItem.TryCreateAsync(A<CartItem>._))
+            .Returns((false, [new Message { Type = Message.MessageType.Error, Content = "blabla"}]));
         // Act
         IActionResult result = await _cartController.Create(id);
         // Assert
@@ -200,12 +193,8 @@ public class CartControllerTests
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Index");
-            //TODO:
-            /*
-                For now, we have no way of mocking the cartItemService
-                When we do mock the cartItemService directly,
-                add a check for error Messages.
-            */
+            // Message is error
+        Assert.IsTrue(_messageHandler.Peek(_cartController.TempData)?.Any(m => m.Type is Message.MessageType.Error), "Expected error mesage was not returned");
     }
 
     #endregion Create
@@ -220,8 +209,8 @@ public class CartControllerTests
         const int id = 0;
             // Modelstate valid
             // Update succeeds
-        A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(true);
+        A.CallTo(() => _shoppingServices.CartItem.TryUpdateAsync(A<CartItem>._))
+            .Returns((true, null));
         // Act
         IActionResult result = await _cartController.Edit(id, A.Fake<CartItemCreateDto>());
         // Assert
@@ -247,7 +236,7 @@ public class CartControllerTests
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Index");
             // Message not succeed
-        Assert.IsTrue(_messageHandler.Peek(_cartController.TempData)?.Any(m => m.Type is Message.MessageType.Warning));
+        Assert.IsTrue(_messageHandler.Peek(_cartController.TempData)?.Any(m => m.Type is Message.MessageType.Warning), "Expected warning mesage was not returned");
     }
 
     [TestMethod]
@@ -258,8 +247,8 @@ public class CartControllerTests
         const int id = 0;
             // Modelstate valid
             // Update does NOT succeed
-        A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(false);
+        A.CallTo(() => _shoppingServices.CartItem.TryUpdateAsync(A<CartItem>._))
+            .Returns((false, [new Message { Type = Message.MessageType.Error, Content = "blabla" }]));
         // Act
         IActionResult result = await _cartController.Edit(id, A.Fake<CartItemCreateDto>());
         // Assert
@@ -267,12 +256,11 @@ public class CartControllerTests
         Assert.IsInstanceOfType<RedirectToActionResult>(result);
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Index");
-            //TODO:
-            /*
-                For now, we have no way of mocking the cartItemService
-                When we do mock the cartItemService directly,
-                add a check for error Messages.
-            */
+            // Update attempted
+        A.CallTo(() => _shoppingServices.CartItem.TryUpdateAsync(A<CartItem>._))
+            .MustHaveHappened();
+            // Message error
+        Assert.IsTrue(_messageHandler.Peek(_cartController.TempData)?.Any(m => m.Type is Message.MessageType.Error), "Expected error mesage was not returned");
     }
 
     #endregion Edit
@@ -286,8 +274,8 @@ public class CartControllerTests
             // Id is not null
         const int id = 0;
             // Delete succeeds
-        A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(true);
+        A.CallTo(() => _shoppingServices.CartItem.TryDeleteAsync(A<CartItem>._))
+            .Returns((true, null));
         // Act
         IActionResult result = await _cartController.Delete(id);
         // Assert
@@ -295,8 +283,8 @@ public class CartControllerTests
         Assert.IsInstanceOfType<RedirectToActionResult>(result, "Action result is not redirectToAction");
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Index", "Does not redirect to Index");
-            // Must have called the database
-        A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
+            // Delete attempted
+        A.CallTo(() => _shoppingServices.CartItem.TryDeleteAsync(A<CartItem>._))
             .MustHaveHappenedOnceExactly();
     }
 
@@ -307,8 +295,8 @@ public class CartControllerTests
             // Id is not null
         const int id = 0;
             // Delete does NOT succeed
-        A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
-            .Returns(false);
+        A.CallTo(() => _shoppingServices.CartItem.TryDeleteAsync(A<CartItem>._))
+            .Returns((false, [new Message { Type = Message.MessageType.Error, Content = "blabla" }]));
         // Act
         IActionResult result = await _cartController.Delete(id);
         // Assert
@@ -316,15 +304,11 @@ public class CartControllerTests
         Assert.IsInstanceOfType<RedirectToActionResult>(result, "Action result is not redirectToAction");
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Index", "Does not redirect to Index");
-            // Must have called the database
-        A.CallTo(() => _cartItemRepository.DoInTransactionAsync(A<Func<Task<bool>>>._))
+            // Attempt delete
+        A.CallTo(() => _shoppingServices.CartItem.TryDeleteAsync(A<CartItem>._))
             .MustHaveHappenedOnceExactly();
-            //TODO:
-            /*
-                For now, we have no way of mocking the cartItemService
-                When we do mock the cartItemService directly,
-                add a check for error Messages.
-            */
+            // Delete attempted
+        Assert.IsTrue(_messageHandler.Peek(_cartController.TempData)?.Any(m => m.Type is Message.MessageType.Error), "Expected error mesage was not returned");
     }
 
     #endregion Delete

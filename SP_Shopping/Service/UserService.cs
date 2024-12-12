@@ -14,14 +14,14 @@ public class UserService
     IRepository<Product> productRepository,
     UserManager<ApplicationUser> userManager,
     IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler,
-    ProductService productService
-)
+    IProductService productService
+) : IUserService
 {
     private readonly IRepository<ApplicationUser> _userRepository = userRepository;
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
-    private readonly ProductService _productService = productService;
+    private readonly IProductService _productService = productService;
 
     public virtual List<ApplicationUser> GetAll()
     {
@@ -101,7 +101,7 @@ public class UserService
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set email" });
                 return false;
             }
-    
+
 
             result = await _userManager.SetPhoneNumberAsync(_user, user.PhoneNumber);
             if (!result.Succeeded)
@@ -232,11 +232,11 @@ public class UserService
             }
             catch (Exception ex)
             {
-                #if DEBUG
+#if DEBUG
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.StackTrace}" });
-                #else
+#else
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
-                #endif
+#endif
                 return false;
             }
 
