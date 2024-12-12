@@ -39,7 +39,7 @@ public class UserController
 
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
     {
-        _logger.LogInformation("GET: Entering Admin/Products.");
+        _logger.LogInformation("GET: Entering Admin/User.");
 
         Func<IQueryable<AdminUserDetailsDto>, IQueryable<AdminUserDetailsDto>> queryFilter = q => q;
         Func<IQueryable<AdminUserDetailsDto>, IQueryable<AdminUserDetailsDto>> sortFilter = q => q
@@ -151,7 +151,7 @@ public class UserController
             }
 
 
-            if (!(await _shoppingServices.User.TryUpdateAsync(user, udto.ProfilePicture, udto.Roles?.Split(' '))).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.User.TryUpdateAsync(user, udto.ProfilePicture, udto.Roles)).TryOut(out var errMsgs))
             {
                _messageHandler.Add(TempData, errMsgs!); 
                return RedirectToAction("Edit", new { id = udto.Id });
