@@ -9,7 +9,6 @@
 
 @{
     ViewData["Title"] = "UserPage";
-    var requestedUserIsAdmin = await _userManager.IsInRoleAsync((await _userManager.FindByIdAsync(Model.Id)), "Admin");
 }
 
 <h1>User info:</h1>
@@ -30,7 +29,7 @@ else
 
 @if (User.IsInRole("Admin"))
 {
-    @if (!requestedUserIsAdmin)
+    @if (!Model.RoleNames.Contains("Admin"))
     {
         <form asp-area="Admin" asp-controller="User" asp-action="Adminize" asp-route-Id="@Model.Id">
             <button type="submit" class="btn btn-success">Give Admin Privileges</button> 

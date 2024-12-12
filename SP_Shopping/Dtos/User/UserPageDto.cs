@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace SP_Shopping.Dtos.User;
@@ -23,5 +22,8 @@ public class UserPageDto
     public string? Description { get; set; }
     [DisplayName("Account Creation")]
     public DateTime InsertionDate { get; set; }
+    public List<string> RoleNames { get; set; }
     public IEnumerable<UserPageProductDto>? ProductDetails { get; set; }
+
+
 }
