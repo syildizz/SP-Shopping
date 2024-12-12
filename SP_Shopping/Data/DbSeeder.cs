@@ -27,25 +27,15 @@ public class DbSeeder : IDisposable
     private readonly IServiceScope _scope;
 
     private readonly ILogger<DbSeeder> _logger;
-    
-    private readonly IRepository<Product> _productRepository;
-    private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
-    private readonly ProductService _productService;
 
-    private readonly IRepositoryCaching<Category> _categoryRepository;
-    private readonly CategoryService _categoryService;
+    private readonly IShoppingServices _shoppingServices;
+    
+    private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
 
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler;
-    private readonly UserService _userService;
 
     private readonly RoleManager<ApplicationRole> _roleManager;
-
-    private readonly IRepository<CartItem> _cartItemRepository;
-    private readonly CartItemService _cartItemService;
-
-    private readonly ApplicationDbContext _context;
 
     private readonly string _seedFolder;
 
@@ -60,24 +50,13 @@ public class DbSeeder : IDisposable
 
         _logger = _scope.ServiceProvider.GetRequiredService<ILogger<DbSeeder>>();
 
-        _productRepository = _scope.ServiceProvider.GetRequiredService<IRepository<Product>>();
+        _shoppingServices = _scope.ServiceProvider.GetRequiredService<IShoppingServices>();
         _productImageHandler = _scope.ServiceProvider.GetRequiredService<IImageHandlerDefaulting<ProductImageKey>>();
-        _productService = new ProductService(_productRepository, _productImageHandler);
-
-        _categoryRepository = _scope.ServiceProvider.GetRequiredService<IRepositoryCaching<Category>>();
-        _categoryService = new CategoryService(_categoryRepository, _productRepository, _productService);
 
         _userManager = _scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        _userRepository = _scope.ServiceProvider.GetRequiredService<IRepository<ApplicationUser>>();
         _profileImageHandler = _scope.ServiceProvider.GetRequiredService<IImageHandlerDefaulting<UserProfileImageKey>>();
-        _userService = new UserService(_userRepository, _productRepository, _userManager, _profileImageHandler, _productService);
-
         _roleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
-        _cartItemRepository = _scope.ServiceProvider.GetRequiredService<IRepository<CartItem>>();
-        _cartItemService = new CartItemService(_cartItemRepository);
-
-        _context = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     }
 
     public void Dispose()
@@ -132,7 +111,7 @@ public class DbSeeder : IDisposable
 
         foreach (var category in categories)
         {
-            var (succeeded, errmsgs) = await _categoryService.TryCreateAsync(category);
+            var (succeeded, errmsgs) = await _shoppingServices.Category.TryCreateAsync(category);
             if (!succeeded)
             {
                 _logger.LogError("Failed to seed category in database due to {ErrMsgs}", errmsgs);
@@ -157,22 +136,17 @@ public class DbSeeder : IDisposable
 
         foreach (var user in users)
         {
-            var succeeded = await _userManager.CreateAsync(user, "123456");
-            user.EmailConfirmed = true;
-            user.PhoneNumberConfirmed = true;
-            if (!succeeded.Succeeded)
-            {
-                _logger.LogError("Failed to seed user in database due to {ErrMsgs}", succeeded.Errors);
-                break;
-            }
             Stream? chosenImage = imageStreams[_random.Next(imageStreams.Count)];
-            if (chosenImage is not null)
+            FormFile? ff = chosenImage is null ? null : new FormFile(chosenImage, 0, chosenImage.Length, "idk", "idk");
+            var (succeeded, errMsgs) = await _shoppingServices.User.TryCreateAsync(user, "123456", ff, null);
+            if (ff is not null)
             {
-                if (!await _profileImageHandler.SetImageAsync(new(user.Id), chosenImage))
-                {
-                    _logger.LogWarning("Failed to seed profile picture of user");
-                }
-                chosenImage.Position = 0;
+                chosenImage!.Position = 0;
+            }
+            if (!succeeded)
+            {
+                _logger.LogError("Failed to seed user in database due to {ErrMsgs}", errMsgs);
+                break;
             }
         }
 
@@ -194,7 +168,7 @@ public class DbSeeder : IDisposable
         {
             Stream? chosenImage = imageStreams[_random.Next(imageStreams.Count)];
             FormFile? ff = chosenImage is null ? null : new FormFile(chosenImage, 0, chosenImage.Length, "idk", "idk");
-            var (succeeded, errmsgs) = await _productService.TryCreateAsync(product, ff);
+            var (succeeded, errmsgs) = await _shoppingServices.Product.TryCreateAsync(product, ff);
             if (ff is not null)
             {
                 chosenImage!.Position = 0;
@@ -218,7 +192,7 @@ public class DbSeeder : IDisposable
 
         foreach (var cartItem in cartItems)
         {
-            var (succeed, errmsgs) = await _cartItemService.TryCreateAsync(cartItem);
+            var (succeed, errmsgs) = await _shoppingServices.CartItem.TryCreateAsync(cartItem);
             if (!succeed)
             {
                 _logger.LogError("Failed to seed cartItem in database due to {Errmsgs}", errmsgs);
@@ -278,32 +252,17 @@ public class DbSeeder : IDisposable
             Description = "Admin user"
         };
 
-        var succeeded = await _userManager.CreateAsync(admin, "123456");
-        admin.EmailConfirmed = true;
-        admin.PhoneNumberConfirmed = true;
-        if (!succeeded.Succeeded)
-        {
-            _logger.LogError("Failed to seed user in database due to {ErrMsgs}", succeeded.Errors);
-            return;
-        }
-
-        succeeded = await _userManager.AddToRoleAsync(admin, "Admin");
-        if (!succeeded.Succeeded)
-        {
-            _logger.LogError("Failed to set admin as admin due to {ErrMsgs}", succeeded.Errors);
-        }
-
         Stream? chosenImage = imageStreams[_random.Next(imageStreams.Count)];
-        if (chosenImage is not null)
+        FormFile? ff = chosenImage is null ? null : new FormFile(chosenImage, 0, chosenImage.Length, "idk", "idk");
+        var (succeeded, errMsgs) = await _shoppingServices.User.TryCreateAsync(admin, "123456", ff, ["Admin"]);
+        if (ff is not null)
         {
-            if (!await _profileImageHandler.SetImageAsync(new(admin.Id), chosenImage))
-            {
-                _logger.LogWarning("Failed to seed image for admin");
-            }
-            chosenImage.Position = 0;
+            chosenImage!.Position = 0;
         }
-
-
+        if (!succeeded)
+        {
+            _logger.LogError("Failed to seed user in database due to {ErrMsgs}", errMsgs);
+        }
     }
 
 
