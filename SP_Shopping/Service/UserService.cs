@@ -5,6 +5,7 @@ using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Data;
+using System.Linq.Expressions;
 
 namespace SP_Shopping.Service;
 
@@ -73,7 +74,90 @@ public class UserService
         return await _userRepository.ExistsAsync(query);
     }
 
-    public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(ApplicationUser user, IFormFile? image, IEnumerable<string>? roles)
+    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryCreateAsync(ApplicationUser user, string password, IFormFile? image, IEnumerable<string>? roles)
+    {
+        ICollection<Message> errorMessages = [];
+
+        bool transactionSucceeded = await _userRepository.DoInTransactionAsync(async () =>
+        {
+
+            IdentityResult succeeded;
+
+            succeeded = await _userManager.CreateAsync(user, password);
+            if (!succeeded.Succeeded)
+            {
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to create user" });
+                return false;
+            }
+
+            if (roles is not null)
+            {
+                var errorMessage = "Failed to set roles";
+                bool wentToCatch = false;
+                try
+                {
+                    succeeded = await _userManager.AddToRolesAsync(user, roles);
+                }
+                catch (InvalidOperationException ex) { wentToCatch = true; errorMessage = ex.StackTrace; }
+                if (wentToCatch || !succeeded.Succeeded)
+                {
+                        #if DEBUG
+                        errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage ?? "Failed to set roles" });
+                        #else
+                        errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set roles" });
+                        #endif
+                        return false;
+                }
+
+            }
+
+            int result2 = await _userRepository.UpdateCertainFieldsAsync(q => q
+                .Where(u => u.Id == user.Id),
+                s => s
+                    .SetProperty(u => u.Description, user.Description)
+                    .SetProperty(u => u.InsertionDate, DateTime.Now)
+                    // Confirm e-mail and phone number when changed by admin.
+                    // Maybe change this functionality in the future idk.
+                    // TODO: Add panels in admin panel to confirm / unconfirm user email / phone number
+                    .SetProperty(u => u.EmailConfirmed, true)
+                    .SetProperty(u => u.PhoneNumberConfirmed, true)
+                    .SetProperty(u => u.ConcurrencyStamp, Guid.NewGuid().ToString())
+            );
+
+            if (result2 < 1)
+            {
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set description" });
+                return false;
+            }
+
+            if (image is not null)
+            {
+                using var imageStream = image.OpenReadStream();
+                if (!await _profileImageHandler.SetImageAsync(new(user.Id), imageStream))
+                {
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set profile picture" });
+                    return false;
+                }
+
+                return true;
+            }
+
+            return true;
+
+        });
+
+        if (transactionSucceeded)
+        {
+            return (true, null);
+        }
+        else
+        {
+            return (false, errorMessages);
+        }
+
+    }
+
+    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryUpdateAsync(ApplicationUser user, IFormFile? image, IEnumerable<string>? roles)
     {
         ICollection<Message> errorMessages = [];
 
