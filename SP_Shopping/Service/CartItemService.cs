@@ -93,7 +93,7 @@ public class CartItemService
                 else if (ex is DbUpdateException)
                 {
                     // Exception occurs when adding same product to same users cart.
-                    // This is a desired effect, therefore the below codoe is commented out.
+                    // This is a desired effect, therefore the below code is commented out.
                     // TODO: Analyze update exception for the above mentioned exception and throw 
                     //     otherwise
                     //_logger.LogError("Failed to create CartItem in the database for user of id \"{UserId}\" and for product of \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
@@ -135,7 +135,7 @@ public class CartItemService
             }
             catch (Exception ex)
             {
-                if (ex is DbUpdateException or DBConcurrencyException)
+                if (ex is DBConcurrencyException)
                 {
 #if DEBUG
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
@@ -143,6 +143,15 @@ public class CartItemService
                     errorMessages.Append(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
 #endif
                     return false;
+                }
+                else if (ex is DbUpdateException)
+                {
+                    // Exception occurs when adding same product to same users cart.
+                    // This is a desired effect, therefore the below code is commented out.
+                    // TODO: Analyze update exception for the above mentioned exception and throw 
+                    //     otherwise
+                    //_logger.LogError("Failed to create CartItem in the database for user of id \"{UserId}\" and for product of \"{ProductId}\".", cartItem.UserId, cartItem.ProductId);
+                    //_messageHandler.AddMessages(TempData, [new Message { Type = Message.MessageType.Error, Content = "Error when adding product to cart" }]);
                 }
                 else
                 {
