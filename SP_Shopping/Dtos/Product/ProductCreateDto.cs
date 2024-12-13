@@ -6,7 +6,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SP_Shopping.Dtos.Product;
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 [RequestSizeLimit(2_000_000)]
 public class ProductCreateDto
 {
@@ -25,5 +24,4 @@ public class ProductCreateDto
     [IsImageFile]
     public IFormFile? ProductImage { get; set; }
 }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
