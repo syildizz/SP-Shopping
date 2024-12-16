@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.Operations;
+using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
@@ -166,7 +166,7 @@ public class UserService
         bool transactionSucceeded = await _userRepository.DoInTransactionAsync(async () =>
         {
 
-            ApplicationUser? _user = await _userManager.FindByIdAsync(user.Id);
+            ApplicationUser? _user = await _userRepository.GetSingleAsync(q => q.Where(u => u.Id == user.Id).Include(u => u.Roles));
             if (_user is null)
             {
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "User has invalid id" });
@@ -177,6 +177,7 @@ public class UserService
             _user.Email = user.Email;
             _user.PhoneNumber = user.PhoneNumber;
             _user.Description = user.Description;
+            _user.Roles = user.Roles;
 
             IdentityResult succeeded;
             string errorMessage = "";
@@ -200,74 +201,6 @@ public class UserService
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
                 #endif
                 return false;
-            }
-
-            if (user.Roles is not null)
-            {
-                // userRoles: The role the user already has
-                // requestRoles: The roles that the request specifies
-                // user/RequestRoles: The roles that the user has that isn't in the request (roles that should be deleted from user)
-                // request/userRoles: The roles that the request has that the user doesn't have  (roles that should be added to user)
-                var userRoles = (await _userManager.GetRolesAsync(user)).Select(s => s.ToUpperInvariant());
-                var requestRoles = user.Roles.Select(r => r.Name).Where(r => !string.IsNullOrWhiteSpace(r)).Select(s => s!.ToUpperInvariant());
-                var userDifferenceRequestRoles = userRoles.Except(requestRoles);
-                var requestDifferenceUserRoles = requestRoles.Except(userRoles);
-
-                errorMessage = "Unable to update user's roles";
-                try
-                {
-                    succeeded = await _userManager.AddToRolesAsync(_user, requestDifferenceUserRoles);
-                }
-                catch (InvalidOperationException ex) 
-                { 
-                    #if DEBUG
-                        errorMessage = $"{errorMessage}: {ex.StackTrace}";
-                    #endif
-                    succeeded = IdentityResult.Failed();
-                }
-                if (!succeeded.Succeeded)
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
-                    return false;
-                }
-
-                try
-                {
-                    succeeded = await _userManager.RemoveFromRolesAsync(_user, userDifferenceRequestRoles);
-                }
-                catch (InvalidOperationException ex) 
-                { 
-                    #if DEBUG
-                        errorMessage = $"{errorMessage}: {ex.StackTrace}";
-                    #endif
-                    succeeded = IdentityResult.Failed();
-                }
-                if (!succeeded.Succeeded)
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
-                    return false;
-                }
-            }
-            // User roles is empty therefore delete all roles from the user
-            else
-            {
-                errorMessage = "Unable to update user's roles";
-                try
-                {
-                    succeeded = await _userManager.RemoveFromRolesAsync(_user, user.Roles!.Select(r => r.Name).Where(r => !string.IsNullOrWhiteSpace(r))!);
-                }
-                catch (InvalidOperationException ex) 
-                { 
-                    #if DEBUG
-                        errorMessage = $"{errorMessage} : {ex.StackTrace}";
-                    #endif
-                    succeeded = IdentityResult.Failed();
-                }
-                if (!succeeded.Succeeded)
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
-                    return false;
-                }
             }
 
             if (image is not null)
