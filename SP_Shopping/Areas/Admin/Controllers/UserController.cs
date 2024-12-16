@@ -42,8 +42,8 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering Admin/User.");
 
-        Func<IQueryable<AdminUserDetailsDto>, IQueryable<AdminUserDetailsDto>> queryFilter = q => q;
-        Func<IQueryable<AdminUserDetailsDto>, IQueryable<AdminUserDetailsDto>> sortFilter = q => q
+        Func<IQueryable<ApplicationUser>, IQueryable<ApplicationUser>> queryFilter = q => q;
+        Func<IQueryable<ApplicationUser>, IQueryable<ApplicationUser>> sortFilter = q => q
             .OrderByDescending(p => p.InsertionDate);
 
         try
@@ -54,19 +54,24 @@ public class UserController
                 {
                     queryFilter = type switch
                     {
-                        nameof(AdminUserDetailsDto.Id) => 
+                        nameof(ApplicationUser.Id) => 
                             q => q.Where(u => u.Id.Contains(query)),
-                        nameof(AdminUserDetailsDto.UserName) => 
-                            q => q.Where(u => u.UserName.Contains(query)),
-                        nameof(AdminUserDetailsDto.PhoneNumber) => 
-                            q => q.Where(u => u.PhoneNumber.Contains(query)),
-                        nameof(AdminUserDetailsDto.Email) => 
-                            q => q.Where(u => u.Email.Contains(query)),
-                        nameof(AdminUserDetailsDto.Roles) => 
-                            q => q.Where(u => u.Roles.Contains(query)),
-                        nameof(AdminUserDetailsDto.Description) => 
-                            q => q.Where(u => u.Description.Contains(query)),
-                        nameof(AdminUserDetailsDto.InsertionDate) => 
+                        nameof(ApplicationUser.UserName) => 
+                            q => q.Where(u => u.UserName != null 
+                                           && u.UserName.Contains(query)),
+                        nameof(ApplicationUser.PhoneNumber) => 
+                            q => q.Where(u => u.PhoneNumber != null 
+                                           && u.PhoneNumber.Contains(query)),
+                        nameof(ApplicationUser.Email) => 
+                            q => q.Where(u => u.Email != null 
+                                           && u.Email.Contains(query)),
+                        nameof(ApplicationUser.Roles) => 
+                            q => q.Where(u => u.Roles.Select(r => r.Name)
+                                  .Where(r => !string.IsNullOrWhiteSpace(r)).Contains(query)),
+                        nameof(ApplicationUser.Description) => 
+                            q => q.Where(u => u.Description != null 
+                                           && u.Description.Contains(query)),
+                        nameof(ApplicationUser.InsertionDate) => 
                             q => q.Where(u => u.InsertionDate.ToString().Contains(query)),
                         _ => throw new NotImplementedException($"{type} is invalid")
                     };
@@ -106,10 +111,11 @@ public class UserController
 
         _logger.LogDebug("Fetching product information matching search term.");
         var pdtoList = await _shoppingServices.User.GetAllAsync(q =>
-            _mapper.ProjectTo<AdminUserDetailsDto>(q)
-                .Take(20)
+            _mapper.ProjectTo<AdminUserDetailsDto>(q
                 ._(queryFilter)
                 ._(sortFilter)
+                .Take(20)
+            )
         );
 
         return View(pdtoList);

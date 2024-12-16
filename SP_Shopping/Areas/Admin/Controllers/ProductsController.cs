@@ -37,8 +37,8 @@ public class ProductsController
     {
         _logger.LogInformation("GET: Entering Admin/Products.");
 
-        Func<IQueryable<AdminProductDetailsDto>, IQueryable<AdminProductDetailsDto>> queryFilter = q => q;
-        Func<IQueryable<AdminProductDetailsDto>, IQueryable<AdminProductDetailsDto>> sortFilter = q => q
+        Func<IQueryable<Product>, IQueryable<Product>> queryFilter = q => q;
+        Func<IQueryable<Product>, IQueryable<Product>> sortFilter = q => q
             .OrderByDescending(p => p.InsertionDate)
             .ThenByDescending(p => p.ModificationDate);
 
@@ -50,15 +50,31 @@ public class ProductsController
                 {
                     queryFilter = type switch
                     {
-                        nameof(AdminProductDetailsDto.Id) => q => q.Where(p => p.Name.Contains(query)),
-                        nameof(AdminProductDetailsDto.Name) => q => q.Where(p => p.Name.Contains(query)),
-                        nameof(AdminProductDetailsDto.Price) => decimal.TryParse(query, out var queryNumber) ? q => q.Where(p => p.Price == queryNumber) : q => q,
-                        nameof(AdminProductDetailsDto.CategoryName) => q => q.Where(p => p.CategoryName != null && p.CategoryName.Contains(query)),
-                        nameof(AdminProductDetailsDto.Description) => q => q.Where(p => p.Description != null && p.Description.Contains(query)),
-                        nameof(AdminProductDetailsDto.SubmitterId) => q => q.Where(p => p.SubmitterName.Contains(query)),
-                        nameof(AdminProductDetailsDto.SubmitterName) => q => q.Where(p => p.SubmitterName.Contains(query)),
-                        nameof(AdminProductDetailsDto.InsertionDate) => q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
-                        nameof(AdminProductDetailsDto.ModificationDate) => q => q.Where(p => p.ModificationDate != null && p.ModificationDate.ToString()!.Contains(query)),
+                        nameof(AdminProductDetailsDto.Id) => 
+                            q => q.Where(p => p.Name.Contains(query)),
+                        nameof(AdminProductDetailsDto.Name) => 
+                            q => q.Where(p => p.Name.Contains(query)),
+                        nameof(AdminProductDetailsDto.Price) => 
+                            decimal.TryParse(query, out var queryNumber) 
+                                ? q => q.Where(p => p.Price == queryNumber) 
+                                : q => q,
+                        nameof(AdminProductDetailsDto.CategoryName) => 
+                            q => q.Where(p => p.Category.Name.Contains(query)),
+                        nameof(AdminProductDetailsDto.Description) => 
+                            q => q.Where(p => p.Description != null 
+                                           && p.Description.Contains(query)),
+                        nameof(AdminProductDetailsDto.SubmitterId) => 
+                            q => q.Where(p => p.SubmitterId != null 
+                                           && p.SubmitterId.Contains(query)),
+                        nameof(AdminProductDetailsDto.SubmitterName) => 
+                            q => q.Where(p => p.Submitter != null 
+                                           && p.Submitter.UserName != null 
+                                           && p.Submitter.UserName.Contains(query)),
+                        nameof(AdminProductDetailsDto.InsertionDate) => 
+                            q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
+                        nameof(AdminProductDetailsDto.ModificationDate) => 
+                            q => q.Where(p => p.ModificationDate != null 
+                                           && p.ModificationDate.ToString()!.Contains(query)),
                         _ => throw new NotImplementedException($"{type} is invalid")
                     };
                 }
@@ -66,15 +82,33 @@ public class ProductsController
                 sort ??= false;
                 sortFilter = type switch
                 {
-                    nameof(AdminProductDetailsDto.Id) => (bool)sort ? q => q.OrderBy(p => p.Id) : q => q.OrderByDescending(p => p.Id),
-                    nameof(AdminProductDetailsDto.Name) => (bool)sort ? q => q.OrderBy(p => p.Name) : q => q.OrderByDescending(p => p.Name),
-                    nameof(AdminProductDetailsDto.Price) => (bool)sort ? q => q.OrderBy(p => p.Price) : q => q.OrderByDescending(p => p.Price),
-                    nameof(AdminProductDetailsDto.CategoryName) => (bool)sort ? q => q.OrderBy(p => p.CategoryName) : q => q.OrderByDescending(p => p.CategoryName),
-                    nameof(AdminProductDetailsDto.Description) => (bool)sort ? q => q.OrderBy(p => p.Description) : q => q.OrderByDescending(p => p.Description),
-                    nameof(AdminProductDetailsDto.SubmitterId) => (bool)sort ? q => q.OrderBy(p => p.SubmitterId) : q => q.OrderByDescending(p => p.SubmitterId),
-                    nameof(AdminProductDetailsDto.SubmitterName) => (bool)sort ? q => q.OrderBy(p => p.SubmitterName) : q => q.OrderByDescending(p => p.SubmitterName),
-                    nameof(AdminProductDetailsDto.InsertionDate) => (bool)sort ? q => q.OrderBy(p => p.InsertionDate) : q => q.OrderByDescending(p => p.InsertionDate),
-                    nameof(AdminProductDetailsDto.ModificationDate) => (bool)sort ? q => q.OrderBy(p => p.ModificationDate) : q => q.OrderByDescending(p => p.ModificationDate),
+                    nameof(AdminProductDetailsDto.Id) => (bool)sort 
+						? q => q.OrderBy(p => p.Id) 
+						: q => q.OrderByDescending(p => p.Id),
+                    nameof(AdminProductDetailsDto.Name) => (bool)sort 
+						? q => q.OrderBy(p => p.Name) 
+						: q => q.OrderByDescending(p => p.Name),
+                    nameof(AdminProductDetailsDto.Price) => (bool)sort 
+						? q => q.OrderBy(p => p.Price) 
+						: q => q.OrderByDescending(p => p.Price),
+                    nameof(AdminProductDetailsDto.CategoryName) => (bool)sort 
+						? q => q.OrderBy(p => p.Category.Name) 
+						: q => q.OrderByDescending(p => p.Category.Name),
+                    nameof(AdminProductDetailsDto.Description) => (bool)sort 
+						? q => q.OrderBy(p => p.Description) 
+						: q => q.OrderByDescending(p => p.Description),
+                    nameof(AdminProductDetailsDto.SubmitterId) => (bool)sort 
+						? q => q.OrderBy(p => p.SubmitterId) 
+						: q => q.OrderByDescending(p => p.SubmitterId),
+                    nameof(AdminProductDetailsDto.SubmitterName) => (bool)sort 
+						? q => q.OrderBy(p => p.Submitter.UserName) 
+						: q => q.OrderByDescending(p => p.Submitter.UserName),
+                    nameof(AdminProductDetailsDto.InsertionDate) => (bool)sort 
+						? q => q.OrderBy(p => p.InsertionDate) 
+						: q => q.OrderByDescending(p => p.InsertionDate),
+                    nameof(AdminProductDetailsDto.ModificationDate) => (bool)sort 
+						? q => q.OrderBy(p => p.ModificationDate) 
+						: q => q.OrderByDescending(p => p.ModificationDate),
                     _ => throw new NotImplementedException($"{type} is invalid")
                 };
 
@@ -87,10 +121,11 @@ public class ProductsController
 
         _logger.LogDebug("Fetching product information matching search term.");
         var pdtoList = await _shoppingServices.Product.GetAllAsync(q =>
-            _mapper.ProjectTo<AdminProductDetailsDto>(q)
-                .Take(20)
+            _mapper.ProjectTo<AdminProductDetailsDto>(q
                 ._(queryFilter)
                 ._(sortFilter)
+                .Take(20)
+            )
         );
 
 
