@@ -93,4 +93,19 @@ public class ShoppingServices : IShoppingServices
         }
     }
 
+    public int SaveChanges()
+    {
+        return _context.SaveChanges();
+    }
+
+    public async Task<int> SaveChangesAsync()
+    {
+        return await _context.SaveChangesAsync();
+    }
+
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        return await _context.SaveChangesAsync(cancellationToken);
+    }
+
 }
