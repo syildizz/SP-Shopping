@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.Operations;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Data;
-using System.Linq.Expressions;
 
 namespace SP_Shopping.Service;
 
@@ -159,86 +159,90 @@ public class UserService
 
     }
 
-    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryUpdateAsync(ApplicationUser user, IFormFile? image, IEnumerable<string>? roles)
+    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryUpdateAsync(ApplicationUser user, IFormFile? image)
     {
         ICollection<Message> errorMessages = [];
 
         bool transactionSucceeded = await _userRepository.DoInTransactionAsync(async () =>
         {
-            IdentityResult result;
 
-            ApplicationUser? _user = _userRepository.GetByKey(user.Id);
+            ApplicationUser? _user = await _userManager.FindByIdAsync(user.Id);
             if (_user is null)
             {
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "User doesn't exist but should. Code should be unreachable. Contact developer" });
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "User has invalid id" });
                 return false;
             }
 
-            result = await _userManager.SetUserNameAsync(_user, user.UserName);
-            if (!result.Succeeded)
+            _user.UserName = user.UserName;
+            _user.Email = user.Email;
+            _user.PhoneNumber = user.PhoneNumber;
+            _user.Description = user.Description;
+
+            IdentityResult succeeded;
+            string errorMessage = "";
+            try
             {
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set username" });
-                return false;
+                errorMessage = "Unable to update user";
+                succeeded = await _userManager.UpdateAsync(_user);
             }
-
-            result = await _userManager.SetEmailAsync(_user, user.Email);
-            if (!result.Succeeded)
+            catch (InvalidOperationException ex) 
+            { 
+                #if DEBUG
+                errorMessage = $"{errorMessage}: {ex.StackTrace}";
+                #endif
+                succeeded = IdentityResult.Failed();
+            }
+            if (!succeeded.Succeeded)
             {
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set email" });
+                #if DEBUG
+                errorMessages = errorMessages.Concat(succeeded.Errors.Select(e => new Message { Type = Message.MessageType.Error, Content = $"{errorMessage}: {e.Description}" })).ToList();
+                #else
+                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
+                #endif
                 return false;
             }
 
-
-            result = await _userManager.SetPhoneNumberAsync(_user, user.PhoneNumber);
-            if (!result.Succeeded)
-            {
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set phone number" });
-                return false;
-            }
-
-            if (roles is not null)
+            if (user.Roles is not null)
             {
                 // userRoles: The role the user already has
                 // requestRoles: The roles that the request specifies
                 // user/RequestRoles: The roles that the user has that isn't in the request (roles that should be deleted from user)
                 // request/userRoles: The roles that the request has that the user doesn't have  (roles that should be added to user)
-                var userRoles = (await _userManager.GetRolesAsync(_user)).Select(s => s.ToUpperInvariant());
-                var requestRoles = roles.Where(r => !string.IsNullOrWhiteSpace(r)).Select(s => s.ToUpperInvariant());
+                var userRoles = (await _userManager.GetRolesAsync(user)).Select(s => s.ToUpperInvariant());
+                var requestRoles = user.Roles.Select(r => r.Name).Where(r => !string.IsNullOrWhiteSpace(r)).Select(s => s!.ToUpperInvariant());
                 var userDifferenceRequestRoles = userRoles.Except(requestRoles);
                 var requestDifferenceUserRoles = requestRoles.Except(userRoles);
 
-                var wentToCatch = false;
-                string errorMessage = "Failed to set roles";
+                errorMessage = "Unable to update user's roles";
                 try
                 {
-                    result = await _userManager.AddToRolesAsync(_user, requestDifferenceUserRoles);
+                    succeeded = await _userManager.AddToRolesAsync(_user, requestDifferenceUserRoles);
                 }
                 catch (InvalidOperationException ex) 
                 { 
-                    wentToCatch = true;
                     #if DEBUG
                         errorMessage = $"{errorMessage}: {ex.StackTrace}";
                     #endif
+                    succeeded = IdentityResult.Failed();
                 }
-                if (wentToCatch || !result.Succeeded)
+                if (!succeeded.Succeeded)
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
                     return false;
                 }
 
-                wentToCatch = false;
                 try
                 {
-                    result = await _userManager.RemoveFromRolesAsync(_user, userDifferenceRequestRoles);
+                    succeeded = await _userManager.RemoveFromRolesAsync(_user, userDifferenceRequestRoles);
                 }
                 catch (InvalidOperationException ex) 
                 { 
-                    wentToCatch = true;
                     #if DEBUG
                         errorMessage = $"{errorMessage}: {ex.StackTrace}";
                     #endif
+                    succeeded = IdentityResult.Failed();
                 }
-                if (wentToCatch || !result.Succeeded)
+                if (!succeeded.Succeeded)
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
                     return false;
@@ -247,41 +251,23 @@ public class UserService
             // User roles is empty therefore delete all roles from the user
             else
             {
-                var wentToCatch = false;
-                string errorMessage = "Failed to set roles";
+                errorMessage = "Unable to update user's roles";
                 try
                 {
-                    result = await _userManager.RemoveFromRolesAsync(_user, await _userManager.GetRolesAsync(_user));
+                    succeeded = await _userManager.RemoveFromRolesAsync(_user, user.Roles!.Select(r => r.Name).Where(r => !string.IsNullOrWhiteSpace(r))!);
                 }
                 catch (InvalidOperationException ex) 
                 { 
-                    wentToCatch = true;
                     #if DEBUG
                         errorMessage = $"{errorMessage} : {ex.StackTrace}";
                     #endif
+                    succeeded = IdentityResult.Failed();
                 }
-                if (wentToCatch || !result.Succeeded)
+                if (!succeeded.Succeeded)
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
                     return false;
                 }
-            }
-
-            int result2 = await _userRepository.UpdateCertainFieldsAsync(q => q
-                .Where(u => u.Id == _user.Id),
-                s => s
-                    .SetProperty(u => u.Description, user.Description)
-                    // Confirm e-mail and phone number when changed by admin.
-                    // Maybe change this functionality in the future idk.
-                    // TODO: Add panels in admin panel to confirm / unconfirm user email / phone number
-                    .SetProperty(u => u.EmailConfirmed, true)
-                    .SetProperty(u => u.PhoneNumberConfirmed, true)
-            );
-
-            if (result2 < 1)
-            {
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set description" });
-                return false;
             }
 
             if (image is not null)

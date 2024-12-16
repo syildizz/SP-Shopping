@@ -12,6 +12,7 @@ public class ShoppingServices : IShoppingServices
     public ICategoryService Category { get; }
     public ICartItemService CartItem { get; }
     public IUserService User { get; }
+    public IRoleService Role { get; }
 
     private readonly ApplicationDbContext _context;
 
@@ -22,10 +23,10 @@ public class ShoppingServices : IShoppingServices
         IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler,
         IMemoryCacher<string> memoryCacher,
         ILogger<RepositoryBaseCaching<Category>> memoryCacherLogger,
-        UserManager<ApplicationUser> userManager
+        UserManager<ApplicationUser> userManager,
+        RoleManager<ApplicationRole> roleManager
     )
     {
-
         _context = context;
 
         IRepository<Product> productRepository = new RepositoryBase<Product>(_context);
@@ -39,6 +40,9 @@ public class ShoppingServices : IShoppingServices
 
         IRepository<ApplicationUser> userRepository = new RepositoryBase<ApplicationUser>(_context);
         User = new UserService(userRepository, productRepository, userManager, profileImageHandler, Product);
+
+        IRepository<ApplicationRole> roleRepository = new RepositoryBase<ApplicationRole>(_context);
+        Role = new RoleService(roleRepository, roleManager);
     }
 
     public bool DoInTransaction(Func<bool> action)

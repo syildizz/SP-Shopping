@@ -107,9 +107,9 @@ public class UserController
         _logger.LogDebug("Fetching product information matching search term.");
         var pdtoList = await _shoppingServices.User.GetAllAsync(q =>
             _mapper.ProjectTo<AdminUserDetailsDto>(q)
+                .Take(20)
                 ._(queryFilter)
                 ._(sortFilter)
-                .Take(20)
         );
 
         return View(pdtoList);
@@ -151,8 +151,11 @@ public class UserController
                 return NotFound("The user is not found");
             }
 
+            user.Roles = await _shoppingServices.Role.GetAllAsync(q => q
+                .Where(r => r.NormalizedName != null && udto.Roles.Contains(r.NormalizedName))
+            );
 
-            if (!(await _shoppingServices.User.TryUpdateAsync(user, udto.ProfilePicture, udto.Roles)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.User.TryUpdateAsync(user, udto.ProfilePicture)).TryOut(out var errMsgs))
             {
                _messageHandler.Add(TempData, errMsgs!); 
                return RedirectToAction("Edit", new { id = udto.Id });

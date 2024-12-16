@@ -156,8 +156,11 @@ public class AdminUserControllerTests
         // Arrange
             // Modelstate is correct
             // Update succeeds
-        A.CallTo(() => _shoppingServices.User.TryUpdateAsync(An<ApplicationUser>._, An<IFormFile?>._, An<IEnumerable<string>?>._))
+        A.CallTo(() => _shoppingServices.User.TryUpdateAsync(An<ApplicationUser>._, An<IFormFile?>._))
             .Returns((true, null));
+        A.CallTo(() => _shoppingServices.Role.GetAllAsync(A<Func<IQueryable<ApplicationRole>, IQueryable<ApplicationRole>>>._))
+            .Returns(A.Fake<List<ApplicationRole>>());
+        
         // Act
         IActionResult result = await _adminUserController.Edit(A.Fake<AdminUserEditDto>());
         // Assert
@@ -166,7 +169,7 @@ public class AdminUserControllerTests
         var redirectResult = (RedirectToActionResult)result;
         Assert.IsTrue(redirectResult.ActionName == "Index", $"Redirected is not Index, but {redirectResult.ActionName}");
             // Update attempted
-        A.CallTo(() => _shoppingServices.User.TryUpdateAsync(An<ApplicationUser>._, An<IFormFile?>._, An<IEnumerable<string>?>._))
+        A.CallTo(() => _shoppingServices.User.TryUpdateAsync(An<ApplicationUser>._, An<IFormFile?>._))
             .MustHaveHappened();
     }
 
@@ -198,7 +201,7 @@ public class AdminUserControllerTests
         user.Id = id;
             // Modelstate is correct
             // Update does NOT succeed
-        A.CallTo(() => _shoppingServices.User.TryUpdateAsync(An<ApplicationUser>._, An<IFormFile?>._, An<IEnumerable<string>?>._))
+        A.CallTo(() => _shoppingServices.User.TryUpdateAsync(An<ApplicationUser>._, An<IFormFile?>._))
             .Returns((false, [ new Message { Type = Message.MessageType.Error, Content = "blabla" }]));
         // Act
         IActionResult result = await _adminUserController.Edit(user);
@@ -209,7 +212,7 @@ public class AdminUserControllerTests
         Assert.IsTrue(redirectResult.ActionName == "Edit", $"Redirected is not Edit, but {redirectResult.ActionName}");
         Assert.IsTrue((string?)redirectResult.RouteValues?["id"] is not null and id, "Wrong route value for Edit");
             // Update attempted
-        A.CallTo(() => _shoppingServices.User.TryUpdateAsync(An<ApplicationUser>._, An<IFormFile?>._, An<IEnumerable<string>?>._))
+        A.CallTo(() => _shoppingServices.User.TryUpdateAsync(An<ApplicationUser>._, An<IFormFile?>._))
             .MustHaveHappened();
             // Message error
         Assert.IsTrue(_messageHandler.Peek(_adminUserController.TempData)?.Any(m => m.Type is Message.MessageType.Error), "Expected error mesage was not returned");

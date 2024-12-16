@@ -10,6 +10,11 @@ public class AdminUserEditDto
     public string? PhoneNumber { get; set; }
     public string? Email { get; set; }
     public List<string> Roles { get; set; } = [];
+
+    public string? RoleString { 
+        get => string.Join(", ", Roles); 
+        set => Roles = !string.IsNullOrWhiteSpace(value) ? value.Split(", ").ToList() : []; 
+    }
     public string? Description { get; set; }
     [IsImageFile]
     public IFormFile? ProfilePicture { get; set; }
