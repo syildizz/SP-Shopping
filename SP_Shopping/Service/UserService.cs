@@ -74,7 +74,7 @@ public class UserService
         return await _userRepository.ExistsAsync(query);
     }
 
-    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryCreateAsync(ApplicationUser user, string password, IFormFile? image, IEnumerable<string>? roles)
+    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryCreateAsync(ApplicationUser user, string password, IFormFile? image)
     {
         ICollection<Message> errorMessages = [];
 
@@ -83,52 +83,12 @@ public class UserService
 
             IdentityResult succeeded;
 
+            user.EmailConfirmed = true;
+            user.PhoneNumberConfirmed = true;
             succeeded = await _userManager.CreateAsync(user, password);
             if (!succeeded.Succeeded)
             {
                 errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to create user" });
-                return false;
-            }
-
-            if (roles is not null)
-            {
-                var errorMessage = "Failed to set user's roles";
-                bool wentToCatch = false;
-                try
-                {
-                    succeeded = await _userManager.AddToRolesAsync(user, roles);
-                }
-                catch (InvalidOperationException ex) 
-                { 
-                    wentToCatch = true;
-                    #if DEBUG
-                    errorMessage = $"{errorMessage}: {ex.StackTrace}";
-                    #endif
-                }
-                if (wentToCatch || !succeeded.Succeeded)
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
-                    return false;
-                }
-
-            }
-
-            int result2 = await _userRepository.UpdateCertainFieldsAsync(q => q
-                .Where(u => u.Id == user.Id),
-                s => s
-                    .SetProperty(u => u.Description, user.Description)
-                    .SetProperty(u => u.InsertionDate, DateTime.Now)
-                    // Confirm e-mail and phone number when changed by admin.
-                    // Maybe change this functionality in the future idk.
-                    // TODO: Add panels in admin panel to confirm / unconfirm user email / phone number
-                    .SetProperty(u => u.EmailConfirmed, true)
-                    .SetProperty(u => u.PhoneNumberConfirmed, true)
-                    .SetProperty(u => u.ConcurrencyStamp, Guid.NewGuid().ToString())
-            );
-
-            if (result2 < 1)
-            {
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set description" });
                 return false;
             }
 

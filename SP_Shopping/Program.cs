@@ -157,6 +157,8 @@ public class Program
         if (app.Configuration.GetSection("SeedDatabase").Get<bool?>() is not null and true)
         {
             await new DbSeeder(app).Seed();
+            app.Services.GetRequiredService<ILogger<Program>>().LogInformation("Finished seeding database");
+            return;
         }
 
         app.Run();

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Service;
+using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
@@ -30,16 +32,9 @@ public class DbSeeder : IDisposable
 
     private readonly IShoppingServices _shoppingServices;
     
-    private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
-
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler;
-
-    private readonly RoleManager<ApplicationRole> _roleManager;
-
     private readonly string _seedFolder;
 
-    private readonly Random _random = new Random();
+    private readonly Random _random = new();
 
     public DbSeeder(WebApplication app, string seedFolder = "MOCK_DATA")
     {
@@ -51,11 +46,6 @@ public class DbSeeder : IDisposable
         _logger = _scope.ServiceProvider.GetRequiredService<ILogger<DbSeeder>>();
 
         _shoppingServices = _scope.ServiceProvider.GetRequiredService<IShoppingServices>();
-        _productImageHandler = _scope.ServiceProvider.GetRequiredService<IImageHandlerDefaulting<ProductImageKey>>();
-
-        _userManager = _scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        _profileImageHandler = _scope.ServiceProvider.GetRequiredService<IImageHandlerDefaulting<UserProfileImageKey>>();
-        _roleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
     }
 
@@ -119,7 +109,15 @@ public class DbSeeder : IDisposable
             }
         }
 
-        await AddRoles();
+        if (!await AddRoles())
+        {
+            return;
+        }
+
+        if (!await MakeAdminUser(imageStreams))
+        {
+            return;
+        }
 
         List<ApplicationUser> users = userSeedData
             .Select(u =>
@@ -129,6 +127,7 @@ public class DbSeeder : IDisposable
                 user.Email = u.Email;
                 user.PhoneNumber = u.PhoneNumber;
                 user.Description = u.Description;
+                user.Roles = [];
                 return user;
             })
             .DistinctBy(u => u.UserName)
@@ -138,7 +137,7 @@ public class DbSeeder : IDisposable
         {
             Stream? chosenImage = imageStreams[_random.Next(imageStreams.Count)];
             FormFile? ff = chosenImage is null ? null : new FormFile(chosenImage, 0, chosenImage.Length, "idk", "idk");
-            var (succeeded, errMsgs) = await _shoppingServices.User.TryCreateAsync(user, "123456", ff, null);
+            var (succeeded, errMsgs) = await _shoppingServices.User.TryCreateAsync(user, "123456", ff);
             if (ff is not null)
             {
                 chosenImage!.Position = 0;
@@ -146,11 +145,10 @@ public class DbSeeder : IDisposable
             if (!succeeded)
             {
                 _logger.LogError("Failed to seed user in database due to {ErrMsgs}", errMsgs);
-                break;
+                return;
             }
         }
 
-        await MakeAdminUser(imageStreams);
 
         List<Product> products = productSeedData
             .Select(p => new Product
@@ -176,7 +174,7 @@ public class DbSeeder : IDisposable
             if (!succeeded)
             {
                 _logger.LogError("Failed to seed product in database due to {ErrMsgs}", errmsgs);
-                continue;
+                return;
             }
         }
 
@@ -196,7 +194,7 @@ public class DbSeeder : IDisposable
             if (!succeed)
             {
                 _logger.LogError("Failed to seed cartItem in database due to {Errmsgs}", errmsgs);
-                continue;
+                return;
             }
         }
 
@@ -219,12 +217,11 @@ public class DbSeeder : IDisposable
     {
         foreach (string role in roles)
         {
-            if (!await _roleManager.RoleExistsAsync(role))
+            if (!await _shoppingServices.Role.ExistsAsync(q => q.Where(r => r.Name == role)))
             {
-                var succeed = await _roleManager.CreateAsync(new ApplicationRole(role));
-                if (!succeed.Succeeded)
+                if (!(await _shoppingServices.Role.TryCreateAsync(new ApplicationRole(role))).TryOut(out var errMsgs))
                 {
-                    _logger.LogError("Failed to create role for role \"{Role}\" due to {ErrMsgs}", role, succeed.Errors);
+                    _logger.LogError("Failed to create role for role \"{Role}\" due to {ErrMsgs}", role, errMsgs);
                     return false;
                 }
             }
@@ -241,20 +238,28 @@ public class DbSeeder : IDisposable
     }
 
 
-    private async Task MakeAdminUser(List<Stream?> imageStreams)
+    private async Task<bool> MakeAdminUser(List<Stream?> imageStreams)
     {
+
+        ApplicationRole? adminRole = await _shoppingServices.Role.GetSingleAsync(q => q.Where(r => r.Name == "Admin"));
+        if (adminRole == null)
+        {
+            _logger.LogError("Failed to get admin role from database");
+            return false;
+        }
 
         var admin = new ApplicationUser
         {
             UserName = "admin",
             Email = "admin@admin.com",
             PhoneNumber = "111111",
-            Description = "Admin user"
+            Description = "Admin user",
+            Roles = adminRole is not null ? [adminRole] : []
         };
 
         Stream? chosenImage = imageStreams[_random.Next(imageStreams.Count)];
         FormFile? ff = chosenImage is null ? null : new FormFile(chosenImage, 0, chosenImage.Length, "idk", "idk");
-        var (succeeded, errMsgs) = await _shoppingServices.User.TryCreateAsync(admin, "123456", ff, ["Admin"]);
+        var (succeeded, errMsgs) = await _shoppingServices.User.TryCreateAsync(admin, "123456", ff);
         if (ff is not null)
         {
             chosenImage!.Position = 0;
@@ -262,7 +267,10 @@ public class DbSeeder : IDisposable
         if (!succeeded)
         {
             _logger.LogError("Failed to seed user in database due to {ErrMsgs}", errMsgs);
+            return false;
         }
+
+        return true;
     }
 
 
