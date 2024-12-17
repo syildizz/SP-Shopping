@@ -10,7 +10,7 @@ using SP_Shopping.Dtos.User;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
-using SP_Shopping.Utilities.Filter;
+using SP_Shopping.Utilities.Filters;
 using System.Security.Claims;
 
 namespace SP_Shopping.Test.Controllers;

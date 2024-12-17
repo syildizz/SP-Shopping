@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace SP_Shopping.Attributes;
+namespace SP_Shopping.Utilities.Attributes;
 
 // Following code is taken from:
 // https://stackoverflow.com/a/78150423 by Michael Ulloa

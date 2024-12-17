@@ -6,11 +6,10 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using SP_Shopping.Attributes;
 using SP_Shopping.Models;
+using SP_Shopping.Utilities.Attributes;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
-using SP_Shopping.Utilities.ImageValidator;
 using SP_Shopping.Utilities.MessageHandler;
 
 namespace SP_Shopping.Areas.Identity.Pages.Account.Manage;

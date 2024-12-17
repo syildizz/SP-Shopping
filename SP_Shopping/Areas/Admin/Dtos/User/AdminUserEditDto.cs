@@ -1,5 +1,6 @@
 ﻿
-using SP_Shopping.Attributes;
+
+using SP_Shopping.Utilities.Attributes;
 
 namespace SP_Shopping.Areas.Admin.Dtos.User;
 

@@ -1,5 +1,4 @@
-﻿using SP_Shopping.Attributes;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace SP_Shopping.Dtos.Cart;
 

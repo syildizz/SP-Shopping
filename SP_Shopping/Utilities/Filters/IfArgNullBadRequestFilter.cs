@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace SP_Shopping.Utilities.Filter;
+namespace SP_Shopping.Utilities.Filters;
 
 public class IfArgNullBadRequestFilter
 (
@@ -34,8 +34,8 @@ public class IfArgNullBadRequestFilter
         {
             if
             (
-                context.ActionArguments.TryGetValue(_argument, out var argumentValue) 
-                && 
+                context.ActionArguments.TryGetValue(_argument, out var argumentValue)
+                &&
                 argumentValue is not null
             )
             {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SP_Shopping.Attributes;
+using SP_Shopping.Utilities.Attributes;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 

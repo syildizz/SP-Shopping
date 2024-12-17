@@ -11,7 +11,7 @@ using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
-using SP_Shopping.Utilities.Filter;
+using SP_Shopping.Utilities.Filters;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;

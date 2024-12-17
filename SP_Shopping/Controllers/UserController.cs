@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Dtos.User;
 using SP_Shopping.Service;
-using SP_Shopping.Utilities.Filter;
+using SP_Shopping.Utilities.Filters;
 
 namespace SP_Shopping.Controllers;
 public class UserController

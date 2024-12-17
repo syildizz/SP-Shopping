@@ -10,7 +10,7 @@ using SP_Shopping.Dtos.Cart;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
-using SP_Shopping.Utilities.Filter;
+using SP_Shopping.Utilities.Filters;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Reflection;
 using System.Security.Claims;
