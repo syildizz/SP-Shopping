@@ -365,5 +365,6 @@ FodyWeavers.xsd
 /SP_Shopping/MOCK_DATA/images/*
 **/wwwroot/img-content/*
 **/wwwroot/is-cache
+**/wwwroot/lib/*
 !**/.gitkeep
 
