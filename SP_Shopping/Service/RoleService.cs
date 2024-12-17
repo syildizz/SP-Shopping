@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.MessageHandler;
-using System.Data;
 
 namespace SP_Shopping.Service;
 
@@ -15,16 +13,6 @@ public class RoleService
 {
     private readonly IRepository<ApplicationRole> _roleRepository = roleRepository;
     private readonly RoleManager<ApplicationRole> _roleManager = rolemanager;
-
-    public bool Exists(Func<IQueryable<ApplicationRole>, IQueryable<ApplicationRole>> query)
-    {
-       return  _roleRepository.Exists(query);
-    }
-
-    public Task<bool> ExistsAsync(Func<IQueryable<ApplicationRole>, IQueryable<ApplicationRole>> query)
-    {
-        return _roleRepository.ExistsAsync(query);
-    }
 
     public List<ApplicationRole> GetAll()
     {
@@ -64,6 +52,16 @@ public class RoleService
     public Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query)
     {
         return _roleRepository.GetSingleAsync(query);
+    }
+
+    public bool Exists(Func<IQueryable<ApplicationRole>, IQueryable<ApplicationRole>> query)
+    {
+       return  _roleRepository.Exists(query);
+    }
+
+    public Task<bool> ExistsAsync(Func<IQueryable<ApplicationRole>, IQueryable<ApplicationRole>> query)
+    {
+        return _roleRepository.ExistsAsync(query);
     }
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(ApplicationRole role)
