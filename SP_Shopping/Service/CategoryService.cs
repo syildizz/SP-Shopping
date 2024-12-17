@@ -69,52 +69,11 @@ public class CategoryService
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Category category)
     {
-
-        ICollection<Message> errorMessages = [];
-
-        bool transactionSucceeded = _categoryRepository.DoInTransaction(() =>
-        {
-
-            _categoryRepository.Create(category);
-
-            try
-            {
-                _categoryRepository.SaveChanges();
-            }
-            catch (Exception ex)
-            {
-                if (ex is DbUpdateException or DBConcurrencyException)
-                {
-#if DEBUG
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-#else
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-#endif
-                    return false;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return true;
-        });
-
-        if (transactionSucceeded)
-        {
-            return (true, null);
-        }
-        else
-        {
-            return (false, errorMessages);
-        }
-
+        return TryCreateAsync(category).Result;
     }
 
     public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryCreateAsync(Category category)
     {
-
         ICollection<Message> errorMessages = [];
 
         bool transactionSucceeded = await _categoryRepository.DoInTransactionAsync(async () =>
@@ -154,51 +113,11 @@ public class CategoryService
         {
             return (false, errorMessages);
         }
-
     }
 
     public (bool succeeded, ICollection<Message>? errorMesages) TryUpdate(Category category)
     {
-        ICollection<Message>? errorMessages = [];
-
-        bool transactionSucceeded = _categoryRepository.DoInTransaction(() =>
-        {
-
-            try
-            {
-                _categoryRepository.Update(category);
-                _categoryRepository.SaveChanges();
-            }
-            catch (Exception ex)
-            {
-                if (ex is DbUpdateException or DBConcurrencyException)
-                {
-#if DEBUG
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-#else
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-#endif
-                    return false;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return true;
-        });
-
-        if (transactionSucceeded)
-        {
-            errorMessages = null;
-            return (true, errorMessages);
-        }
-        else
-        {
-            return (false, errorMessages);
-        }
-
+        return TryUpdateAsync(category).Result;
     }
 
     public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(Category category)
@@ -247,52 +166,7 @@ public class CategoryService
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryDelete(Category category)
     {
-
-        ICollection<Message> errorMessages = [];
-
-        var productIds = _productRepository.GetAll(q => q.Where(p => p.Category == category).Select(p => p.Id));
-
-        bool transactionSucceeded = _categoryRepository.DoInTransaction(() =>
-        {
-
-            try
-            {
-                _categoryRepository.Delete(category);
-                _categoryRepository.SaveChanges();
-            }
-            catch (Exception ex)
-            {
-                if (ex is DbUpdateException or DBConcurrencyException)
-                {
-#if DEBUG
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace}" });
-#else
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-#endif
-                    return false;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return true;
-        });
-
-        if (transactionSucceeded)
-        {
-            foreach (var productId in productIds)
-            {
-                _productService.TryDeleteCascade(new Product { Id = productId });
-            }
-            return (true, null);
-        }
-        else
-        {
-            return (false, errorMessages);
-        }
-
+        return TryDeleteAsync(category).Result;
     }
 
     public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(Category category)

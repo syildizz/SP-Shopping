@@ -68,33 +68,7 @@ public class RoleService
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(ApplicationRole role)
     {
-        ICollection<Message> errorMessages = [];
-
-        bool transactionSucceeded = true;
-
-        try
-        {
-            var succeeds = _roleManager.CreateAsync(role).Result;
-            if (succeeds is not null and IdentityResult) transactionSucceeded = true;
-        }
-        catch (InvalidOperationException ex)
-        {
-#if DEBUG
-            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace} {ex.Data}" });
-#else
-            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-#endif
-            transactionSucceeded = false;
-        }
-
-        if (transactionSucceeded)
-        {
-            return (true, null);
-        }
-        else
-        {
-            return (false, errorMessages);
-        }
+        return TryCreateAsync(role).Result;
     }
 
     public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryCreateAsync(ApplicationRole role)
@@ -128,7 +102,12 @@ public class RoleService
         }
     }
 
-    public (bool succeeded, ICollection<Message>? errorMessages) TryDelete(ApplicationRole role)
+    public (bool succeeded, ICollection<Message>? errorMesages) TryUpdate(ApplicationRole role)
+    {
+        return TryUpdateAsync(role).Result;
+    }
+
+    public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(ApplicationRole role)
     {
         ICollection<Message> errorMessages = [];
 
@@ -136,7 +115,7 @@ public class RoleService
 
         try
         {
-            var succeeds = _roleManager.DeleteAsync(role).Result;
+            var succeeds = await _roleManager.UpdateAsync(role);
             if (succeeds is not null and IdentityResult) transactionSucceeded = true;
         }
         catch (InvalidOperationException ex)
@@ -157,6 +136,11 @@ public class RoleService
         {
             return (false, errorMessages);
         }
+    }
+
+    public (bool succeeded, ICollection<Message>? errorMessages) TryDelete(ApplicationRole role)
+    {
+        return TryDeleteAsync(role).Result;
     }
 
     public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(ApplicationRole role)
@@ -190,65 +174,4 @@ public class RoleService
         }
     }
 
-    public (bool succeeded, ICollection<Message>? errorMesages) TryUpdate(ApplicationRole role)
-    {
-        ICollection<Message> errorMessages = [];
-
-        bool transactionSucceeded = true;
-
-        try
-        {
-            var succeeds = _roleManager.UpdateAsync(role).Result;
-            if (succeeds is not null and IdentityResult) transactionSucceeded = true;
-        }
-        catch (InvalidOperationException ex)
-        {
-#if DEBUG
-            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace} {ex.Data}" });
-#else
-            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-#endif
-            transactionSucceeded = false;
-        }
-
-        if (transactionSucceeded)
-        {
-            return (true, null);
-        }
-        else
-        {
-            return (false, errorMessages);
-        }
-    }
-
-    public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(ApplicationRole role)
-    {
-        ICollection<Message> errorMessages = [];
-
-        bool transactionSucceeded = true;
-
-        try
-        {
-            var succeeds = await _roleManager.UpdateAsync(role);
-            if (succeeds is not null and IdentityResult) transactionSucceeded = true;
-        }
-        catch (InvalidOperationException ex)
-        {
-#if DEBUG
-            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Error saving to database: {ex.StackTrace} {ex.Data}" });
-#else
-            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
-#endif
-            transactionSucceeded = false;
-        }
-
-        if (transactionSucceeded)
-        {
-            return (true, null);
-        }
-        else
-        {
-            return (false, errorMessages);
-        }
-    }
 }

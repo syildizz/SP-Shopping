@@ -76,47 +76,7 @@ public class UserService
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(ApplicationUser user, string password, IFormFile? image)
     {
-        ICollection<Message> errorMessages = [];
-
-        bool transactionSucceeded = _userRepository.DoInTransaction(() =>
-        {
-
-            IdentityResult succeeded;
-
-            user.EmailConfirmed = true;
-            user.PhoneNumberConfirmed = true;
-            succeeded = _userManager.CreateAsync(user, password).Result;
-            if (!succeeded.Succeeded)
-            {
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to create user" });
-                return false;
-            }
-
-            if (image is not null)
-            {
-                using var imageStream = image.OpenReadStream();
-                if (!_profileImageHandler.SetImage(new(user.Id), imageStream))
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set profile picture" });
-                    return false;
-                }
-
-                return true;
-            }
-
-            return true;
-
-        });
-
-        if (transactionSucceeded)
-        {
-            return (true, null);
-        }
-        else
-        {
-            return (false, errorMessages);
-        }
-
+        return TryCreateAsync(user, password, image).Result;
     }
 
     public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryCreateAsync(ApplicationUser user, string password, IFormFile? image)
@@ -166,73 +126,7 @@ public class UserService
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryUpdate(ApplicationUser user, IFormFile? image)
     {
-        ICollection<Message> errorMessages = [];
-
-        bool transactionSucceeded = _userRepository.DoInTransaction(() =>
-        {
-
-            ApplicationUser? _user = _userRepository.GetSingle(q => q.Where(u => u.Id == user.Id).Include(u => u.Roles));
-            if (_user is null)
-            {
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "User has invalid id" });
-                return false;
-            }
-
-            _user.UserName = user.UserName;
-            _user.Email = user.Email;
-            _user.PhoneNumber = user.PhoneNumber;
-            _user.Description = user.Description;
-            _user.Roles = user.Roles;
-
-            IdentityResult succeeded;
-            string errorMessage = "";
-            try
-            {
-                errorMessage = "Unable to update user";
-                succeeded = _userManager.UpdateAsync(_user).Result;
-            }
-            catch (InvalidOperationException ex) 
-            { 
-                #if DEBUG
-                errorMessage = $"{errorMessage}: {ex.StackTrace}";
-                #endif
-                succeeded = IdentityResult.Failed();
-            }
-            if (!succeeded.Succeeded)
-            {
-                #if DEBUG
-                errorMessages = errorMessages.Concat(succeeded.Errors.Select(e => new Message { Type = Message.MessageType.Error, Content = $"{errorMessage}: {e.Description}" })).ToList();
-                #else
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = errorMessage });
-                #endif
-                return false;
-            }
-
-            if (image is not null)
-            {
-                using var imageStream = image.OpenReadStream();
-                if (!_profileImageHandler.SetImage(new(user.Id), imageStream))
-                {
-                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set profile picture" });
-                    return false;
-                }
-
-                return true;
-            }
-
-            return true;
-
-        });
-
-        if (transactionSucceeded)
-        {
-            return (true, null);
-        }
-        else
-        {
-            return (false, errorMessages);
-        }
-
+        return TryUpdateAsync(user, image).Result;
     }
 
     public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryUpdateAsync(ApplicationUser user, IFormFile? image)
@@ -308,54 +202,7 @@ public class UserService
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryDelete(ApplicationUser user)
     {
-
-        ICollection<Message> errorMessages = [];
-
-        var productIds = _productRepository.GetAll(q => q.Where(p => p.SubmitterId == user.Id).Select(p => p.Id));
-
-        bool transactionSucceeded = _userRepository.DoInTransaction(() =>
-        {
-
-            IdentityResult result;
-
-            result = _userManager.DeleteAsync(user).Result;
-            if (!result.Succeeded)
-            {
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete user" });
-                return false;
-            }
-
-            try
-            {
-                _profileImageHandler.DeleteImage(new(user.Id));
-            }
-            catch (Exception ex)
-            {
-#if DEBUG
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.StackTrace}" });
-#else
-                errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
-#endif
-                return false;
-            }
-
-            return true;
-
-        });
-
-        if (transactionSucceeded)
-        {
-            foreach (var productId in productIds)
-            {
-                _productService.TryDeleteCascade(new Product { Id = productId });
-            }
-            return (true, null);
-        }
-        else
-        {
-            return (false, errorMessages);
-        }
-
+        return TryDeleteAsync(user).Result;
     }
 
     public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(ApplicationUser user)
