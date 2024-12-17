@@ -5,7 +5,7 @@ namespace SP_Shopping.Utilities.ImageHandler;
 
 public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<TKey> where TKey : IImageHandlerKey
 {
-    protected abstract string KeyName { get; }
+    protected abstract string ImageFolder { get; }
     protected string FolderPath => folderPath;
     protected virtual string ImgExtension => "png";
 
@@ -16,12 +16,12 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
 
     protected string GenerateImagePath(TKey key)
     {
-        return Path.Combine(FolderPath, "img-content", KeyName, GenerateImageFileName(key));
+        return Path.Combine(FolderPath, ImageFolder, GenerateImageFileName(key));
     }
 
     public string GenerateImageURL(TKey key)
     {
-        return Path.Combine("/", "img-content", KeyName, $"{GenerateImageFileName(key)}");
+        return Path.Combine("/", ImageFolder, $"{GenerateImageFileName(key)}");
     }
 
     public byte[] GetImageData(TKey key)

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp.Web.Commands;
 using SixLabors.ImageSharp.Web.DependencyInjection;
 using SixLabors.ImageSharp.Web.Processors;
+using SP_Shopping.Config;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -67,12 +68,15 @@ public class Program
         builder.Services.AddScoped(typeof(IRepositoryCaching<>), typeof(RepositoryBaseCaching<>));
         builder.Services.AddSingleton<IMemoryCacher<string>, MemoryCacher<string>>();
 
+        var imageLocationsOption = builder.Configuration.GetSection(ImageLocationsOption.ImageLocations).Get<ImageLocationsOption>();
+
         builder.Services.AddSingleton<IImageHandlerDefaulting<UserProfileImageKey>>(
             new ImageHandlerDefaulting<UserProfileImageKey>
             (
                 folderPath: builder.Environment.WebRootPath,
-                defaultProp: "default_pfp",
-                keyName: "user-pfp",
+                defaultImageFolder: imageLocationsOption?.Default.Folder ?? "img",
+                defaultProp: imageLocationsOption?.Default.User ?? "default_pfp",
+                imageFolder: imageLocationsOption?.User.Folder ?? "user-pfp",
                 imgExtension: "png"
             )
         );
@@ -80,8 +84,9 @@ public class Program
             new ImageHandlerDefaulting<ProductImageKey>
             (
                 folderPath: builder.Environment.WebRootPath,
-                defaultProp: "default_product",
-                keyName: "product",
+                defaultImageFolder: imageLocationsOption?.Default.Folder ?? "img",
+                defaultProp: imageLocationsOption?.Default.Product ?? "default_product",
+                imageFolder: imageLocationsOption?.Product.Folder ?? "product",
                 imgExtension: "png"
             )
         );

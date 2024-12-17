@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.Identity.Client;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 
 namespace SP_Shopping.Utilities.ImageHandler;
@@ -6,6 +7,7 @@ namespace SP_Shopping.Utilities.ImageHandler;
 public abstract class ImageHandlerDefaultingBase<TKey>(string folderPath) : ImageHandlerBase<TKey>(folderPath), IImageHandlerDefaulting<TKey> where TKey : IImageHandlerKey
 {
     protected abstract string DefaultProp { get; }
+    protected abstract string DefaultImageFolder { get; }
 
     protected string GenerateDefaultImageFileName()
     {
@@ -14,12 +16,12 @@ public abstract class ImageHandlerDefaultingBase<TKey>(string folderPath) : Imag
 
     protected string GenerateDefaultProfilePicturePath()
     {
-        return Path.Combine(FolderPath, "img", GenerateDefaultImageFileName());
+        return Path.Combine(FolderPath, DefaultImageFolder, GenerateDefaultImageFileName());
     }
 
     public string GenerateDefaultImageURL()
     {
-        return Path.Combine("/", "img", $"{GenerateDefaultImageFileName()}");
+        return Path.Combine("/", DefaultImageFolder, $"{GenerateDefaultImageFileName()}");
     }
 
     public string GetImageOrDefaultURL(TKey key)
