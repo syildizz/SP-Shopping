@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.MessageHandler;
@@ -8,15 +9,17 @@ namespace SP_Shopping.Service;
 public class RoleService
 (
     IRepository<ApplicationRole> roleRepository,
-    RoleManager<ApplicationRole> rolemanager
+    RoleManager<ApplicationRole> rolemanager,
+    IMapper mapper
 ) : IRoleService
 {
     private readonly IRepository<ApplicationRole> _roleRepository = roleRepository;
     private readonly RoleManager<ApplicationRole> _roleManager = rolemanager;
+    private readonly IMapper _mapper = mapper;
 
-    public List<ApplicationRole> GetAll()
+    public List<TResult> GetAll<TResult>()
     {
-        return _roleRepository.GetAll();
+        return _roleRepository.GetAll(q => _mapper.ProjectTo<TResult>(q));
     }
 
     public List<TResult> GetAll<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query)
@@ -24,24 +27,14 @@ public class RoleService
         return _roleRepository.GetAll(query);
     }
 
-    public Task<List<ApplicationRole>> GetAllAsync()
+    public async Task<List<TResult>> GetAllAsync<TResult>()
     {
-        return _roleRepository.GetAllAsync();
+        return await _roleRepository.GetAllAsync(q => _mapper.ProjectTo<TResult>(q));
     }
 
-    public Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query)
+    public async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query)
     {
-        return _roleRepository.GetAllAsync(query);
-    }
-
-    public ApplicationRole? GetByKey(params object?[]? keyValues)
-    {
-        return _roleRepository.GetByKey(keyValues);
-    }
-
-    public Task<ApplicationRole?> GetByKeyAsync(params object?[]? keyValues)
-    {
-        return _roleRepository.GetByKeyAsync(keyValues);
+        return await _roleRepository.GetAllAsync(query);
     }
 
     public TResult? GetSingle<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query)
@@ -49,19 +42,19 @@ public class RoleService
         return _roleRepository.GetSingle(query);
     }
 
-    public Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query)
+    public async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query)
     {
-        return _roleRepository.GetSingleAsync(query);
+        return await _roleRepository.GetSingleAsync(query);
     }
 
     public bool Exists(Func<IQueryable<ApplicationRole>, IQueryable<ApplicationRole>> query)
     {
-       return  _roleRepository.Exists(query);
+       return _roleRepository.Exists(query);
     }
 
-    public Task<bool> ExistsAsync(Func<IQueryable<ApplicationRole>, IQueryable<ApplicationRole>> query)
+    public async Task<bool> ExistsAsync(Func<IQueryable<ApplicationRole>, IQueryable<ApplicationRole>> query)
     {
-        return _roleRepository.ExistsAsync(query);
+        return await _roleRepository.ExistsAsync(query);
     }
 
     public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(ApplicationRole role)

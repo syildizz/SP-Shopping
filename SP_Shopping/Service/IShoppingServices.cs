@@ -8,6 +8,4 @@ public interface IShoppingServices
     IProductService Product { get; }
     IUserService User { get; }
     IRoleService Role { get; }
-    bool DoInTransaction(Func<bool> action);
-    Task<bool> DoInTransactionAsync(Func<Task<bool>> action);
 }

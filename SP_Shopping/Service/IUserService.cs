@@ -4,12 +4,10 @@ using SP_Shopping.Utilities.MessageHandler;
 namespace SP_Shopping.Service;
 public interface IUserService
 {
-    List<ApplicationUser> GetAll();
+    List<TResult> GetAll<TResult>();
     List<TResult> GetAll<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query);
-    Task<List<ApplicationUser>> GetAllAsync();
+    Task<List<TResult>> GetAllAsync<TResult>();
     Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query);
-    ApplicationUser? GetByKey(params object?[]? keyValues);
-    Task<ApplicationUser?> GetByKeyAsync(params object?[]? keyValues);
     TResult? GetSingle<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query);
     Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query);
     bool Exists(Func<IQueryable<ApplicationUser>, IQueryable<ApplicationUser>> query);

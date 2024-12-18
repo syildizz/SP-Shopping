@@ -5,12 +5,10 @@ namespace SP_Shopping.Service;
 
 public interface IRoleService
 {
-    List<ApplicationRole> GetAll();
+    List<TResult> GetAll<TResult>();
     List<TResult> GetAll<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query);
-    Task<List<ApplicationRole>> GetAllAsync();
+    Task<List<TResult>> GetAllAsync<TResult>();
     Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query);
-    ApplicationRole? GetByKey(params object?[]? keyValues);
-    Task<ApplicationRole?> GetByKeyAsync(params object?[]? keyValues);
     TResult? GetSingle<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query);
     Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<ApplicationRole>, IQueryable<TResult>> query);
     bool Exists(Func<IQueryable<ApplicationRole>, IQueryable<ApplicationRole>> query);

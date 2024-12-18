@@ -4,12 +4,10 @@ using SP_Shopping.Utilities.MessageHandler;
 namespace SP_Shopping.Service;
 public interface ICategoryService
 {
-    List<Category> GetAll();
+    List<TResult> GetAll<TResult>();
     List<TResult> GetAll<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query);
-    Task<List<Category>> GetAllAsync();
+    Task<List<TResult>> GetAllAsync<TResult>();
     Task<List<TResult>> GetAllAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query);
-    Category? GetByKey(string cacheKey, params object?[]? keyValues);
-    Task<Category?> GetByKeyAsync(string cacheKey, params object?[]? keyValues);
     TResult? GetSingle<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query);
     Task<TResult?> GetSingleAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query);
     bool Exists(Func<IQueryable<Category>, IQueryable<Category>> query);

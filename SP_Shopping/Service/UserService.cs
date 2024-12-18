@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -15,7 +16,8 @@ public class UserService
     IRepository<Product> productRepository,
     UserManager<ApplicationUser> userManager,
     IImageHandlerDefaulting<UserProfileImageKey> profileImageHandler,
-    IProductService productService
+    IProductService productService,
+    IMapper mapper
 ) : IUserService
 {
     private readonly IRepository<ApplicationUser> _userRepository = userRepository;
@@ -23,10 +25,11 @@ public class UserService
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IImageHandlerDefaulting<UserProfileImageKey> _profileImageHandler = profileImageHandler;
     private readonly IProductService _productService = productService;
+    private readonly IMapper _mapper = mapper;
 
-    public virtual List<ApplicationUser> GetAll()
+    public virtual List<TResult> GetAll<TResult>()
     {
-        return _userRepository.GetAll();
+        return _userRepository.GetAll(q => _mapper.ProjectTo<TResult>(q));
     }
 
     public virtual List<TResult> GetAll<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query)
@@ -34,24 +37,14 @@ public class UserService
         return _userRepository.GetAll(query);
     }
 
-    public virtual async Task<List<ApplicationUser>> GetAllAsync()
+    public virtual async Task<List<TResult>> GetAllAsync<TResult>()
     {
-        return await _userRepository.GetAllAsync();
+        return await _userRepository.GetAllAsync(q => _mapper.ProjectTo<TResult>(q));
     }
 
     public virtual async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query)
     {
         return await _userRepository.GetAllAsync(query);
-    }
-
-    public virtual ApplicationUser? GetByKey(params object?[]? keyValues)
-    {
-        return _userRepository.GetByKey(keyValues);
-    }
-
-    public virtual async Task<ApplicationUser?> GetByKeyAsync(params object?[]? keyValues)
-    {
-        return await _userRepository.GetByKeyAsync(keyValues);
     }
 
     public virtual TResult? GetSingle<TResult>(Func<IQueryable<ApplicationUser>, IQueryable<TResult>> query)

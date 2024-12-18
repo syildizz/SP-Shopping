@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
@@ -13,15 +14,18 @@ namespace SP_Shopping.Service;
 public class ProductService
 (
     IRepository<Product> productRepository,
-    IImageHandlerDefaulting<ProductImageKey> productImageHandler
+    IImageHandlerDefaulting<ProductImageKey> productImageHandler,
+    IMapper mapper
 ) : IProductService
 {
 
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler = productImageHandler;
-    public virtual List<Product> GetAll()
+    private readonly IMapper _mapper = mapper;
+
+    public virtual List<TResult> GetAll<TResult>()
     {
-        return _productRepository.GetAll();
+        return _productRepository.GetAll(q => _mapper.ProjectTo<TResult>(q));
     }
 
     public virtual List<TResult> GetAll<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
@@ -29,24 +33,14 @@ public class ProductService
         return _productRepository.GetAll(query);
     }
 
-    public virtual async Task<List<Product>> GetAllAsync()
+    public virtual async Task<List<TResult>> GetAllAsync<TResult>()
     {
-        return await _productRepository.GetAllAsync();
+        return await _productRepository.GetAllAsync(q => _mapper.ProjectTo<TResult>(q));
     }
 
     public virtual async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
     {
         return await _productRepository.GetAllAsync(query);
-    }
-
-    public virtual Product? GetByKey(params object?[]? keyValues)
-    {
-        return _productRepository.GetByKey(keyValues);
-    }
-
-    public virtual async Task<Product?> GetByKeyAsync(params object?[]? keyValues)
-    {
-        return await _productRepository.GetByKeyAsync(keyValues);
     }
 
     public virtual TResult? GetSingle<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)

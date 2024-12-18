@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.MessageHandler;
@@ -8,15 +9,17 @@ namespace SP_Shopping.Service;
 
 public class CartItemService
 (
-    IRepository<CartItem> cartItemRepository
+    IRepository<CartItem> cartItemRepository,
+    IMapper mapper
 ) : ICartItemService
 {
 
     private readonly IRepository<CartItem> _cartItemRepository = cartItemRepository;
+    private readonly IMapper _mapper = mapper;
 
-    public virtual List<CartItem> GetAll()
+    public virtual List<TResult> GetAll<TResult>()
     {
-        return _cartItemRepository.GetAll();
+        return _cartItemRepository.GetAll(q => _mapper.ProjectTo<TResult>(q));
     }
 
     public virtual List<TResult> GetAll<TResult>(Func<IQueryable<CartItem>, IQueryable<TResult>> query)
@@ -24,24 +27,14 @@ public class CartItemService
         return _cartItemRepository.GetAll(query);
     }
 
-    public virtual async Task<List<CartItem>> GetAllAsync()
+    public virtual async Task<List<TResult>> GetAllAsync<TResult>()
     {
-        return await _cartItemRepository.GetAllAsync();
+        return await _cartItemRepository.GetAllAsync(q => _mapper.ProjectTo<TResult>(q));
     }
 
     public virtual async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<CartItem>, IQueryable<TResult>> query)
     {
         return await _cartItemRepository.GetAllAsync(query);
-    }
-
-    public virtual CartItem? GetByKey(params object?[]? keyValues)
-    {
-        return _cartItemRepository.GetByKey(keyValues);
-    }
-
-    public virtual async Task<CartItem?> GetByKeyAsync(params object?[]? keyValues)
-    {
-        return await _cartItemRepository.GetByKeyAsync(keyValues);
     }
 
     public virtual TResult? GetSingle<TResult>(Func<IQueryable<CartItem>, IQueryable<TResult>> query)

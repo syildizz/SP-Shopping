@@ -79,7 +79,7 @@ public class CategoriesController
             return NotFound();
         }
 
-        var category = await _shoppingServices.Category.GetByKeyAsync(HttpContext.Request.Path, (int)id);
+        var category = await _shoppingServices.Category.GetSingleAsync(HttpContext.Request.Path, q => q.Where(c => c.Id == id));
         if (category == null)
         {
             return NotFound();
@@ -123,7 +123,7 @@ public class CategoriesController
             return NotFound();
         }
 
-        var category = await _shoppingServices.Category.GetByKeyAsync(HttpContext.Request.Path, (int)id);
+        var category = await _shoppingServices.Category.GetSingleAsync(HttpContext.Request.Path, q => q.Where(c => c.Id == id));
         if (category == null)
         {
             return NotFound();
@@ -167,7 +167,7 @@ public class CategoriesController
 
         //var category = await _context.Categories
         //    .FirstOrDefaultAsync(m => m.Id == id);
-        var category = await _shoppingServices.Category.GetByKeyAsync(HttpContext.Request.Path, (int)id);
+        var category = await _shoppingServices.Category.GetSingleAsync(HttpContext.Request.Path, q => q.Where(c => c.Id == id));
         if (category == null)
         {
             return NotFound();
@@ -182,7 +182,7 @@ public class CategoriesController
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         //var category = await _context.Categories.FindAsync(id);
-        var category = await _shoppingServices.Category.GetByKeyAsync("All", id);
+        var category = await _shoppingServices.Category.GetSingleAsync("All", q => q.Where(c => c.Id == id));
         if (category != null)
         {
             if (!(await _shoppingServices.Category.TryDeleteAsync(category)).TryOut(out var errMsgs))

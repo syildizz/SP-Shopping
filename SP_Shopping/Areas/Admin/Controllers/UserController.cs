@@ -202,7 +202,7 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering Admin/User/Adminize");
 
-        var user = await _shoppingServices.User.GetByKeyAsync(id);
+        var user = await _shoppingServices.User.GetSingleAsync(q => q.Where(u => u.Id == id).Include(u => u.Roles));
 
         if (user is null) return NotFound("User is not found");
         if (await _userManager.IsInRoleAsync(user, "Admin"))
@@ -237,7 +237,7 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering Admin/User/Unadminize");
 
-        var user = await _shoppingServices.User.GetByKeyAsync(id);
+        var user = await _shoppingServices.User.GetSingleAsync(q => q.Where(u => u.Id == id).Include(u => u.Roles));
         
         if (user is null) return NotFound("User is not found");
         if (!await _userManager.IsInRoleAsync(user, "Admin"))

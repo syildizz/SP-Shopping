@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.MessageHandler;
@@ -10,17 +11,19 @@ public class CategoryService
 (
     IRepositoryCaching<Category> categoryRepository,
     IRepository<Product> productRepository,
-    IProductService productService
+    IProductService productService,
+    IMapper mapper
 ) : ICategoryService
 {
 
     private readonly IRepositoryCaching<Category> _categoryRepository = categoryRepository;
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IProductService _productService = productService;
+    private readonly IMapper _mapper = mapper;
 
-    public virtual List<Category> GetAll()
+    public virtual List<TResult> GetAll<TResult>()
     {
-        return _categoryRepository.GetAll();
+        return _categoryRepository.GetAll(q => _mapper.ProjectTo<TResult>(q));
     }
 
     public virtual List<TResult> GetAll<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
@@ -28,24 +31,14 @@ public class CategoryService
         return _categoryRepository.GetAll(cacheKey, query);
     }
 
-    public virtual async Task<List<Category>> GetAllAsync()
+    public virtual async Task<List<TResult>> GetAllAsync<TResult>()
     {
-        return await _categoryRepository.GetAllAsync();
+        return await _categoryRepository.GetAllAsync(q => _mapper.ProjectTo<TResult>(q));
     }
 
     public virtual async Task<List<TResult>> GetAllAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
     {
         return await _categoryRepository.GetAllAsync(cacheKey, query);
-    }
-
-    public virtual Category? GetByKey(string cacheKey, params object?[]? keyValues)
-    {
-        return _categoryRepository.GetByKey(cacheKey, keyValues);
-    }
-
-    public virtual async Task<Category?> GetByKeyAsync(string cacheKey, params object?[]? keyValues)
-    {
-        return await _categoryRepository.GetByKeyAsync(cacheKey, keyValues);
     }
 
     public virtual TResult? GetSingle<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query)
