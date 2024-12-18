@@ -88,6 +88,7 @@ public class UserService
 
             IdentityResult succeeded;
 
+            user.InsertionDate = DateTime.Now;
             user.EmailConfirmed = true;
             user.PhoneNumberConfirmed = true;
             succeeded = await _userManager.CreateAsync(user, password);
