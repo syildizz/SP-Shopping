@@ -8,6 +8,7 @@ public class ProductCreateProfile : Profile
     public ProductCreateProfile()
     {
         CreateMap<Models.Product, ProductCreateDto>()
+            .ForMember(pdto => pdto.ProductImage, opt => opt.Ignore())
             .ReverseMap();
     }
 }
