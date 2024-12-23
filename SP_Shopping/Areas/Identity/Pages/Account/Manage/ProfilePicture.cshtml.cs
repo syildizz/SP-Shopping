@@ -102,7 +102,7 @@ public class ProfilePictureModel : PageModel
             return RedirectToPage();
         }
 
-        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Success, Content =  "Your account description has been updated." });;
+        _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Success, Content =  "Your profile picture has been updated." });;
         return RedirectToPage();
     }
 
