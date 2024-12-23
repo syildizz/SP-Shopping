@@ -6,6 +6,7 @@
 @{
     ViewData["Title"] = "Manage Profile Picture";
     ViewData["ActivePage"] = ManageNavPages.ProfilePicture;
+    const string imageInputId = "new-profile-image";
 }
 
 <h3>@ViewData["Title"]</h3>
@@ -21,6 +22,7 @@
             <div class="form-floating mb-3">
                 <input 
                     asp-for="Input.NewProfilePicture" 
+                    id="@imageInputId"
                     class="form-control form-control-sm" 
                     autocomplete="profile picture" 
                     aria-required="true" 
@@ -35,6 +37,18 @@
     </div>
 </div>
 
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
+
+<script type="module">
+    import { validateImageFile } from "/js/site.js";
+    const imageDiv = document.getElementById("@imageInputId");
+    imageDiv.addEventListener("change", e => {
+        let isValid = validateImageFile(imageDiv, imageDiv.files[0], 1_500_000);
+        if (!isValid) {
+            imageDiv.reportValidity();
+        }
+    });
+</script>

@@ -7,6 +7,7 @@
 @{
     ViewData["Title"] = "Edit";
     IEnumerable<SelectListItem> categorySelectList = ViewBag.categorySelectList;
+    const string imageInputId = "new-product-image";
 }
 
 <h1>Edit</h1>
@@ -35,6 +36,7 @@
             <label asp-for="@Model.ProductImage" class="control-label"></label>
             <input 
                 asp-for="@Model.ProductImage" 
+                id="@imageInputId"
                 class="form-control"
                 autocomplete="profile picture" 
                 aria-required="true" 
@@ -77,6 +79,17 @@
 <div>
     <a asp-action="Index">Back to List</a>
 </div>
+
+<script type="module">
+    import { validateImageFile } from "/js/site.js";
+    const imageDiv = document.getElementById("@imageInputId");
+    imageDiv.addEventListener("change", e => {
+        let isValid = validateImageFile(imageDiv, imageDiv.files[0], 1_500_000);
+        if (!isValid) {
+            imageDiv.reportValidity();
+        }
+    });
+</script>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
