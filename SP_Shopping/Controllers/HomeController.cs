@@ -2,7 +2,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
 using SP_Shopping.Service;
 using System.Diagnostics;
 using System.Security.Claims;

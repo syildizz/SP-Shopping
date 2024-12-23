@@ -50,7 +50,7 @@
         </nav>
     </header>
     <div class="container">
-
+        <div id="server-messages">
         @if (messages is not null)
         {
             @foreach (Message message in messages)
@@ -58,6 +58,7 @@
                 @Html.Raw(message.ContentHtml)
             }
         }
+        </div>
         <main role="main" class="pb-3">
             @RenderBody()
         </main>

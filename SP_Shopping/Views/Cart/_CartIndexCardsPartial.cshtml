@@ -4,38 +4,38 @@
 @inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
 
 <div>
-    @foreach (var item in Model)
+    @foreach (var cart in Model)
     {
     <div class="card justify-content-around m-3" style="min-height: 10em;">
         <div class="row g-0 align-items-center h-100">
             <div class="col-sm-3 d-flex card-body justify-content-center">
                 <img 
-                    src="@_productImageHandler.GetImageOrDefaultURL(new(item.ProductId))"
+                    src="@_productImageHandler.GetImageOrDefaultURL(new(cart.ProductId))"
                     class="img-fluid ratio-1x1"
                     style="aspect-ratio: 1/1; width: 80%;"
                     alt="Image for product"
                 />
             </div>
             <div class="col-sm-2 card-body d-flex flex-column card-body justify-content-center align-items-center">
-               <div class="card-title"><strong>@Html.DisplayFor(model => item.SubmitterName)</strong></div>
-               <div class="card-text">@Html.DisplayFor(model => item.ProductName)</div>
+               <div class="card-title"><strong>@Html.DisplayFor(model => cart.SubmitterName)</strong></div>
+               <div class="card-text">@Html.DisplayFor(model => cart.ProductName)</div>
             </div>
             <div class="col-sm-3 card-body d-flex card-body justify-content-center">
                 <div class="card-text card-text-fixer">
-                <form asp-action="Edit" asp-route-id="@item.ProductId" class="d-flex flex-row justify-content-center gap-2">
-                    <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@item.Count" value="@item.Count" class="form-control" style="min-width: 5em;" />
+                <form asp-action="Edit" asp-route-id="@cart.ProductId" class="d-flex flex-row justify-content-center gap-2">
+                    <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@cart.Count" value="@cart.Count" class="form-control" style="min-width: 5em;" min="0" oninput="this.reportValidity();" />
                     <button type="submit" class="btn btn-secondary btn-sm">Update</button>
                 </form>
                 </div>
             </div>
             <div class="col-sm-2 card-body d-flex flex-column card-body justify-content-center align-items-center">
                 <div class="card-text card-text-fixer">
-                    @((item.Price * item.Count).ToString("C"))
+                    @((cart.Price * cart.Count).ToString("C"))
                 </div>
             </div>
             <div class="col-sm-2 card-body d-flex card-body justify-content-center">
                 <div class="card-text">
-                <form asp-action="Delete" asp-route-id="@item.ProductId">
+                <form asp-action="Delete" asp-route-id="@cart.ProductId">
                     <button type="submit" class="btn btn-danger btn-sm mw-100 overflow-auto">Remove from cart</button>
                 </form>
                 </div>

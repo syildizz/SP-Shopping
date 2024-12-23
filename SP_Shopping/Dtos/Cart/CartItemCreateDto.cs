@@ -4,6 +4,6 @@ namespace SP_Shopping.Dtos.Cart;
 
 public class CartItemCreateDto
 {
-    [RegularExpression("([0-9]+)", ErrorMessage = "Count must be a positive integer")]
+    [RegularExpression("([0-9]+)", ErrorMessage = "Cart cannot have negative count of items")]
     public int Count { get; set; }
 }
