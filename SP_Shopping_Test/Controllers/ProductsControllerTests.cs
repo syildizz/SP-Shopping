@@ -101,6 +101,7 @@ public class ProductsControllerTests
     [DataRow("Delete", (Type[])[typeof(int?)])]
     [DataRow("DeleteConfirmed", (Type[])[typeof(int?)])]
     [DataRow("ResetImage", (Type[])[typeof(int?)])]
+    [DataRow("ProductCard", (Type[])[typeof(int?)])]
     [DataTestMethod]
     public void ProductsController_Some_Fails_WhenIdIsNull_WithBadRequest(string methodName, Type[] types)
     {
@@ -628,7 +629,7 @@ public class ProductsControllerTests
     #region Image
 
     [TestMethod]
-    public async Task ProductsController_ResetImage_Succeeds_WithRedirect()
+    public async Task ProductsController_ResetImakge_Succeeds_WithRedirect()
     {
         // Arrange
             // Id is not null
@@ -729,4 +730,41 @@ public class ProductsControllerTests
 
     #endregion Image
 
+    #region API
+
+    [TestMethod]
+    public async Task ProductsController_ProductCard_Succeeds_WithPartialView()
+    {
+        // Arrange
+            // Id is not null
+        const int id = 0;
+            // Id exists, Product is found
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+            .Returns(A.Fake<ProductDetailsDto>());
+        // Act
+        IActionResult result = await _productsController.ProductCard(id);
+        // Assert
+            // Result is correct
+        Assert.IsInstanceOfType<PartialViewResult>(result);
+        var partialViewResult = (PartialViewResult)result;
+        Assert.IsInstanceOfType<ProductDetailsDto>(partialViewResult.Model);
+    }
+
+    [TestMethod]
+    public async Task ProductsController_ProductCard_Fails_WhenProductIsNotExist_WithNotFound()
+    {
+        // Arrange
+            // Id is not null
+        const int id = 0;
+            // Id exists, Product is found
+        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
+            .Returns((ProductDetailsDto?)null);
+        // Act
+        IActionResult result = await _productsController.ProductCard(id);
+        // Assert
+            // Result is correct
+        Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult, $"Result should be {nameof(NotFoundResult)} or {nameof(NotFoundObjectResult)} but is {result.GetType().Name}");
+    }
+
+    #endregion API
 }
