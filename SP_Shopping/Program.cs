@@ -98,6 +98,7 @@ public class Program
 
         builder.Services.AddImageSharp(options =>
         {
+            options.CacheMaxAge = TimeSpan.FromDays(5);
             options.OnParseCommandsAsync = c =>
             {
                 if (c.Commands.Count == 0)
