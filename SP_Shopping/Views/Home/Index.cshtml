@@ -1,4 +1,5 @@
-﻿@using SP_Shopping.Utilities.ImageHandler
+﻿@using SP_Shopping.Hubs
+@using SP_Shopping.Utilities.ImageHandler
 @using SP_Shopping.Utilities.ImageHandlerKeys
 @model IEnumerable<ProductDetailsDto>
 @inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
@@ -20,5 +21,32 @@
         <partial name="_SearchFormPartial" model="@("Products", "Search", "query")"/>
     </div>
     
-    <partial name="_ProductCardsPartial" model="Model" /> 
+    <div id="productCards">
+        <partial name="_ProductCardsPartial" model="Model" /> 
+    </div>
 </div>
+
+<script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+
+<script type="module">
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/productHub")
+        .configureLogging(signalR.LogLevel.Warning)
+        .withAutomaticReconnect()
+        .build();
+
+    await connection.on("@(nameof(IProductHubClient.NotifyChangeInProductWithId))", async id => {
+        const productCard = document.getElementById(`product_card_${id}`);
+        let response = await fetch("/api/products/productcard" + "?" + new URLSearchParams({ "id": id }).toString());
+        if (response.status === 404) {
+            productCard.remove();
+        }
+        if (response.status === 200) {
+            let productCardHTML = await response.text();
+            productCard.outerHTML = productCardHTML;
+        }
+    });
+
+    await connection.start();
+
+</script>

@@ -1,0 +1,35 @@
+﻿@using SP_Shopping.Utilities.ImageHandler
+@using SP_Shopping.Utilities.ImageHandlerKeys
+@model ProductDetailsDto
+@inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
+@inject IImageHandlerDefaulting<UserProfileImageKey> _userProfileImageHandler
+
+    <div id="product_card_@Model.Id" class="card" style="text-align: left;">
+        <a asp-controller="Products" asp-action="Details" asp-route-id="@Model.Id" class="unstyled">
+        <img 
+            src="@_productImageHandler.GetImageOrDefaultURL(new(Model.Id))"
+            class="card-img-top ratio-1x1"
+            alt="Image for product"
+        />
+        </a>
+        <div class="card-body py-2">
+            <a asp-controller="Products" asp-action="Details" asp-route-id="@Model.Id" class="unstyled">
+            <div class="card-title card-text-fixer my-1"><strong>@Html.DisplayFor(model => Model.Name)</strong></div>    
+            <div class="card-text card-text-fixer my-1">@Html.DisplayFor(model => Model.Price)</div>    
+            <div class="card-text card-text-fixer my-1">@Html.DisplayFor(model => Model.CategoryName)</div>    
+            </a>
+            @if (Model.SubmitterId is not null)
+            {
+                <div class="card-text-fixer my-1">
+                <a asp-controller="User" asp-action="Index" asp-route-Id="@Model.SubmitterId">
+                    <img 
+                        class="img-fluid ratio-1x1 float-start me-2" 
+                        style="width: 1.5em; top: 50%; left: 0; aspect-ratio: 1/1;" 
+                        src="@_userProfileImageHandler.GetImageOrDefaultURL(new(Model.SubmitterId))" 
+                    />
+                    <span>@Html.DisplayFor(model => Model.SubmitterName)</span>
+                </a>
+                </div>
+            }
+        </div>
+    </div>

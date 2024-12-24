@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using SP_Shopping.Data;
+using SP_Shopping.Hubs;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
@@ -26,13 +28,14 @@ public class ShoppingServices : IShoppingServices
         ILogger<RepositoryBaseCaching<Category>> memoryCacherLogger,
         UserManager<ApplicationUser> userManager,
         RoleManager<ApplicationRole> roleManager,
-        IMapper mapper
+        IMapper mapper,
+        IHubContext<ProductHub, IProductHubClient> productHubContext
     )
     {
         _context = context;
 
         IRepository<Product> productRepository = new RepositoryBase<Product>(_context);
-        Product = new ProductService(productRepository, productImageHandler, mapper);
+        Product = new ProductService(productRepository, productImageHandler, mapper, productHubContext);
 
         IRepositoryCaching<Category> categoryRepository = new RepositoryBaseCaching<Category>(_context, memoryCacher, memoryCacherLogger);
         Category = new CategoryService(categoryRepository, productRepository, Product, mapper);

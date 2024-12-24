@@ -5,6 +5,7 @@ using SixLabors.ImageSharp.Web.DependencyInjection;
 using SixLabors.ImageSharp.Web.Processors;
 using SP_Shopping.Config;
 using SP_Shopping.Data;
+using SP_Shopping.Hubs;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Service;
@@ -124,6 +125,8 @@ public class Program
             };
         });
 
+        builder.Services.AddSignalR();
+
         var app = builder.Build();
 
         app.UseRequestLocalization("tr-TR");
@@ -158,6 +161,8 @@ public class Program
             pattern: "{controller=Home}/{action=Index}/{id?}"
         );
         app.MapRazorPages();
+
+        app.MapHub<ProductHub>("/productHub");
 
         if (app.Configuration.GetSection("SeedDatabase").Get<bool?>() is not null and true)
         {

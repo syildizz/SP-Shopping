@@ -7,34 +7,6 @@
 <div class="my-grid">
     @foreach (var product in Model)
     {
-        <div class="card" style="text-align: left;">
-            <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" class="unstyled">
-            <img 
-                src="@_productImageHandler.GetImageOrDefaultURL(new(product.Id))"
-                class="card-img-top ratio-1x1"
-                alt="Image for product"
-            />
-            </a>
-            <div class="card-body py-2">
-                <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" class="unstyled">
-                <div class="card-title card-text-fixer my-1"><strong>@Html.DisplayFor(model => product.Name)</strong></div>    
-                <div class="card-text card-text-fixer my-1">@Html.DisplayFor(model => product.Price)</div>    
-                <div class="card-text card-text-fixer my-1">@Html.DisplayFor(model => product.CategoryName)</div>    
-                </a>
-                @if (product.SubmitterId is not null)
-                {
-                    <div class="card-text-fixer my-1">
-                    <a asp-controller="User" asp-action="Index" asp-route-Id="@product.SubmitterId">
-                        <img 
-                            class="img-fluid ratio-1x1 float-start me-2" 
-                            style="width: 1.5em; top: 50%; left: 0; aspect-ratio: 1/1;" 
-                            src="@_userProfileImageHandler.GetImageOrDefaultURL(new(product.SubmitterId))" 
-                        />
-                        <span>@Html.DisplayFor(model => product.SubmitterName)</span>
-                    </a>
-                    </div>
-                }
-            </div>
-        </div>
+        <partial name="_ProductCardPartial" model="product" />
     }
 </div>

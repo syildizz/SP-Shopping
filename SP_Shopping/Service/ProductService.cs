@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using SP_Shopping.Hubs;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
 using SP_Shopping.Utilities.ImageHandler;
@@ -15,13 +17,15 @@ public class ProductService
 (
     IRepository<Product> productRepository,
     IImageHandlerDefaulting<ProductImageKey> productImageHandler,
-    IMapper mapper
+    IMapper mapper,
+    IHubContext<ProductHub, IProductHubClient> productHubContext
 ) : IProductService
 {
 
     private readonly IRepository<Product> _productRepository = productRepository;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler = productImageHandler;
     private readonly IMapper _mapper = mapper;
+    private readonly IHubContext<ProductHub, IProductHubClient> _productHubContext = productHubContext;
 
     public virtual List<TResult> GetAll<TResult>()
     {
@@ -207,6 +211,7 @@ public class ProductService
 
         if (transactionSucceeded)
         {
+            await _productHubContext.Clients.All.NotifyChangeInProductWithId(product.Id);
             return (true, null);
         }
         else
@@ -270,6 +275,7 @@ public class ProductService
 
         if (transactionSucceeded)
         {
+            await _productHubContext.Clients.All.NotifyChangeInProductWithId(product.Id);
             return (true, null);
         }
         else
@@ -301,6 +307,7 @@ public class ProductService
 
         if (transactionSucceeded)
         {
+            _productHubContext.Clients.All.NotifyChangeInProductWithId(product.Id).RunSynchronously();
             return (true, null);
         }
         else
