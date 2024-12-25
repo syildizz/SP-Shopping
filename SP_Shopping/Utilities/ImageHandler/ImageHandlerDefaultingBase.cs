@@ -21,7 +21,7 @@ public abstract class ImageHandlerDefaultingBase<TKey>(string folderPath) : Imag
 
     public string GenerateDefaultImageURL()
     {
-        return Path.Combine("/", DefaultImageFolder, $"{GenerateDefaultImageFileName()}");
+        return $"/{DefaultImageFolder}/{GenerateDefaultImageFileName()}";
     }
 
     public string GetImageOrDefaultURL(TKey key)

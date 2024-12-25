@@ -21,7 +21,7 @@ public abstract class ImageHandlerBase<TKey>(string folderPath) : IImageHandler<
 
     public string GenerateImageURL(TKey key)
     {
-        return Path.Combine("/", ImageFolder, $"{GenerateImageFileName(key)}");
+        return $"/{ImageFolder}/{GenerateImageFileName(key)}";
     }
 
     public byte[] GetImageData(TKey key)
