@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SP_Shopping.Dtos.Product;
-using SP_Shopping.Models;
 using SP_Shopping.Service;
+using SP_Shopping.ServiceDtos;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.Filters;
 using SP_Shopping.Utilities.ImageHandler;
@@ -38,13 +38,14 @@ public class ProductsController(
         if (!string.IsNullOrWhiteSpace(query))
         {
             _logger.LogDebug("Fetching product information matching search term.");
-            pdtoList = await _shoppingServices.Product.GetAllAsync(q =>
-                _mapper.ProjectTo<ProductDetailsDto>(q
-                    .Where(p => p.Name.Contains(query))
-                    .OrderByDescending(p => p.InsertionDate)
-                    .ThenByDescending(p => p.ModificationDate)
-                    .Take(paginationCount)
-                )
+            pdtoList = await _shoppingServices.Product.GetAllAsync<ProductDetailsDto>(
+                //q =>
+                //_mapper.ProjectTo<ProductDetailsDto>(q
+                //    .Where(p => p.Name.Contains(query))
+                //    .OrderByDescending(p => p.InsertionDate)
+                //    .ThenByDescending(p => p.ModificationDate)
+                //    .Take(paginationCount)
+                //)
             );
         }
         return View(pdtoList);
@@ -61,12 +62,7 @@ public class ProductsController(
         _logger.LogInformation("GET: Entering Products/Details.");
 
         _logger.LogDebug("Fetching \"{Id}\" product information.", id);
-        ProductDetailsDto? pdto = await _shoppingServices.Product.GetSingleAsync(q => 
-            _mapper.ProjectTo<ProductDetailsDto>(q
-                .Where(p => p.Id == id)
-            )
-        );
-
+        ProductDetailsDto? pdto = await _shoppingServices.Product.GetByIdAsync<ProductDetailsDto>((int)id!);
         if (pdto == null)
         {
             _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
@@ -83,7 +79,7 @@ public class ProductsController(
         if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
 
         _logger.LogInformation($"GET: Entering Products/Details.");
-        var pdto = _mapper.Map<Product, ProductCreateDto>(new Product());
+        var pdto = new Dtos.Product.ProductCreateDto();
         _logger.LogDebug($"Fetching all categories.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
@@ -96,7 +92,7 @@ public class ProductsController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize]
-    public async Task<IActionResult> Create(ProductCreateDto pdto)
+    public async Task<IActionResult> Create(Dtos.Product.ProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Create.");
 
@@ -112,19 +108,18 @@ public class ProductsController(
         }
 
         _logger.LogDebug($"Creating product.");
-        Product product = _mapper.Map<ProductCreateDto, Product>(pdto);
-
-        product.SubmitterId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+        using ServiceDtos.ProductCreateDto pcdto = _mapper.Map<ServiceDtos.ProductCreateDto>(pdto);
+        pcdto.SubmitterId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
             ?? throw new Exception("ClaimTypes.NameIdentifier doesn't exist somehow. Should be unreachable code");
 
-        if (!(await _shoppingServices.Product.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+        if (!(await _shoppingServices.Product.TryCreateAsync(pcdto)).TryOut(out int? id, out var errMsgs))
         {
             _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
             _messageHandler.Add(TempData, errMsgs!);
             return RedirectToAction(nameof(Create));
         }
 
-        return RedirectToAction(nameof(Details), new { id = product.Id });
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     // GET: Products/Edit/5
@@ -140,22 +135,14 @@ public class ProductsController(
 
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var pdto = await _shoppingServices.Product.GetSingleAsync(q =>
-            _mapper.ProjectTo<ProductCreateDto>(q
-                .Where(p => p.Id == id)
-            )
-        );
-
+        var pdto = await _shoppingServices.Product.GetByIdAsync<Dtos.Product.ProductCreateDto>((int)id!);
         if (pdto == null)
         {
             _logger.LogError("Could not fetch product for id \"{Id}\".", id);
             return NotFound($"Product with id {id} does not exist.");
         }
 
-        string? productSubmitterId = await _shoppingServices.Product.GetSingleAsync(q => q
-            .Where(p => p.Id == id)
-            .Select(p => p.SubmitterId)
-        );
+        string? productSubmitterId = await _shoppingServices.Product.GetByIdSubmitterIdAsync((int)id!);
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (productSubmitterId != userId)
@@ -180,11 +167,11 @@ public class ProductsController(
     [Authorize]
     [IfArgNullBadRequestFilter(nameof(id))]
     [ExportModelState]
-    public async Task<IActionResult> Edit(int? id, ProductCreateDto pdto)
+    public async Task<IActionResult> Edit(int? id, Dtos.Product.ProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Products/Edit.");
 
-        if (!await _shoppingServices.Product.ExistsAsync(q => q.Where(p => p.Id == id)))
+        if (!await _shoppingServices.Product.ExistsAsync((int)id!))
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
@@ -196,17 +183,12 @@ public class ProductsController(
             return RedirectToAction(nameof(Edit), new { id });
         }
 
-        var product = _mapper.Map<ProductCreateDto, Product>(pdto);
-        product.Id = (int)id!;
-
         // Get user argument from session and edit if the user owns the product.
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+        // TODO: Fix
         // Get the existing submitter id for the product from the database.
-        string? productExistingSubmitterId = await _shoppingServices.Product.GetSingleAsync(q => q
-            .Where(p => p.Id == id)
-            .Select(p => p.SubmitterId)
-        );
+        string? productExistingSubmitterId = await _shoppingServices.Product.GetByIdSubmitterIdAsync((int)id!);
         if (productExistingSubmitterId != userId)
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to edit product "
@@ -215,7 +197,10 @@ public class ProductsController(
         }
         
         _logger.LogDebug("Updating product.");
-        if(!(await _shoppingServices.Product.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+
+        using ProductEditDto pedto = _mapper.Map<ProductEditDto>(pdto);
+
+        if(!(await _shoppingServices.Product.TryUpdateAsync((int)pdto.Id!, pedto)).TryOut(out var errMsgs))
         {
             _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
             _messageHandler.Add(TempData, errMsgs!);
@@ -236,11 +221,7 @@ public class ProductsController(
         _logger.LogInformation($"GET: Entering Products/Delete.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var pdto = await _shoppingServices.Product.GetSingleAsync(q =>
-            _mapper.ProjectTo<ProductDetailsDto>(q
-                .Where(p => p.Id == id)
-            )
-        );
+        var pdto = await _shoppingServices.Product.GetByIdAsync<ProductDetailsDto>((int)id!);
 
         if (pdto == null)
         {
@@ -268,10 +249,7 @@ public class ProductsController(
         _logger.LogInformation($"POST: Entering Products/Delete.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        Product? product = await _shoppingServices.Product.GetSingleAsync(q => q
-            .Where(q => q.Id == id)
-            .Select(p => new Product() { Id = p.Id, SubmitterId = p.SubmitterId })
-        );
+        var product = _shoppingServices.Product.GetById((int)id!, p => new { p.Id, p.SubmitterId });
         if (product == null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
@@ -291,7 +269,7 @@ public class ProductsController(
 
         //_context.Products.Remove(product);
         _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
-        if(!(await _shoppingServices.Product.TryDeleteAsync(product)).TryOut(out var errMsgs))
+        if(!(await _shoppingServices.Product.TryDeleteAsync(product.Id)).TryOut(out var errMsgs))
         {
             _messageHandler.Add(TempData, errMsgs!);
             return RedirectToAction(nameof(Delete), new { id });
@@ -309,22 +287,19 @@ public class ProductsController(
         _logger.LogInformation($"POST: Entering Products/ResetImage.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var product = await _shoppingServices.Product.GetSingleAsync(q => q
-            .Where(p => p.Id == id)
-            .Select(p => new Product { SubmitterId = p.SubmitterId })
-        );
+        var submitterId = await _shoppingServices.Product.GetByIdSubmitterIdAsync((int)id!);
 
-        if (product?.SubmitterId is null)
+        if (submitterId is null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound($"The product with the passed id of \"{id}\" does not exist.");
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (product.SubmitterId != userId)
+        if (submitterId != userId)
         {
             _logger.LogDebug("User with id \"{userId}\" attempted to reset the image of product"
-                + "belonging to user with id \"{ProductOwnerId}\"", userId, product.SubmitterId);
+                + "belonging to user with id \"{ProductOwnerId}\"", userId, submitterId);
             return Unauthorized("Cannot delete the image of a product that is not yours");
         }
 
@@ -353,12 +328,7 @@ public class ProductsController(
     [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> ProductCard(int? id)
     {
-        var pdto = await _shoppingServices.Product.GetSingleAsync(q => 
-            _mapper.ProjectTo<ProductDetailsDto>(q
-                .Where(p => p.Id == id)
-            )
-        );
-
+        var pdto = await _shoppingServices.Product.GetByIdAsync<ProductDetailsDto>((int)id!);
         if (pdto is null)
         {
             return NotFound("Not Found");

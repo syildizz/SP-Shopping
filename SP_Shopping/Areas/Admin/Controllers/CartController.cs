@@ -151,7 +151,7 @@ public class CartController
         }
 
         _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", cartItem.ProductId);
-        bool productExists = await _shoppingServices.Product.ExistsAsync(q => q.Where(p => p.Id == cartItem.ProductId));
+        bool productExists = await _shoppingServices.Product.ExistsAsync(cartItem.ProductId);
         if (!productExists)
         {
             _logger.LogError("The product id of \"{ProductId}\" does not exist in the database.", cartItem.ProductId);

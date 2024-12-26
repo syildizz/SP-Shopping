@@ -24,12 +24,13 @@ public class HomeController
     {
         ViewBag.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         ViewBag.UserName = User.FindFirstValue(ClaimTypes.Name);
-        IEnumerable<ProductDetailsDto> pdto = await _shoppingServices.Product.GetAllAsync(q => 
-            _mapper.ProjectTo<ProductDetailsDto>(q
-                .OrderByDescending(p => p.InsertionDate)
-                .ThenByDescending(p => p.ModificationDate)
-                .Take(20)
-            )
+        IEnumerable<ProductDetailsDto> pdto = await _shoppingServices.Product.GetAllAsync<ProductDetailsDto>(20
+            //q => 
+            //_mapper.ProjectTo<ProductDetailsDto>(q
+            //    .OrderByDescending(p => p.InsertionDate)
+            //    .ThenByDescending(p => p.ModificationDate)
+            //    .Take(20)
+            //)
         );
         return View(pdto);
     }

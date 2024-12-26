@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
+using SP_Shopping.ServiceDtos;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.Filters;
 using SP_Shopping.Utilities.ImageHandler;
@@ -37,10 +38,8 @@ public class ProductsController
     {
         _logger.LogInformation("GET: Entering Admin/Products.");
 
-        Func<IQueryable<Product>, IQueryable<Product>> queryFilter = q => q;
-        Func<IQueryable<Product>, IQueryable<Product>> sortFilter = q => q
-            .OrderByDescending(p => p.InsertionDate)
-            .ThenByDescending(p => p.ModificationDate);
+        string filterQuery = "";
+        string orderQuery = "InsertionDate,ModificationDate";
 
         try
         {
@@ -48,67 +47,45 @@ public class ProductsController
             {
                 if (!string.IsNullOrWhiteSpace(query))
                 {
-                    queryFilter = type switch
+                    filterQuery = type switch
                     {
-                        nameof(AdminProductDetailsDto.Id) => 
-                            q => q.Where(p => p.Name.Contains(query)),
-                        nameof(AdminProductDetailsDto.Name) => 
-                            q => q.Where(p => p.Name.Contains(query)),
-                        nameof(AdminProductDetailsDto.Price) => 
-                            decimal.TryParse(query, out var queryNumber) 
-                                ? q => q.Where(p => p.Price == queryNumber) 
-                                : q => q,
-                        nameof(AdminProductDetailsDto.CategoryName) => 
-                            q => q.Where(p => p.Category.Name.Contains(query)),
-                        nameof(AdminProductDetailsDto.Description) => 
-                            q => q.Where(p => p.Description != null 
-                                           && p.Description.Contains(query)),
-                        nameof(AdminProductDetailsDto.SubmitterId) => 
-                            q => q.Where(p => p.SubmitterId != null 
-                                           && p.SubmitterId.Contains(query)),
-                        nameof(AdminProductDetailsDto.SubmitterName) => 
-                            q => q.Where(p => p.Submitter != null 
-                                           && p.Submitter.UserName != null 
-                                           && p.Submitter.UserName.Contains(query)),
-                        nameof(AdminProductDetailsDto.InsertionDate) => 
-                            q => q.Where(p => p.InsertionDate.ToString().Contains(query)),
-                        nameof(AdminProductDetailsDto.ModificationDate) => 
-                            q => q.Where(p => p.ModificationDate != null 
-                                           && p.ModificationDate.ToString()!.Contains(query)),
+                        nameof(AdminProductDetailsDto.Id) =>
+                            $"{nameof(ProductGetDto.Id)}.Contains(@0)",
+                        nameof(AdminProductDetailsDto.Name) =>
+                            $"{nameof(ProductGetDto.Name)}.Contains(@0)",
+                        nameof(AdminProductDetailsDto.Price) =>
+                            decimal.TryParse(query, out var queryNumber)
+                                ? $"{nameof(ProductGetDto.Price)} == @0)"
+                                : filterQuery,
+                        nameof(AdminProductDetailsDto.CategoryName) =>
+                            $"{nameof(ProductGetDto.Category)}.{nameof(Category.Name)}.Contains(@0)",
+                        nameof(AdminProductDetailsDto.Description) =>
+                            $"{nameof(ProductGetDto.Description)}.Contains(@0)",
+                        nameof(AdminProductDetailsDto.SubmitterId) =>
+                            $"{nameof(ProductGetDto.SubmitterId)}.Contains(@0)",
+                        nameof(AdminProductDetailsDto.SubmitterName) =>
+                            $"{nameof(ProductGetDto.Submitter)}.{nameof(ApplicationUser.UserName)}.Contains(@0)",
+                        nameof(AdminProductDetailsDto.InsertionDate) =>
+                            $"{nameof(ProductGetDto.InsertionDate)}.ToString().Contains(@0)",
+                        nameof(AdminProductDetailsDto.ModificationDate) =>
+                            $"{nameof(ProductGetDto.ModificationDate)}.ToString().Contains(@0)",
                         _ => throw new NotImplementedException($"{type} is invalid")
                     };
                 }
 
-                sort ??= false;
-                sortFilter = type switch
+                bool _sort = sort ?? false;
+                orderQuery = type switch
                 {
-                    nameof(AdminProductDetailsDto.Id) => (bool)sort 
-						? q => q.OrderBy(p => p.Id) 
-						: q => q.OrderByDescending(p => p.Id),
-                    nameof(AdminProductDetailsDto.Name) => (bool)sort 
-						? q => q.OrderBy(p => p.Name) 
-						: q => q.OrderByDescending(p => p.Name),
-                    nameof(AdminProductDetailsDto.Price) => (bool)sort 
-						? q => q.OrderBy(p => p.Price) 
-						: q => q.OrderByDescending(p => p.Price),
-                    nameof(AdminProductDetailsDto.CategoryName) => (bool)sort 
-						? q => q.OrderBy(p => p.Category.Name) 
-						: q => q.OrderByDescending(p => p.Category.Name),
-                    nameof(AdminProductDetailsDto.Description) => (bool)sort 
-						? q => q.OrderBy(p => p.Description) 
-						: q => q.OrderByDescending(p => p.Description),
-                    nameof(AdminProductDetailsDto.SubmitterId) => (bool)sort 
-						? q => q.OrderBy(p => p.SubmitterId) 
-						: q => q.OrderByDescending(p => p.SubmitterId),
-                    nameof(AdminProductDetailsDto.SubmitterName) => (bool)sort 
-						? q => q.OrderBy(p => p.Submitter.UserName) 
-						: q => q.OrderByDescending(p => p.Submitter.UserName),
-                    nameof(AdminProductDetailsDto.InsertionDate) => (bool)sort 
-						? q => q.OrderBy(p => p.InsertionDate) 
-						: q => q.OrderByDescending(p => p.InsertionDate),
-                    nameof(AdminProductDetailsDto.ModificationDate) => (bool)sort 
-						? q => q.OrderBy(p => p.ModificationDate) 
-						: q => q.OrderByDescending(p => p.ModificationDate),
+                    nameof(AdminProductDetailsDto.Id) => $"{nameof(ProductGetDto.Id)}{(_sort ? " desc" : "")}",
+                    nameof(AdminProductDetailsDto.Name) => $"{nameof(ProductGetDto.Name)}{(_sort ? " desc" : "")}",
+                    nameof(AdminProductDetailsDto.Price) => $"{nameof(ProductGetDto.Price)}{(_sort ? " desc" : "")}",
+                    nameof(AdminProductDetailsDto.CategoryName) => $"{nameof(ProductGetDto.Category)}.{nameof(Category.Name)}{(_sort ? " desc" : "")}",
+                    nameof(AdminProductDetailsDto.Description) => $"{nameof(ProductGetDto.Description)}{(_sort ? " desc" : "")}",
+                    nameof(AdminProductDetailsDto.SubmitterId) => $"{nameof(ProductGetDto.SubmitterId)}{(_sort ? " desc" : "")}",
+                    
+                    nameof(AdminProductDetailsDto.SubmitterName) => $"{nameof(ProductGetDto.Submitter)}.{nameof(ApplicationUser.UserName)}{(_sort ? " desc" : "")}",
+                    nameof(AdminProductDetailsDto.InsertionDate) => $"{nameof(ProductGetDto.InsertionDate)}{(_sort ? " desc" : "")}",
+                    nameof(AdminProductDetailsDto.ModificationDate) => $"{nameof(ProductGetDto.ModificationDate)}{(_sort ? " desc" : "")}",
                     _ => throw new NotImplementedException($"{type} is invalid")
                 };
 
@@ -120,14 +97,14 @@ public class ProductsController
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var pdtoList = await _shoppingServices.Product.GetAllAsync(q =>
-            _mapper.ProjectTo<AdminProductDetailsDto>(q
-                ._(queryFilter)
-                ._(sortFilter)
-                .Take(20)
-            )
-        );
-
+        var pdtoList = await _shoppingServices.Product.GetAllAsync<AdminProductDetailsDto, string>(filterQuery, orderQuery, query!, 20);
+            //q =>
+            //_mapper.ProjectTo<AdminProductDetailsDto>(q
+            //    ._(queryFilter)
+            //    ._(sortFilter)
+            //    .Take(20)
+            //)
+        //);
 
         return View(pdtoList);
         
@@ -139,12 +116,7 @@ public class ProductsController
     {
         _logger.LogInformation("GET: Entering Admin/Products/Details.");
 
-        AdminProductDetailsDto? pdto = await _shoppingServices.Product.GetSingleAsync(q => 
-            _mapper.ProjectTo<AdminProductDetailsDto>(q
-                .Where(p => p.Id == id)
-            )
-        );
-
+        AdminProductDetailsDto? pdto = await _shoppingServices.Product.GetByIdAsync<AdminProductDetailsDto>((int)id!);
         if (pdto == null)
         {
             _logger.LogError("Failed to fetch product for id \"{Id}\".", id);
@@ -158,7 +130,7 @@ public class ProductsController
     public async Task<IActionResult> Create()
     {
         _logger.LogInformation($"GET: Entering Admin/Products/Details.");
-        var pdto = _mapper.Map<Product, AdminProductCreateDto>(new Product());
+        var pdto = new AdminProductCreateDto();
         _logger.LogDebug($"Fetching all categories and users.");
         IEnumerable<SelectListItem> categorySelectList = await GetCategoriesSelectListAsync();
         ViewBag.categorySelectList = categorySelectList;
@@ -203,15 +175,15 @@ public class ProductsController
             }
         }
 
-        Product product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
-        if (!(await _shoppingServices.Product.TryCreateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+        ProductCreateDto pcdto = _mapper.Map<ProductCreateDto>(pdto);
+        if (!(await _shoppingServices.Product.TryCreateAsync(pcdto)).TryOut(out int? id, out var errMsgs))
         {
-            _logger.LogError("Couldn't create product with name of \"{Product}\".", pdto.Name);
+            _logger.LogError("Couldn't create product with name of \"{Product}\".", pcdto.Name);
             _messageHandler.Add(TempData, errMsgs!);
             return RedirectToAction(nameof(Create));
         }
 
-        return RedirectToAction(nameof(Details), new { id = product.Id });
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     // GET: Products/Edit/5
@@ -223,12 +195,7 @@ public class ProductsController
 
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var pdto = await _shoppingServices.Product.GetSingleAsync(q =>
-            _mapper.ProjectTo<AdminProductCreateDto>(q
-                .Where(p => p.Id == id)
-            )
-        );
-
+        var pdto = await _shoppingServices.Product.GetByIdAsync<AdminProductCreateDto>((int)id!);
         if (pdto == null)
         {
             _logger.LogError("Could not fetch product for id \"{Id}\".", id);
@@ -252,7 +219,7 @@ public class ProductsController
     public async Task<IActionResult> Edit(int? id, AdminProductCreateDto pdto)
     {
         _logger.LogInformation($"POST: Entering Admin/Products/Edit.");
-        if (!await _shoppingServices.Product.ExistsAsync(q => q.Where(p => p.Id == id)))
+        if (!await _shoppingServices.Product.ExistsAsync((int)id!))
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound();
@@ -264,12 +231,11 @@ public class ProductsController
             return RedirectToAction(nameof(Edit), new { id });
         }
 
-        var product = _mapper.Map<AdminProductCreateDto, Product>(pdto);
-        product.Id = (int)id!;
+        ProductEditDto pedto = _mapper.Map<ProductEditDto>(pdto);
 
         _logger.LogDebug("Updating product.");
 
-        if (!(await _shoppingServices.Product.TryUpdateAsync(product, pdto.ProductImage)).TryOut(out var errMsgs))
+        if (!(await _shoppingServices.Product.TryUpdateAsync((int)id!, pedto)).TryOut(out var errMsgs))
         {
             _logger.LogError("The product with the id of \"{Id}\" could not be updated.", id);
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't update product" });
@@ -288,12 +254,7 @@ public class ProductsController
         _logger.LogInformation($"GET: Entering Admin/Products/Delete.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var pdto = await _shoppingServices.Product.GetSingleAsync(q =>
-            _mapper.ProjectTo<AdminProductDetailsDto>(q
-                .Where(p => p.Id == id)
-            )
-        );
-
+        var pdto = await _shoppingServices.Product.GetByIdAsync<AdminProductDetailsDto>((int)id!);
         if (pdto == null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
@@ -312,11 +273,8 @@ public class ProductsController
         _logger.LogInformation($"POST: Entering Admin/Products/Delete.");
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        Product? product = await _shoppingServices.Product.GetSingleAsync(q => q
-            .Where(q => q.Id == id)
-            .Select(p => new Product() { Id = p.Id, SubmitterId = p.SubmitterId })
-        );
-        if (product == null)
+        var productExists = await _shoppingServices.Product.ExistsAsync((int)id!);
+        if (!productExists)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
             return NotFound($"The product with the passed id of \"{id}\" does not exist.");
@@ -324,7 +282,7 @@ public class ProductsController
 
         //_context.Products.Remove(product);
         _logger.LogDebug("Deleting product with id for \"{Id}\" from database", id);
-        if (!(await _shoppingServices.Product.TryDeleteAsync(product)).TryOut(out var errMsgs))
+        if (!(await _shoppingServices.Product.TryDeleteAsync((int)id!)).TryOut(out var errMsgs))
         {
             _logger.LogError("The product with the id of \"{Id}\" could not be deleted.", id);
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Error, Content = "Couldn't delete product" });
@@ -343,10 +301,7 @@ public class ProductsController
 
         _logger.LogInformation($"POST: Entering Admin/Products/ResetImage.");
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var productExists = await _shoppingServices.Product.ExistsAsync(q => q
-            .Where(p => p.Id == id)
-        );
-
+        var productExists = await _shoppingServices.Product.ExistsAsync((int)id!);
         if (!productExists)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);

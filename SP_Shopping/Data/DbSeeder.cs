@@ -1,12 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using AutoMapper;
 using SP_Shopping.Models;
-using SP_Shopping.Repository;
 using SP_Shopping.Service;
+using SP_Shopping.ServiceDtos;
 using SP_Shopping.Utilities;
-using SP_Shopping.Utilities.ImageHandler;
-using SP_Shopping.Utilities.ImageHandlerKeys;
-using SP_Shopping.Utilities.MessageHandler;
 using System.Text.Json;
 
 namespace SP_Shopping.Data;
@@ -34,6 +30,8 @@ public class DbSeeder : IDisposable
     
     private readonly string _seedFolder;
 
+    private readonly IMapper _mapper;
+
     private readonly Random _random = new();
 
     public DbSeeder(WebApplication app, string seedFolder = "MOCK_DATA")
@@ -44,6 +42,8 @@ public class DbSeeder : IDisposable
         _scope = _app.Services.CreateAsyncScope();
 
         _logger = _scope.ServiceProvider.GetRequiredService<ILogger<DbSeeder>>();
+
+        _mapper = _scope.ServiceProvider.GetRequiredService<IMapper>();
 
         _shoppingServices = _scope.ServiceProvider.GetRequiredService<IShoppingServices>();
 
@@ -150,39 +150,41 @@ public class DbSeeder : IDisposable
         }
 
 
-        List<Product> products = productSeedData
-            .Select(p => new Product
+        List<ProductCreateDto> pcdtos = productSeedData
+            .Select(p => new ProductCreateDto
             {
                 Name = p.Name,
                 Price = p.Price,
                 Description = p.Description,
                 CategoryId = categories[_random.Next(categories.Count)].Id,
                 SubmitterId = users[_random.Next(users.Count)].Id,
+                Image = imageStreams[_random.Next(imageStreams.Count)]
             })
             .DistinctBy(p => p.Name)
             .ToList();
 
-        foreach (var product in products)
+        List<int> productIds = [];
+
+        foreach (var pcdto in pcdtos)
         {
-            Stream? chosenImage = imageStreams[_random.Next(imageStreams.Count)];
-            FormFile? ff = chosenImage is null ? null : new FormFile(chosenImage, 0, chosenImage.Length, "idk", "idk");
-            var (succeeded, errmsgs) = await _shoppingServices.Product.TryCreateAsync(product, ff);
-            if (ff is not null)
+            var (succeeded, id, errmsgs) = await _shoppingServices.Product.TryCreateAsync(pcdto);
+            if (pcdto.Image is not null)
             {
-                chosenImage!.Position = 0;
+                pcdto.Image.Position = 0;
             }
             if (!succeeded)
             {
                 _logger.LogError("Failed to seed product in database due to {ErrMsgs}", errmsgs);
                 return;
             }
+            productIds.Add(id ?? throw new Exception("Impossible"));
         }
 
         List<CartItem> cartItems = cartItemSeedData
             .Select(c => new CartItem
             {
                 UserId = users[_random.Next(users.Count)].Id,
-                ProductId = products[_random.Next(products.Count)].Id,
+                ProductId = productIds[_random.Next(productIds.Count)],
                 Count = c.Count
             })
             .DistinctBy(c => new { c.ProductId, c.UserId })

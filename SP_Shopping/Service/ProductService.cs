@@ -5,10 +5,13 @@ using Microsoft.EntityFrameworkCore.Query;
 using SP_Shopping.Hubs;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.ServiceDtos;
+using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Data;
+using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 
 namespace SP_Shopping.Service;
@@ -27,63 +30,157 @@ public class ProductService
     private readonly IMapper _mapper = mapper;
     private readonly IHubContext<ProductHub, IProductHubClient> _productHubContext = productHubContext;
 
-    public virtual List<TResult> GetAll<TResult>()
+    public List<TDto> GetAll<TDto>()
     {
-        return _productRepository.GetAll(q => _mapper.ProjectTo<TResult>(q));
+        return _productRepository.GetAll(q => _mapper.ProjectTo<TDto>(q));
     }
 
-    public virtual List<TResult> GetAll<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
+    public List<TDto> GetAll<TDto>(Expression<Func<ProductGetDto, TDto>> select)
     {
-        return _productRepository.GetAll(query);
+        return _productRepository.GetAll(q => _mapper.ProjectTo<ProductGetDto>(q).Select(select));
     }
 
-    public virtual async Task<List<TResult>> GetAllAsync<TResult>()
+
+    public List<TDto> GetAll<TDto>(int take)
     {
-        return await _productRepository.GetAllAsync(q => _mapper.ProjectTo<TResult>(q));
+        Func<IQueryable<Product>, IQueryable<Product>> query;
+
+        query = q => q.Take(take);
+
+        return _productRepository.GetAll(q =>
+            _mapper.ProjectTo<TDto>(query(q))
+        );
     }
 
-    public virtual async Task<List<TResult>> GetAllAsync<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
+    public async Task<List<TDto>> GetAllAsync<TDto>()
     {
-        return await _productRepository.GetAllAsync(query);
+        return await _productRepository.GetAllAsync(q =>
+            _mapper.ProjectTo<TDto>(q)
+        );
     }
 
-    public virtual TResult? GetSingle<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
+    public async Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<ProductGetDto, TDto>> select)
     {
-        return _productRepository.GetSingle(query);
+        return await _productRepository.GetAllAsync(q =>
+            _mapper.ProjectTo<ProductGetDto>(q)
+            .Select(select)
+        );
     }
 
-    public virtual async Task<TResult?> GetSingleAsync<TResult>(Func<IQueryable<Product>, IQueryable<TResult>> query)
+    public async Task<List<TDto>> GetAllAsync<TDto>(int take)
     {
-        return await _productRepository.GetSingleAsync(query);
+        Func<IQueryable<Product>, IQueryable<Product>> query;
+
+        query = q => q.Take(take);
+
+        return await _productRepository.GetAllAsync(q =>
+            _mapper.ProjectTo<TDto>(query(q))
+        );
     }
 
-    public virtual bool Exists(Func<IQueryable<Product>, IQueryable<Product>> query)
+    public async Task<List<TDto>> GetAllAsync<TDto, TValue>(string filterQuery, string orderQuery, TValue? filterValue, int take)
     {
-        return _productRepository.Exists(query);
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> _filterQuery = q => q;
+
+        if (filterValue is not null)
+        {
+            _filterQuery = q => q.Where(filterQuery, filterValue);
+        }
+
+        return await _productRepository.GetAllAsync(q => 
+            _mapper.ProjectTo<TDto>(
+                _mapper.ProjectTo<ProductGetDto>(q)
+                    ._(_filterQuery)
+                    .OrderBy(orderQuery)
+                    .Take(take)
+            )
+        );
     }
 
-    public virtual async Task<bool> ExistsAsync(Func<IQueryable<Product>, IQueryable<Product>> query)
+    public async Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<ProductGetDto, TDto>> select, int take)
     {
-        return await _productRepository.ExistsAsync(query);
+        Func<IQueryable<Product>, IQueryable<Product>> query;
+
+        query = q => q.Take(take);
+
+        return await _productRepository.GetAllAsync(q => q
+            .Select(p => _mapper.Map<ProductGetDto>(p))
+            .Select(select)
+        );
     }
 
-    public (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Product product, IFormFile? image)
+    public virtual TDto? GetById<TDto>(int id)
     {
-        return TryCreateAsync(product, image).Result;
+        return _productRepository.GetSingle(q =>
+            _mapper.ProjectTo<TDto>(q
+                .Where(p => p.Id == id)
+            )
+        );
     }
 
-    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryCreateAsync(Product product, IFormFile? image)
+    public virtual TDto? GetById<TDto>(int id, Expression<Func<ProductGetDto, TDto>> select)
+    {
+        return _productRepository.GetSingle(q => q
+            .Where(p => p.Id == id)
+            .Select(p => _mapper.Map<ProductGetDto>(p))
+            .Select(select)
+        );
+    }
+
+    public virtual async Task<TDto?> GetByIdAsync<TDto>(int id)
+    {
+        return await _productRepository.GetSingleAsync(q => 
+            _mapper.ProjectTo<TDto>(
+                _mapper.ProjectTo<ProductGetDto>(q
+                    .Where(p => p.Id == id)
+                )
+            )
+        );
+    }
+
+    public virtual async Task<TDto?> GetByIdAsync<TDto>(int id, Expression<Func<ProductGetDto, TDto>> select)
+    {
+        return await _productRepository.GetSingleAsync(q => q
+            .Where(p => p.Id == id)
+            .Select(p => _mapper.Map<ProductGetDto>(p))
+            .Select(select)
+        );
+    }
+
+    public virtual bool Exists(int id)
+    {
+        return _productRepository.Exists(q => q.Where(p => p.Id == id));
+    }
+
+    public virtual async Task<bool> ExistsAsync(int id)
+    {
+        return await _productRepository.ExistsAsync(q => q.Where(p => p.Id == id));
+    }
+
+    public virtual string? GetByIdSubmitterId(int id)
+    {
+        return _productRepository.GetSingle(q => q.Where(p => p.Id == id).Select(p => p.SubmitterId));
+    }
+
+    public virtual async Task<string?> GetByIdSubmitterIdAsync(int id)
+    {
+        return await _productRepository.GetSingleAsync(q => q.Where(p => p.Id == id).Select(p => p.SubmitterId));
+    }
+
+    public (bool succeeded, int? id, ICollection<Message>? errorMessages) TryCreate(ProductCreateDto pdto)
+    {
+        return TryCreateAsync(pdto).Result;
+    }
+
+    public async Task<(bool succeeded, int? id, ICollection<Message>? errorMessages)> TryCreateAsync(ProductCreateDto pdto)
     {
 
         ICollection<Message> errorMessages = [];
 
+        Product product = _mapper.Map<Product>(pdto);
+
         bool transactionSucceeded = await _productRepository.DoInTransactionAsync(async () =>
         {
-            // Set submitter to null 
-            // to avoid generating new ApplicationUser with auto-generated id.
-            product.Submitter = null;
-
-            product.InsertionDate = DateTime.Now;
             await _productRepository.CreateAsync(product);
 
             try
@@ -107,10 +204,9 @@ public class ProductService
                 }
             }
 
-            if (image is not null)
+            if (pdto.Image is not null)
             {
-                using var ImageStream = image.OpenReadStream();
-                if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
+                if (!await _productImageHandler.SetImageAsync(new(product.Id), pdto.Image))
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
                     return false;
@@ -122,23 +218,25 @@ public class ProductService
 
         if (transactionSucceeded)
         {
-            return (true, null);
+            return (true, product.Id, null);
         }
         else
         {
-            return (false, errorMessages);
+            return (false, product.Id, errorMessages);
         }
 
     }
 
-    public (bool succeeded, ICollection<Message>? errorMesages) TryUpdate(Product product, IFormFile? image)
+    public (bool succeeded, ICollection<Message>? errorMesages) TryUpdate(int id, ProductEditDto pdto)
     {
-        return TryUpdateAsync(product, image).Result;
+        return TryUpdateAsync(id, pdto).Result;
     }
 
-    public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(Product product, IFormFile? image)
+    public async Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(int id, ProductEditDto pdto)
     {
         ICollection<Message> errorMessages = [];
+
+        Product product = _mapper.Map<Product>(pdto);
 
         bool transactionSucceeded = await _productRepository.DoInTransactionAsync(async () =>
         {
@@ -175,7 +273,7 @@ public class ProductService
                 }
 
                 await _productRepository.UpdateCertainFieldsAsync(q => q
-                    .Where(p => p.Id == product.Id),
+                    .Where(p => p.Id == id),
                     setPropertyCalls: setProperties
                 );
             }
@@ -196,10 +294,9 @@ public class ProductService
                 }
             }
 
-            if (image is not null)
+            if (pdto.Image is not null)
             {
-                using var ImageStream = image.OpenReadStream();
-                if (!await _productImageHandler.SetImageAsync(new(product.Id), ImageStream))
+                if (!await _productImageHandler.SetImageAsync(new(id), pdto.Image))
                 {
                     errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to set image" });
                     return false;
@@ -211,7 +308,7 @@ public class ProductService
 
         if (transactionSucceeded)
         {
-            await _productHubContext.Clients.All.NotifyChangeInProductWithId(product.Id);
+            await _productHubContext.Clients.All.NotifyChangeInProductWithId(id);
             return (true, null);
         }
         else
@@ -221,23 +318,28 @@ public class ProductService
 
     }
 
-    public (bool succeeded, ICollection<Message>? errorMessages) TryDelete(Product product)
+    public (bool succeeded, ICollection<Message>? errorMessages) TryDelete(int id)
     {
-        return TryDeleteAsync(product).Result;
+        return TryDeleteAsync(id).Result;
     }
 
-    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(Product product)
+    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(int id)
     {
 
         ICollection<Message> errorMessages = [];
 
         bool transactionSucceeded = await _productRepository.DoInTransactionAsync(async () =>
         {
-            _productRepository.Delete(product);
-
             try
             {
-                await _productRepository.SaveChangesAsync();
+                var count = await _productRepository.DeleteCertainEntriesAsync(q => q.Where(p => p.Id == id));
+                if (count != 1)
+                {
+#if DEBUG
+                    errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Error saving to database" });
+#endif
+                    return false;
+                }
             }
             catch (Exception ex)
             {
@@ -258,7 +360,7 @@ public class ProductService
 
             try
             {
-                _productImageHandler.DeleteImage(new(product.Id));
+                _productImageHandler.DeleteImage(new(id));
             }
             catch (Exception ex)
             {
@@ -275,7 +377,7 @@ public class ProductService
 
         if (transactionSucceeded)
         {
-            await _productHubContext.Clients.All.NotifyChangeInProductWithId(product.Id);
+            await _productHubContext.Clients.All.NotifyChangeInProductWithId(id);
             return (true, null);
         }
         else
@@ -285,7 +387,7 @@ public class ProductService
 
     }
 
-    public (bool succeeded, ICollection<Message>? errorMessages) TryDeleteCascade(Product product)
+    public (bool succeeded, ICollection<Message>? errorMessages) TryDeleteCascade(int id)
     {
 
         ICollection<Message> errorMessages = [];
@@ -293,7 +395,7 @@ public class ProductService
         bool transactionSucceeded = false;
         try
         {
-            _productImageHandler.DeleteImage(new(product.Id));
+            _productImageHandler.DeleteImage(new(id));
             transactionSucceeded = true;
         }
         catch (Exception ex)
@@ -307,7 +409,7 @@ public class ProductService
 
         if (transactionSucceeded)
         {
-            _productHubContext.Clients.All.NotifyChangeInProductWithId(product.Id).RunSynchronously();
+            _productHubContext.Clients.All.NotifyChangeInProductWithId(id).RunSynchronously();
             return (true, null);
         }
         else
@@ -316,6 +418,5 @@ public class ProductService
         }
 
     }
-
 
 }

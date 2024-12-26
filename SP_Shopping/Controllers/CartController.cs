@@ -49,7 +49,7 @@ public class CartController
         _logger.LogInformation("POST: Cart/Create.");
 
         _logger.LogDebug("Checking if product with \"{ProductId}\" exists in database.", id);
-        bool productExists = await _shoppingServices.Product.ExistsAsync(q => q.Where(p => p.Id == id));
+        bool productExists = await _shoppingServices.Product.ExistsAsync((int)id!);
 
         if (!productExists)
         {
