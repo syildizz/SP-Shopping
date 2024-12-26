@@ -259,7 +259,7 @@ public class ProductsController(
         _logger.LogInformation($"POST: Entering Products/Delete.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var product = _shoppingServices.Product.GetById((int)id!, p => new { p.Id, p.SubmitterId });
+        var product = await _shoppingServices.Product.GetByIdAsync((int)id!, p => new { p.Id, p.SubmitterId });
         if (product == null)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);
