@@ -12,6 +12,7 @@ using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
 using SP_Shopping.Utilities.ModelStateHandler;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace SP_Shopping.Areas.Admin.Controllers;
@@ -41,34 +42,38 @@ public class ProductsController
         string filterQuery = "";
         string orderQuery = "InsertionDate,ModificationDate";
 
+        object? filterValue = null;
+
         try
         {
             if (!string.IsNullOrWhiteSpace(type))
             {
                 if (!string.IsNullOrWhiteSpace(query))
                 {
-                    filterQuery = type switch
+                    (filterQuery, filterValue) = type switch
                     {
                         nameof(AdminProductDetailsDto.Id) =>
-                            $"{nameof(ProductGetDto.Id)}.Contains(@0)",
+                            int.TryParse(query, out var queryNumber)
+                                ? ($"{nameof(ProductGetDto.Id)} == @0", queryNumber)
+                                : ("false", null),
                         nameof(AdminProductDetailsDto.Name) =>
-                            $"{nameof(ProductGetDto.Name)}.Contains(@0)",
+                            ($"{nameof(ProductGetDto.Name)}.Contains(@0)", query),
                         nameof(AdminProductDetailsDto.Price) =>
                             decimal.TryParse(query, out var queryNumber)
-                                ? $"{nameof(ProductGetDto.Price)} == @0)"
-                                : filterQuery,
+                                ? ($"@0 - 3 <= {nameof(ProductGetDto.Price)} && {nameof(ProductGetDto.Price)} <= @0 + 3", queryNumber)
+                                : ("false", null),
                         nameof(AdminProductDetailsDto.CategoryName) =>
-                            $"{nameof(ProductGetDto.Category)}.{nameof(Category.Name)}.Contains(@0)",
+                            ($"{nameof(ProductGetDto.Category)}.{nameof(Category.Name)}.Contains(@0)", query as object),
                         nameof(AdminProductDetailsDto.Description) =>
-                            $"{nameof(ProductGetDto.Description)}.Contains(@0)",
+                            ($"{nameof(ProductGetDto.Description)}.Contains(@0)", query),
                         nameof(AdminProductDetailsDto.SubmitterId) =>
-                            $"{nameof(ProductGetDto.SubmitterId)}.Contains(@0)",
+                            ($"{nameof(ProductGetDto.SubmitterId)}.Contains(@0)", query),
                         nameof(AdminProductDetailsDto.SubmitterName) =>
-                            $"{nameof(ProductGetDto.Submitter)}.{nameof(ApplicationUser.UserName)}.Contains(@0)",
+                            ($"{nameof(ProductGetDto.Submitter)}.{nameof(ApplicationUser.UserName)}.Contains(@0)", query),
                         nameof(AdminProductDetailsDto.InsertionDate) =>
-                            $"{nameof(ProductGetDto.InsertionDate)}.ToString().Contains(@0)",
+                            ($"{nameof(ProductGetDto.InsertionDate)}.ToString().Contains(@0)", query),
                         nameof(AdminProductDetailsDto.ModificationDate) =>
-                            $"{nameof(ProductGetDto.ModificationDate)}.ToString().Contains(@0)",
+                            ($"{nameof(ProductGetDto.ModificationDate)}.ToString().Contains(@0)", query),
                         _ => throw new NotImplementedException($"{type} is invalid")
                     };
                 }
@@ -97,7 +102,7 @@ public class ProductsController
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var pdtoList = await _shoppingServices.Product.GetAllAsync<AdminProductDetailsDto, string>(filterQuery, orderQuery, query!, 20);
+        var pdtoList = await _shoppingServices.Product.GetAllAsync<AdminProductDetailsDto>(filterQuery, orderQuery, filterValue, 20);
             //q =>
             //_mapper.ProjectTo<AdminProductDetailsDto>(q
             //    ._(queryFilter)

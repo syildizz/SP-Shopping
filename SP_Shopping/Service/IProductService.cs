@@ -27,5 +27,5 @@ public interface IProductService
     List<TDto> GetAll<TDto>(int take);
     Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<ProductGetDto, TDto>> select);
     Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<ProductGetDto, TDto>> select, int take);
-    Task<List<TDto>> GetAllAsync<TDto, TValue>(string filterQuery, string orderQuery, TValue filterValue, int take);
+    Task<List<TDto>> GetAllAsync<TDto>(string? filterQuery, string? orderQuery, object? filterValue, int? take);
 }

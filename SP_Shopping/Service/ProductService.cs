@@ -78,22 +78,33 @@ public class ProductService
         );
     }
 
-    public async Task<List<TDto>> GetAllAsync<TDto, TValue>(string filterQuery, string orderQuery, TValue? filterValue, int take)
+    public async Task<List<TDto>> GetAllAsync<TDto>(string? filterQuery, string? orderQuery, object? filterValue, int? take)
     {
-        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> _filterQuery = q => q;
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> queryFilter = q => q;
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> orderFilter = q => q;
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> takeFilter = q => q;
 
-        if (filterValue is not null)
+        if (filterValue is not null && filterQuery is not null)
         {
-            _filterQuery = q => q.Where(filterQuery, filterValue);
+            queryFilter = q => q.Where(filterQuery, filterValue);
         }
 
-        return await _productRepository.GetAllAsync(q => 
-            _mapper.ProjectTo<TDto>(
-                _mapper.ProjectTo<ProductGetDto>(q)
-                    ._(_filterQuery)
-                    .OrderBy(orderQuery)
-                    .Take(take)
-            )
+        if (orderQuery is not null)
+        {
+            orderFilter = q => q.OrderBy(orderQuery);
+        }
+
+        if (take is not null)
+        {
+            takeFilter = q => q.Take((int)take);
+        }
+
+        return await _productRepository.GetAllAsync(q => q
+            ._(q => _mapper.ProjectTo<ProductGetDto>(q))
+            ._(queryFilter)
+            ._(orderFilter)
+            ._(takeFilter)
+            ._(q => _mapper.ProjectTo<TDto>(q))
         );
     }
 
