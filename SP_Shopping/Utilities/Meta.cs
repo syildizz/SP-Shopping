@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace SP_Shopping.Utilities;
 
@@ -14,6 +16,7 @@ public static class Meta
     {
         return f(_);
     }
+
 
 }
 
@@ -51,4 +54,9 @@ public static class ModelStateErrorMessagesToListOfMessages
                 .Select(es => es.ErrorMessage)
             );
     }
+}
+
+public static class AutoMapperHelper
+{
+    public static IQueryable<Tout> ProjectTo<Tin, Tout>(this IQueryable<Tin> q, IMapper mapper) => mapper.ProjectTo<Tout>(q);
 }

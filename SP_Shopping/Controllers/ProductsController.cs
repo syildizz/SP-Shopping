@@ -28,7 +28,6 @@ public class ProductsController(
     private readonly IShoppingServices _shoppingServices = shoppingServices;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler = productImageHandler;
     private readonly IMessageHandler _messageHandler = messageHandler;
-    private readonly int paginationCount = 5;
 
     public async Task<IActionResult> Search(string? query)
     {
@@ -38,15 +37,7 @@ public class ProductsController(
         if (!string.IsNullOrWhiteSpace(query))
         {
             _logger.LogDebug("Fetching product information matching search term.");
-            pdtoList = await _shoppingServices.Product.GetAllAsync<ProductDetailsDto>(
-                //q =>
-                //_mapper.ProjectTo<ProductDetailsDto>(q
-                //    .Where(p => p.Name.Contains(query))
-                //    .OrderByDescending(p => p.InsertionDate)
-                //    .ThenByDescending(p => p.ModificationDate)
-                //    .Take(paginationCount)
-                //)
-            );
+            pdtoList = await _shoppingServices.Product.GetAllAsync<ProductDetailsDto>(20);
         }
         return View(pdtoList);
         
@@ -129,20 +120,39 @@ public class ProductsController(
     public async Task<IActionResult> Edit(int? id)
     {
 
-        if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
+        if (User.IsInRole("Admin")) return RedirectToAction("Edit", "Products", new { area = "Admin" });
 
         _logger.LogInformation($"GET: Entering Products/Edit.");
 
         //var product = await _context.Products.FindAsync(id);
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
-        var pdto = await _shoppingServices.Product.GetByIdAsync<Dtos.Product.ProductCreateDto>((int)id!);
-        if (pdto == null)
+        var result = await _shoppingServices.Product.GetByIdAsync((int)id!, p => new 
+        { 
+            p.Id,
+            p.Name,
+            p.Price,
+            p.CategoryId,
+            p.Description,
+            p.SubmitterId
+        });
+
+        if (result is null)
         {
             _logger.LogError("Could not fetch product for id \"{Id}\".", id);
             return NotFound($"Product with id {id} does not exist.");
         }
 
-        string? productSubmitterId = await _shoppingServices.Product.GetByIdSubmitterIdAsync((int)id!);
+        var pdto = new Dtos.Product.ProductCreateDto
+        {
+            Id = result.Id,
+            Name = result.Name,
+            Price = result.Price,
+            CategoryId = result.CategoryId,
+            Description = result.Description,
+            ProductImage = null
+        };
+
+        string? productSubmitterId = result.SubmitterId;
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (productSubmitterId != userId)
@@ -216,7 +226,7 @@ public class ProductsController(
     public async Task<IActionResult> Delete(int? id)
     {
 
-        if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
+        if (User.IsInRole("Admin")) return RedirectToAction("Delete", "Products", new { area = "Admin" });
 
         _logger.LogInformation($"GET: Entering Products/Delete.");
 

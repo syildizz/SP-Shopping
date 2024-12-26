@@ -9,6 +9,7 @@ using SP_Shopping.ServiceDtos;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
+using SP_Shopping.Utilities.Mappers;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Data;
 using System.Linq.Dynamic.Core;
@@ -43,38 +44,80 @@ public class ProductService
 
     public List<TDto> GetAll<TDto>(int take)
     {
-        Func<IQueryable<Product>, IQueryable<Product>> query;
+        return _productRepository.GetAll(q => q
+            .ProjectTo<Product, TDto>(_mapper)
+            .Take(take)
+        );
+    }
 
-        query = q => q.Take(take);
+    public List<TDto> GetAll<TDto>(Expression<Func<ProductGetDto, TDto>> select, int take)
+    {
+        return _productRepository.GetAll(q => q
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+            .ProjectTo<ProductGetDto, TDto>(_mapper)
+            .Take(take)
+        );
+    }
 
-        return _productRepository.GetAll(q =>
-            _mapper.ProjectTo<TDto>(query(q))
+    public List<TDto> GetAll<TDto>(string? filterQuery, string? orderQuery, object? filterValue, int? take)
+    {
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> queryFilter = q => q;
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> orderFilter = q => q;
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> takeFilter = q => q;
+
+        if (filterValue is not null && filterQuery is not null)
+        {
+            queryFilter = q => q.Where(filterQuery, filterValue);
+        }
+
+        if (orderQuery is not null)
+        {
+            orderFilter = q => q.OrderBy(orderQuery);
+        }
+
+        if (take is not null)
+        {
+            takeFilter = q => q.Take((int)take);
+        }
+
+        return _productRepository.GetAll(q => q
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+            ._(queryFilter)
+            ._(orderFilter)
+            ._(takeFilter)
+            ._(q => _mapper.ProjectTo<TDto>(q))
         );
     }
 
     public async Task<List<TDto>> GetAllAsync<TDto>()
     {
-        return await _productRepository.GetAllAsync(q =>
-            _mapper.ProjectTo<TDto>(q)
+        return await _productRepository.GetAllAsync(q => q
+            .ProjectTo<Product, TDto>(_mapper)
         );
     }
 
     public async Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<ProductGetDto, TDto>> select)
     {
-        return await _productRepository.GetAllAsync(q =>
-            _mapper.ProjectTo<ProductGetDto>(q)
+        return await _productRepository.GetAllAsync(q => q
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
             .Select(select)
         );
     }
 
     public async Task<List<TDto>> GetAllAsync<TDto>(int take)
     {
-        Func<IQueryable<Product>, IQueryable<Product>> query;
-
-        query = q => q.Take(take);
-
-        return await _productRepository.GetAllAsync(q =>
-            _mapper.ProjectTo<TDto>(query(q))
+        return await _productRepository.GetAllAsync(q => q
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+            .ProjectTo<ProductGetDto,TDto>(_mapper)
+            .Take(take)
+        );
+    }
+    public async Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<ProductGetDto, TDto>> select, int take)
+    {
+        return await _productRepository.GetAllAsync(q => q
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+            .Select(select)
+            .Take(take)
         );
     }
 
@@ -100,7 +143,7 @@ public class ProductService
         }
 
         return await _productRepository.GetAllAsync(q => q
-            ._(q => _mapper.ProjectTo<ProductGetDto>(q))
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
             ._(queryFilter)
             ._(orderFilter)
             ._(takeFilter)
@@ -108,24 +151,11 @@ public class ProductService
         );
     }
 
-    public async Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<ProductGetDto, TDto>> select, int take)
-    {
-        Func<IQueryable<Product>, IQueryable<Product>> query;
-
-        query = q => q.Take(take);
-
-        return await _productRepository.GetAllAsync(q => q
-            .Select(p => _mapper.Map<ProductGetDto>(p))
-            .Select(select)
-        );
-    }
-
     public virtual TDto? GetById<TDto>(int id)
     {
-        return _productRepository.GetSingle(q =>
-            _mapper.ProjectTo<TDto>(q
-                .Where(p => p.Id == id)
-            )
+        return _productRepository.GetSingle(q => q
+            .Where(p => p.Id == id)
+            .ProjectTo<Product, TDto>(_mapper)
         );
     }
 
@@ -140,12 +170,10 @@ public class ProductService
 
     public virtual async Task<TDto?> GetByIdAsync<TDto>(int id)
     {
-        return await _productRepository.GetSingleAsync(q => 
-            _mapper.ProjectTo<TDto>(
-                _mapper.ProjectTo<ProductGetDto>(q
-                    .Where(p => p.Id == id)
-                )
-            )
+        return await _productRepository.GetSingleAsync(q => q
+            .Where(p => p.Id == id)
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+            .ProjectTo<ProductGetDto, TDto>(_mapper)
         );
     }
 
@@ -153,7 +181,7 @@ public class ProductService
     {
         return await _productRepository.GetSingleAsync(q => q
             .Where(p => p.Id == id)
-            .Select(p => _mapper.Map<ProductGetDto>(p))
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
             .Select(select)
         );
     }
@@ -188,7 +216,7 @@ public class ProductService
 
         ICollection<Message> errorMessages = [];
 
-        Product product = _mapper.Map<Product>(pdto);
+        Product product = MapToProduct.From(pdto);
 
         bool transactionSucceeded = await _productRepository.DoInTransactionAsync(async () =>
         {
@@ -247,7 +275,7 @@ public class ProductService
     {
         ICollection<Message> errorMessages = [];
 
-        Product product = _mapper.Map<Product>(pdto);
+        Product product = MapToProduct.From(pdto);
 
         bool transactionSucceeded = await _productRepository.DoInTransactionAsync(async () =>
         {
