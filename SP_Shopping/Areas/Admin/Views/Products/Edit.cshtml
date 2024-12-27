@@ -22,7 +22,8 @@
                 <img 
                     class="img-fluid" 
                     style="width: 10em; aspect-ratio: 1/1"
-                    src="@(_productImageHandler.GetImageOrDefaultURL(new((int)Model.Id)) )" 
+                    src="@(_productImageHandler.GetImageOrDefaultURL(new((int)Model.Id)) )"
+                    asp-append-version=true
                 />
                 @if (_productImageHandler.ImageExists(new((int)Model.Id)))
                 {

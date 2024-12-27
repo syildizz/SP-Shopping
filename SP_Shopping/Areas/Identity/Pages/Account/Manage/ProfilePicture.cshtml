@@ -12,7 +12,7 @@
 <h3>@ViewData["Title"]</h3>
 <div class="row">
     <div class="col-md-6">
-    <img class="img-fluid ratio-1x1" style="width: 10em;" src="@_userProfileImageHandler.GetImageOrDefaultURL(new UserProfileImageKey(User.FindFirstValue(ClaimTypes.NameIdentifier)!))" />
+    <img class="img-fluid ratio-1x1" style="width: 10em;" src="@_userProfileImageHandler.GetImageOrDefaultURL(new UserProfileImageKey(User.FindFirstValue(ClaimTypes.NameIdentifier)!))" asp-append-version=true />
     @if (_userProfileImageHandler.ImageExists(new((string)User.FindFirstValue(ClaimTypes.NameIdentifier)!)))
     {
         <button id="reset-profile-picture-button" name="button" type="submit" class="btn-close position-absolute translate-middle badge rounded-pill bg-danger" value="Reset" form="profile-picture-form"> </button>

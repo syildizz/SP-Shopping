@@ -74,7 +74,7 @@
         <tr>
             <td>
                 <a asp-area="" asp-controller="User" asp-action="Index" asp-route-id="@item.Id" class="unstyled">
-                <img class="img-fluid" src="@_imageHandler.GetImageOrDefaultURL(new(item.Id))" />
+                <img class="img-fluid" src="@_imageHandler.GetImageOrDefaultURL(new(item.Id))" asp-append-version=true />
                 </a>
             </td>
             <td>

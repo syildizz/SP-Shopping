@@ -24,6 +24,7 @@
                     style="
                         width: 10em;"
                     src="@( _productImageHandler.GetImageOrDefaultURL(new((int)Model.Id)) )" 
+                    asp-append-version=true
                 />
                 @if (_productImageHandler.ImageExists(new((int)Model.Id)))
                 {

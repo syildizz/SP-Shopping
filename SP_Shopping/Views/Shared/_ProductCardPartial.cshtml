@@ -10,6 +10,7 @@
             src="@_productImageHandler.GetImageOrDefaultURL(new(Model.Id))"
             class="card-img-top ratio-1x1"
             alt="Image for product"
+            asp-append-version=true
         />
         </a>
         <div class="card-body py-2">
@@ -25,7 +26,8 @@
                     <img 
                         class="img-fluid ratio-1x1 float-start me-2" 
                         style="width: 1.5em; top: 50%; left: 0; aspect-ratio: 1/1;" 
-                        src="@_userProfileImageHandler.GetImageOrDefaultURL(new(Model.SubmitterId))" 
+                        src="@_userProfileImageHandler.GetImageOrDefaultURL(new(Model.SubmitterId))"
+                        asp-append-version=true
                     />
                     <span>@Html.DisplayFor(model => Model.SubmitterName)</span>
                 </a>
