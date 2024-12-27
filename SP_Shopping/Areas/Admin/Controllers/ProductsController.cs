@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
 using SP_Shopping.Areas.Admin.Dtos.Product;
+using SP_Shopping.Hubs;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
 using SP_Shopping.Utilities;
@@ -23,7 +25,8 @@ public class ProductsController
     IMapper mapper,
     IShoppingServices shoppingServices,
     IImageHandlerDefaulting<ProductImageKey> productImageHandler,
-    IMessageHandler messageHandler
+    IMessageHandler messageHandler,
+    IHubContext<ProductHub, IProductHubClient> productHub
 ) : Controller
 {
     private readonly ILogger<ProductsController> _logger = logger;
@@ -31,6 +34,7 @@ public class ProductsController
     private readonly IShoppingServices _shoppingServices = shoppingServices;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler = productImageHandler;
     private readonly IMessageHandler _messageHandler = messageHandler;
+    private readonly IHubContext<ProductHub, IProductHubClient> _productHub = productHub;
 
     // GET: Products
     public async Task<IActionResult> Index(string? query, string? type, [FromQuery] bool? sort)
@@ -367,6 +371,8 @@ public class ProductsController
 #endif
             return RedirectToAction(nameof(Edit), new { id });
         }
+
+        await _productHub.Clients.All.NotifyChangeInProductWithId((int)id!);
 
         return RedirectToAction(nameof(Edit), new { id });
         
