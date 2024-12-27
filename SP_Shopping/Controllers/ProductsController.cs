@@ -134,7 +134,7 @@ public class ProductsController(
     public async Task<IActionResult> Edit(int? id)
     {
 
-        if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
+        if (User.IsInRole("Admin")) return RedirectToAction("Edit", "Products", new { area = "Admin" });
 
         _logger.LogInformation($"GET: Entering Products/Edit.");
 
@@ -231,7 +231,7 @@ public class ProductsController(
     public async Task<IActionResult> Delete(int? id)
     {
 
-        if (User.IsInRole("Admin")) return RedirectToAction("Create", "Products", new { area = "Admin" });
+        if (User.IsInRole("Admin")) return RedirectToAction("Delete", "Products", new { area = "Admin" });
 
         _logger.LogInformation($"GET: Entering Products/Delete.");
 
@@ -306,6 +306,8 @@ public class ProductsController(
     [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> ResetImage(int? id)
     {
+        if (User.IsInRole("Admin")) return RedirectToAction("ResetImage", "Products", new { area = "Admin" });
+
         _logger.LogInformation($"POST: Entering Products/ResetImage.");
 
         _logger.LogDebug("Fetching product for id \"{Id}\".", id);
