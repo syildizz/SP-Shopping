@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Dtos.Product;
-using SP_Shopping.ServiceDtos;
-using ProductCreateDto = SP_Shopping.ServiceDtos.ProductCreateDto;
+using SP_Shopping.ServiceDtos.Product;
+using ProductCreateDto = SP_Shopping.ServiceDtos.Product.ProductCreateDto;
 
 namespace SP_Shopping.MapProfiles.ServiceDtos;
 

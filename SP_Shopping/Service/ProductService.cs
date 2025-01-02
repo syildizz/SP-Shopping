@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Query;
 using SP_Shopping.Hubs;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
-using SP_Shopping.ServiceDtos;
+using SP_Shopping.ServiceDtos.Product;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;

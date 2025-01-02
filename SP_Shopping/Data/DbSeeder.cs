@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
-using SP_Shopping.ServiceDtos;
+using SP_Shopping.ServiceDtos.Product;
 using SP_Shopping.Utilities;
 using System.Text.Json;
 

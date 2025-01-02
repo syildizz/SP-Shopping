@@ -1,9 +1,9 @@
-﻿using SP_Shopping.ServiceDtos;
-using SP_Shopping.Models;
-using ProductCreateDto = SP_Shopping.ServiceDtos.ProductCreateDto;
+﻿using SP_Shopping.Models;
+using ProductCreateDto = SP_Shopping.ServiceDtos.Product.ProductCreateDto;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using System.Linq.Expressions;
 using SP_Shopping.Dtos.Product;
+using SP_Shopping.ServiceDtos.Product;
 
 namespace SP_Shopping.Utilities.Mappers;
 

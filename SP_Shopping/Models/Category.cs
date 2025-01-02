@@ -10,5 +10,5 @@ public class Category
     [Required]
     [MaxLength(50, ErrorMessage = "A genre name cannot be longer than 50 characters.")]
     public required string Name { get; set; }
-    public List<Product> Products { get; set; } = new();
+    public List<Product> Products { get; set; } = [];
 }

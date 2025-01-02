@@ -1,6 +1,6 @@
 ﻿using SP_Shopping.Utilities.ImageHandlerKeys;
 
-namespace SP_Shopping.ServiceDtos;
+namespace SP_Shopping.ServiceDtos.Product;
 
 public class ProductEditDto : IDisposable
 {

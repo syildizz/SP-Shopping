@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.Service;
-using SP_Shopping.ServiceDtos;
+using SP_Shopping.ServiceDtos.Product;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.Filters;
 using SP_Shopping.Utilities.ImageHandler;
@@ -99,7 +99,7 @@ public class ProductsController(
         }
 
         _logger.LogDebug($"Creating product.");
-        using ServiceDtos.ProductCreateDto pcdto = _mapper.Map<ServiceDtos.ProductCreateDto>(pdto);
+        using ServiceDtos.Product.ProductCreateDto pcdto = _mapper.Map<ServiceDtos.Product.ProductCreateDto>(pdto);
         pcdto.SubmitterId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
             ?? throw new Exception("ClaimTypes.NameIdentifier doesn't exist somehow. Should be unreachable code");
 

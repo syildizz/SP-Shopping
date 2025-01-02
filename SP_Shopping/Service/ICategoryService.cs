@@ -1,21 +1,32 @@
 ﻿using SP_Shopping.Models;
+using SP_Shopping.ServiceDtos.Category;
 using SP_Shopping.Utilities.MessageHandler;
+using System.Linq.Expressions;
 
 namespace SP_Shopping.Service;
 public interface ICategoryService
 {
-    List<TResult> GetAll<TResult>();
-    List<TResult> GetAll<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query);
-    Task<List<TResult>> GetAllAsync<TResult>();
-    Task<List<TResult>> GetAllAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query);
-    TResult? GetSingle<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query);
-    Task<TResult?> GetSingleAsync<TResult>(string cacheKey, Func<IQueryable<Category>, IQueryable<TResult>> query);
-    bool Exists(Func<IQueryable<Category>, IQueryable<Category>> query);
-    Task<bool> ExistsAsync(Func<IQueryable<Category>, IQueryable<Category>> query);
-    (bool succeeded, ICollection<Message>? errorMessages) TryCreate(Category category);
-    Task<(bool succeeded, ICollection<Message>? errorMessages)> TryCreateAsync(Category category);
-    (bool succeeded, ICollection<Message>? errorMesages) TryUpdate(Category category);
-    Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(Category category);
-    (bool succeeded, ICollection<Message>? errorMessages) TryDelete(Category category);
-    Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(Category category);
+    List<TDto> GetAll<TDto>();
+    List<TDto> GetAll<TDto>(int take);
+    List<TDto> GetAll<TDto>(Expression<Func<CategoryGetDto, TDto>> select);
+    List<TDto> GetAll<TDto>(Expression<Func<CategoryGetDto, TDto>> select, int take);
+    List<TDto> GetAll<TDto>(string? filterQuery, string? orderQuery, object? filterValue, int? take);
+    Task<List<TDto>> GetAllAsync<TDto>();
+    Task<List<TDto>> GetAllAsync<TDto>(int take);
+    Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<CategoryGetDto, TDto>> select);
+    Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<CategoryGetDto, TDto>> select, int take);
+    Task<List<TDto>> GetAllAsync<TDto>(string? filterQuery, string? orderQuery, object? filterValue, int? take);
+    TDto? GetById<TDto>(int id);
+    TDto? GetById<TDto>(int id, Expression<Func<CategoryGetDto, TDto>> select);
+    Task<TDto?> GetByIdAsync<TDto>(int id);
+    Task<TDto?> GetByIdAsync<TDto>(int id, Expression<Func<CategoryGetDto, TDto>> select);
+    bool Exists(int id);
+    Task<bool> ExistsAsync(int id);
+    (bool succeeded, int? id, ICollection<Message>? errorMessages) TryCreate(CategoryCreateDto cdto);
+    Task<(bool succeeded, int? id, ICollection<Message>? errorMessages)> TryCreateAsync(CategoryCreateDto cdto);
+    (bool succeeded, ICollection<Message>? errorMesages) TryUpdate(int id, CategoryEditDto cdto);
+    Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(int id, CategoryEditDto cdto);
+    (bool succeeded, ICollection<Message>? errorMessages) TryDelete(int id);
+    Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(int id);
+    (bool succeeded, ICollection<Message>? errorMessages) TryDeleteCascade(int id);
 }

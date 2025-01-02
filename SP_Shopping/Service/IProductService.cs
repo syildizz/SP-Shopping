@@ -1,5 +1,5 @@
 ﻿using SP_Shopping.Models;
-using SP_Shopping.ServiceDtos;
+using SP_Shopping.ServiceDtos.Product;
 using SP_Shopping.Utilities.MessageHandler;
 using System.Linq.Expressions;
 

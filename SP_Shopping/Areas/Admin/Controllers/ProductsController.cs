@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using SP_Shopping.Areas.Admin.Dtos.Product;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
-using SP_Shopping.ServiceDtos;
+using SP_Shopping.ServiceDtos.Product;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.Filters;
 using SP_Shopping.Utilities.ImageHandler;

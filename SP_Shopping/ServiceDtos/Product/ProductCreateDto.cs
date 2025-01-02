@@ -1,5 +1,4 @@
-﻿
-namespace SP_Shopping.ServiceDtos;
+﻿namespace SP_Shopping.ServiceDtos.Product;
 
 public class ProductCreateDto : IDisposable
 {
