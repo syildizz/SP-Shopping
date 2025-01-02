@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SP_Shopping.Controllers;
 using SP_Shopping.Dtos.Product;
+using SP_Shopping.Hubs;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
@@ -29,6 +31,7 @@ public class ProductsControllerTests
     private readonly IShoppingServices _shoppingServices;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
     private readonly IMessageHandler _messageHandler;
+    private readonly IHubContext<ProductHub, IProductHubClient> _productHub;
     private readonly ProductsController _productsController;
 
     public ProductsControllerTests()
@@ -38,6 +41,7 @@ public class ProductsControllerTests
         _shoppingServices = A.Fake<IShoppingServices>();
         _productImageHandler = A.Fake<IImageHandlerDefaulting<ProductImageKey>>();
         _messageHandler = new MessageHandler();
+        _productHub = A.Fake<IHubContext<ProductHub, IProductHubClient>>();
 
         // SUT
 
@@ -47,7 +51,8 @@ public class ProductsControllerTests
             mapper: _mapper,
             shoppingServices: _shoppingServices,
             productImageHandler: _productImageHandler,
-            messageHandler: _messageHandler
+            messageHandler: _messageHandler,
+            productHub: _productHub
         );
 
         var fakeUser = new ClaimsPrincipal
@@ -101,7 +106,6 @@ public class ProductsControllerTests
     [DataRow("Delete", (Type[])[typeof(int?)])]
     [DataRow("DeleteConfirmed", (Type[])[typeof(int?)])]
     [DataRow("ResetImage", (Type[])[typeof(int?)])]
-    [DataRow("ProductCard", (Type[])[typeof(int?)])]
     [DataTestMethod]
     public void ProductsController_Some_Fails_WhenIdIsNull_WithBadRequest(string methodName, Type[] types)
     {
@@ -727,44 +731,6 @@ public class ProductsControllerTests
             .MustHaveHappenedOnceOrMore();
     }
 
-
     #endregion Image
 
-    #region API
-
-    [TestMethod]
-    public async Task ProductsController_ProductCard_Succeeds_WithPartialView()
-    {
-        // Arrange
-            // Id is not null
-        const int id = 0;
-            // Id exists, Product is found
-        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
-            .Returns(A.Fake<ProductDetailsDto>());
-        // Act
-        IActionResult result = await _productsController.ProductCard(id);
-        // Assert
-            // Result is correct
-        Assert.IsInstanceOfType<PartialViewResult>(result);
-        var partialViewResult = (PartialViewResult)result;
-        Assert.IsInstanceOfType<ProductDetailsDto>(partialViewResult.Model);
-    }
-
-    [TestMethod]
-    public async Task ProductsController_ProductCard_Fails_WhenProductIsNotExist_WithNotFound()
-    {
-        // Arrange
-            // Id is not null
-        const int id = 0;
-            // Id exists, Product is found
-        A.CallTo(() => _shoppingServices.Product.GetSingleAsync(A<Func<IQueryable<Product>, IQueryable<ProductDetailsDto>>>._))
-            .Returns((ProductDetailsDto?)null);
-        // Act
-        IActionResult result = await _productsController.ProductCard(id);
-        // Assert
-            // Result is correct
-        Assert.IsTrue(result is NotFoundResult or NotFoundObjectResult, $"Result should be {nameof(NotFoundResult)} or {nameof(NotFoundObjectResult)} but is {result.GetType().Name}");
-    }
-
-    #endregion API
 }

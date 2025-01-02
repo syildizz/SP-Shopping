@@ -355,29 +355,6 @@ public class ProductsController(
         
     }
 
-    #region API
-
-    [HttpGet("api/[controller]/[action]/{id?}")]
-    [IfArgNullBadRequestFilter(nameof(id))]
-    public async Task<IActionResult> ProductCard(int? id)
-    {
-        var pdto = await _shoppingServices.Product.GetSingleAsync(q => 
-            _mapper.ProjectTo<ProductDetailsDto>(q
-                .Where(p => p.Id == id)
-            )
-        );
-
-        if (pdto is null)
-        {
-            return NotFound("Not Found");
-        }
-
-        return PartialView("_ProductCardPartial", pdto);
-    }
-
-
-    #endregion API
-
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
     {
         return await _shoppingServices.Category.GetAllAsync(nameof(GetCategoriesSelectListAsync), q => q

@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SP_Shopping.Areas.Admin.Controllers;
 using SP_Shopping.Areas.Admin.Dtos.Product;
+using SP_Shopping.Hubs;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
 using SP_Shopping.Test.TestingUtilities;
@@ -29,6 +31,7 @@ public class AdminProductsControllerTests
     private readonly IShoppingServices _shoppingServices;
     private readonly IImageHandlerDefaulting<ProductImageKey> _productImageHandler;
     private readonly IMessageHandler _messageHandler;
+    private readonly IHubContext<ProductHub, IProductHubClient> _productHub;
     private readonly ProductsController _adminProductsController;
 
     public AdminProductsControllerTests()
@@ -38,6 +41,7 @@ public class AdminProductsControllerTests
         _shoppingServices = A.Fake<IShoppingServices>();
         _productImageHandler = A.Fake<IImageHandlerDefaulting<ProductImageKey>>();
         _messageHandler = new MessageHandler();
+        _productHub = A.Fake<IHubContext<ProductHub, IProductHubClient>>();
 
         // SUT
 
@@ -47,7 +51,8 @@ public class AdminProductsControllerTests
             mapper: _mapper,
             shoppingServices: _shoppingServices,
             productImageHandler: _productImageHandler,
-            messageHandler: _messageHandler
+            messageHandler: _messageHandler,
+            productHub: _productHub
         );
 
         var fakeUser = new ClaimsPrincipal
