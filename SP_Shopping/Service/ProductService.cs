@@ -31,6 +31,10 @@ public class ProductService
     private readonly IMapper _mapper = mapper;
     private readonly IHubContext<ProductHub, IProductHubClient> _productHubContext = productHubContext;
 
+    public List<ProductGetDto> GetAll()
+    {
+        return _productRepository.GetAll(q => q.Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct()));
+    }
     public List<TDto> GetAll<TDto>()
     {
         return _productRepository.GetAll(q => _mapper.ProjectTo<TDto>(q));
@@ -41,6 +45,13 @@ public class ProductService
         return _productRepository.GetAll(q => _mapper.ProjectTo<ProductGetDto>(q).Select(select));
     }
 
+    public List<ProductGetDto> GetAll(int take)
+    {
+        return _productRepository.GetAll(q => q
+            .Take(take)
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+        );
+    }
 
     public List<TDto> GetAll<TDto>(int take)
     {
@@ -56,6 +67,35 @@ public class ProductService
             .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
             .ProjectTo<ProductGetDto, TDto>(_mapper)
             .Take(take)
+        );
+    }
+
+    public List<ProductGetDto> GetAll(string? filterQuery, string? orderQuery, object? filterValue, int? take)
+    {
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> queryFilter = q => q;
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> orderFilter = q => q;
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> takeFilter = q => q;
+
+        if (filterValue is not null && filterQuery is not null)
+        {
+            queryFilter = q => q.Where(filterQuery, filterValue);
+        }
+
+        if (orderQuery is not null)
+        {
+            orderFilter = q => q.OrderBy(orderQuery);
+        }
+
+        if (take is not null)
+        {
+            takeFilter = q => q.Take((int)take);
+        }
+
+        return _productRepository.GetAll(q => q
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+            ._(queryFilter)
+            ._(orderFilter)
+            ._(takeFilter)
         );
     }
 
@@ -89,6 +129,13 @@ public class ProductService
         );
     }
 
+    public async Task<List<ProductGetDto>> GetAllAsync()
+    {
+        return await _productRepository.GetAllAsync(q => q
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+        );
+    }
+
     public async Task<List<TDto>> GetAllAsync<TDto>()
     {
         return await _productRepository.GetAllAsync(q => q
@@ -101,6 +148,14 @@ public class ProductService
         return await _productRepository.GetAllAsync(q => q
             .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
             .Select(select)
+        );
+    }
+
+    public async Task<List<ProductGetDto>> GetAllAsync(int take)
+    {
+        return await _productRepository.GetAllAsync(q => q
+            .Take(take)
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
         );
     }
 
@@ -118,6 +173,35 @@ public class ProductService
             .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
             .Select(select)
             .Take(take)
+        );
+    }
+
+    public async Task<List<ProductGetDto>> GetAllAsync(string? filterQuery, string? orderQuery, object? filterValue, int? take)
+    {
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> queryFilter = q => q;
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> orderFilter = q => q;
+        Func<IQueryable<ProductGetDto>, IQueryable<ProductGetDto>> takeFilter = q => q;
+
+        if (filterValue is not null && filterQuery is not null)
+        {
+            queryFilter = q => q.Where(filterQuery, filterValue);
+        }
+
+        if (orderQuery is not null)
+        {
+            orderFilter = q => q.OrderBy(orderQuery);
+        }
+
+        if (take is not null)
+        {
+            takeFilter = q => q.Take((int)take);
+        }
+
+        return await _productRepository.GetAllAsync(q => q
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+            ._(queryFilter)
+            ._(orderFilter)
+            ._(takeFilter)
         );
     }
 
@@ -151,6 +235,14 @@ public class ProductService
         );
     }
 
+    public ProductGetDto? GetById(int id)
+    {
+        return _productRepository.GetSingle(q => q
+            .Where(p => p.Id == id)
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
+        );
+    }
+
     public virtual TDto? GetById<TDto>(int id)
     {
         return _productRepository.GetSingle(q => q
@@ -165,6 +257,13 @@ public class ProductService
             .Where(p => p.Id == id)
             .Select(p => _mapper.Map<ProductGetDto>(p))
             .Select(select)
+        );
+    }
+    public async Task<ProductGetDto?> GetByIdAsync(int id)
+    {
+        return await _productRepository.GetSingleAsync(q => q
+            .Where(p => p.Id == id)
+            .Select(Utilities.Mappers.MapToProductGet.Expression.FromProduct())
         );
     }
 

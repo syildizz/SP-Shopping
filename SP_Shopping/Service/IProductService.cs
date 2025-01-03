@@ -6,18 +6,26 @@ using System.Linq.Expressions;
 namespace SP_Shopping.Service;
 public interface IProductService
 {
+    List<ProductGetDto> GetAll();
     List<TDto> GetAll<TDto>();
+    List<ProductGetDto> GetAll(int take);
     List<TDto> GetAll<TDto>(int take);
     List<TDto> GetAll<TDto>(Expression<Func<ProductGetDto, TDto>> select);
     List<TDto> GetAll<TDto>(Expression<Func<ProductGetDto, TDto>> select, int take);
+    List<ProductGetDto> GetAll(string? filterQuery, string? orderQuery, object? filterValue, int? take);
     List<TDto> GetAll<TDto>(string? filterQuery, string? orderQuery, object? filterValue, int? take);
+    Task<List<ProductGetDto>> GetAllAsync();
     Task<List<TDto>> GetAllAsync<TDto>();
+    Task<List<ProductGetDto>> GetAllAsync(int take);
     Task<List<TDto>> GetAllAsync<TDto>(int take);
     Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<ProductGetDto, TDto>> select);
     Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<ProductGetDto, TDto>> select, int take);
+    Task<List<ProductGetDto>> GetAllAsync(string? filterQuery, string? orderQuery, object? filterValue, int? take);
     Task<List<TDto>> GetAllAsync<TDto>(string? filterQuery, string? orderQuery, object? filterValue, int? take);
+    ProductGetDto? GetById(int id);
     TDto? GetById<TDto>(int id);
     TDto? GetById<TDto>(int id, Expression<Func<ProductGetDto, TDto>> select);
+    Task<ProductGetDto?> GetByIdAsync(int id);
     Task<TDto?> GetByIdAsync<TDto>(int id);
     Task<TDto?> GetByIdAsync<TDto>(int id, Expression<Func<ProductGetDto, TDto>> select);
     string? GetByIdSubmitterId(int id);
