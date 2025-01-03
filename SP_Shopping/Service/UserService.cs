@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Models;
 using SP_Shopping.Repository;
+using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.ImageHandler;
 using SP_Shopping.Utilities.ImageHandlerKeys;
 using SP_Shopping.Utilities.MessageHandler;
@@ -240,7 +241,9 @@ public class UserService
         {
             foreach (var productId in productIds)
             {
-                _productService.TryDeleteCascade(new Product { Id = productId });
+                if (!(await _productService.TryDeleteCascadeAsync(productId)).TryOut(out var errMsgs)) {
+                    return (false, errMsgs);
+                }
             }
             return (true, null);
         }
