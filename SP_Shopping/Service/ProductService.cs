@@ -440,7 +440,7 @@ public class ProductService
         catch (Exception ex)
         {
 #if DEBUG
-            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image: {ex.StackTrace}" });
+            errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = $"Failed to delete image cascade: {ex.StackTrace}" });
 #else
             errorMessages.Add(new Message { Type = Message.MessageType.Error, Content = "Failed to delete image" });
 #endif
