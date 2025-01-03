@@ -4,6 +4,7 @@ using SP_Shopping.Areas.Admin.Dtos.Product;
 using System.Linq.Expressions;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.ServiceDtos.Product;
+using SP_Shopping.ServiceDtos.Category;
 
 namespace SP_Shopping.Utilities.Mappers;
 
@@ -130,7 +131,7 @@ public static class MapToProduct {
                 Name = p.Name,
                 Price = p.Price,
                 CategoryId = p.CategoryId,
-                Category = p.Category,
+                Category = new Category { Id = p.Category.Id, Name = p.Category.Name },
                 Description = p.Description,
                 SubmitterId = p.SubmitterId,
                 Submitter = p.Submitter,
@@ -187,7 +188,7 @@ public static class MapToProductGet
                 Name = p.Name,
                 Price = p.Price,
                 CategoryId = p.CategoryId,
-                Category = p.Category,
+                Category = new CategoryGetDto { Id = p.Category.Id, Name = p.Category.Name },
                 Description = p.Description,
                 SubmitterId = p.SubmitterId,
                 Submitter = p.Submitter,

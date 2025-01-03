@@ -30,5 +30,5 @@ public interface IProductService
     Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(int id, ProductEditDto pdto);
     (bool succeeded, ICollection<Message>? errorMessages) TryDelete(int id);
     Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(int id);
-    (bool succeeded, ICollection<Message>? errorMessages) TryDeleteCascade(int id);
+    Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteCascadeAsync(int id);
 }

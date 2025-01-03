@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Data;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
+using SP_Shopping.ServiceDtos.Category;
+using SP_Shopping.ServiceDtos.Product;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.MessageHandler;
 
@@ -28,9 +30,10 @@ public class CategoriesController
     {
         _logger.LogInformation("GET: Entering Admin/Products/Search.");
 
-        Func<IQueryable<Category>, IQueryable<Category>> queryFilter = q => q;
-        Func<IQueryable<Category>, IQueryable<Category>> sortFilter = q => q
-            .OrderByDescending(c => c.Name);
+        string filterQuery = "";
+        string orderQuery = "Name";
+
+        object? filterValue = null;
 
         try
         {
@@ -38,19 +41,23 @@ public class CategoriesController
             {
                 if (!string.IsNullOrWhiteSpace(query))
                 {
-                    queryFilter = type switch
+                    (filterQuery, filterValue) = type switch
                     {
-                        nameof(Category.Id) => int.TryParse(query, out var queryNumber) ? q => q.Where(c => c.Id == queryNumber) : q => q,
-                        nameof(Category.Name) => q => q.Where(c => c.Name.Contains(query)),
+                        nameof(CategoryGetDto.Id) => 
+                            int.TryParse(query, out var queryNumber) 
+                                ? ($"{nameof(CategoryGetDto.Id)} == @0", queryNumber as object)
+                                : ("false", null),
+                        nameof(CategoryGetDto.Name) => 
+                            ($"{nameof(CategoryGetDto.Name)}.Contains(@0)", query),
                         _ => throw new NotImplementedException($"{type} is invalid")
                     };
                 }
 
-                sort ??= false;
-                sortFilter = type switch
+                bool _sort = sort ?? false;
+                orderQuery = type switch
                 {
-                    nameof(Category.Id) => (bool)sort ? q => q.OrderBy(c => c.Id) : q => q.OrderByDescending(c => c.Id),
-                    nameof(Category.Name) => (bool)sort ? q => q.OrderBy(c => c.Name) : q => q.OrderByDescending(c => c.Name),
+                    nameof(CategoryGetDto.Id) => $"{nameof(CategoryGetDto.Id)}{(_sort ? " desc" : "")}",
+                    nameof(CategoryGetDto.Name) => $"{nameof(CategoryGetDto.Name)}{(_sort ? " desc" : "")}",
                     _ => throw new NotImplementedException($"{type} is invalid")
                 };
             }
@@ -61,11 +68,7 @@ public class CategoriesController
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var categoryList = await _shoppingServices.Category.GetAllAsync(HttpContext.Request.Path, q => q
-            ._(queryFilter)
-            ._(sortFilter)
-            .Take(20)
-        );
+        var categoryList = await _shoppingServices.Category.GetAllAsync(filterQuery, orderQuery, filterValue, 20);
 
         return View(categoryList);
         
@@ -79,7 +82,7 @@ public class CategoriesController
             return NotFound();
         }
 
-        var category = await _shoppingServices.Category.GetSingleAsync(HttpContext.Request.Path, q => q.Where(c => c.Id == id));
+        var category = await _shoppingServices.Category.GetByIdAsync((int)id);
         if (category == null)
         {
             return NotFound();
@@ -99,14 +102,14 @@ public class CategoriesController
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,Name")] Category category)
+    public async Task<IActionResult> Create([Bind("Name")] CategoryGetDto category)
     {
         if (!ModelState.IsValid)
         {
             return View(category);
         }
 
-        if (!(await _shoppingServices.Category.TryCreateAsync(category)).TryOut(out var errMsgs))
+        if (!(await _shoppingServices.Category.TryCreateAsync(new CategoryCreateDto { Name = category.Name })).TryOut(out var id, out var errMsgs))
         {
             _messageHandler.Add(TempData, errMsgs!);
             return View(category);
@@ -123,7 +126,7 @@ public class CategoriesController
             return NotFound();
         }
 
-        var category = await _shoppingServices.Category.GetSingleAsync(HttpContext.Request.Path, q => q.Where(c => c.Id == id));
+        var category = await _shoppingServices.Category.GetByIdAsync((int)id);
         if (category == null)
         {
             return NotFound();
@@ -148,7 +151,7 @@ public class CategoriesController
             return View(category);
         }
 
-        if (!(await _shoppingServices.Category.TryUpdateAsync(category)).TryOut(out var errMsgs))
+        if (!(await _shoppingServices.Category.TryUpdateAsync(id, new CategoryEditDto { Name = category.Name })).TryOut(out var errMsgs))
         {
             _messageHandler.Add(TempData, errMsgs!);
             return View(category);
@@ -167,7 +170,7 @@ public class CategoriesController
 
         //var category = await _context.Categories
         //    .FirstOrDefaultAsync(m => m.Id == id);
-        var category = await _shoppingServices.Category.GetSingleAsync(HttpContext.Request.Path, q => q.Where(c => c.Id == id));
+        var category = await _shoppingServices.Category.GetByIdAsync((int)id);
         if (category == null)
         {
             return NotFound();
@@ -181,18 +184,17 @@ public class CategoriesController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        //var category = await _context.Categories.FindAsync(id);
-        var category = await _shoppingServices.Category.GetSingleAsync("All", q => q.Where(c => c.Id == id));
-        if (category != null)
+        if (!await _shoppingServices.Category.ExistsAsync(id))
         {
-            if (!(await _shoppingServices.Category.TryDeleteAsync(category)).TryOut(out var errMsgs))
-            {
-                _messageHandler.Add(TempData, errMsgs!);
-                return View(category);
-            }
+            return NotFound();
         }
 
-        //await _context.SaveChangesAsync();
+        if (!(await _shoppingServices.Category.TryDeleteAsync(id)).TryOut(out var errMsgs))
+        {
+            _messageHandler.Add(TempData, errMsgs!);
+            return RedirectToAction(nameof(Delete), new { id });
+        }
+
         return RedirectToAction(nameof(Index));
     }
 

@@ -240,7 +240,7 @@ public class UserService
         {
             foreach (var productId in productIds)
             {
-                _productService.TryDeleteCascade(productId);
+                await _productService.TryDeleteCascadeAsync(productId);
             }
             return (true, null);
         }

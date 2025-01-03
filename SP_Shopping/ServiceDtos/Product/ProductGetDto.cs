@@ -1,4 +1,5 @@
 ﻿using SP_Shopping.Models;
+using SP_Shopping.ServiceDtos.Category;
 
 namespace SP_Shopping.ServiceDtos.Product;
 
@@ -8,7 +9,7 @@ public class ProductGetDto
     public string Name { get; set; } = "";
     public decimal Price { get; set; }
     public int CategoryId { get; set; }
-    public Category Category { get; set; } = default!;
+    public CategoryGetDto Category { get; set; } = default!;
     public string? Description { get; set; }
     public string? SubmitterId { get; set; }
     public ApplicationUser? Submitter { get; set; } = null;

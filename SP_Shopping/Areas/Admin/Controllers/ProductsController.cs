@@ -103,13 +103,6 @@ public class ProductsController
 
         _logger.LogDebug("Fetching product information matching search term.");
         var pdtoList = await _shoppingServices.Product.GetAllAsync<AdminProductDetailsDto>(filterQuery, orderQuery, filterValue, 20);
-            //q =>
-            //_mapper.ProjectTo<AdminProductDetailsDto>(q
-            //    ._(queryFilter)
-            //    ._(sortFilter)
-            //    .Take(20)
-            //)
-        //);
 
         return View(pdtoList);
         
@@ -334,9 +327,7 @@ public class ProductsController
 
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
     {
-        return await _shoppingServices.Category.GetAllAsync(nameof(GetCategoriesSelectListAsync), q => q
-            .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
-        );
+        return await _shoppingServices.Category.GetAllAsync(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() });
     }
 
     private async Task<IEnumerable<SelectListItem>> GetUsersSelectListAsync()

@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
+using SP_Shopping.ServiceDtos.Category;
 using SP_Shopping.ServiceDtos.Product;
 using SP_Shopping.Utilities;
 using System.Text.Json;
@@ -97,16 +99,19 @@ public class DbSeeder : IDisposable
         }
         imageStreams.Add(null);
 
-        List<Category> categories = categorySeedData.Select(c => new Category { Name = c.Name }).DistinctBy(c => c.Name).ToList();
+        List<CategoryCreateDto> cdtos = categorySeedData.Select(c => new CategoryCreateDto { Name = c.Name }).DistinctBy(c => c.Name).ToList();
 
-        foreach (var category in categories)
+        List<int> categoryIds = [];
+
+        foreach (var cdto in cdtos)
         {
-            var (succeeded, errmsgs) = await _shoppingServices.Category.TryCreateAsync(category);
+            var (succeeded, id, errmsgs) = await _shoppingServices.Category.TryCreateAsync(cdto);
             if (!succeeded)
             {
                 _logger.LogError("Failed to seed category in database due to {ErrMsgs}", errmsgs);
                 break;
             }
+            categoryIds.Add((int)id!);
         }
 
         if (!await AddRoles())
@@ -156,7 +161,7 @@ public class DbSeeder : IDisposable
                 Name = p.Name,
                 Price = p.Price,
                 Description = p.Description,
-                CategoryId = categories[_random.Next(categories.Count)].Id,
+                CategoryId = categoryIds[_random.Next(categoryIds.Count)],
                 SubmitterId = users[_random.Next(users.Count)].Id,
                 Image = imageStreams[_random.Next(imageStreams.Count)]
             })

@@ -352,9 +352,7 @@ public class ProductsController(
 
     private async Task<IEnumerable<SelectListItem>> GetCategoriesSelectListAsync()
     {
-        return await _shoppingServices.Category.GetAllAsync(nameof(GetCategoriesSelectListAsync), q => q
-            .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
-        );
+        return await _shoppingServices.Category.GetAllAsync(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() });
     }
 
 

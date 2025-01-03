@@ -25,17 +25,30 @@ public class CategoryService
     private readonly IProductService _productService = productService;
     private readonly IMapper _mapper = mapper;
 
+    public List<CategoryGetDto> GetAll()
+    {
+        return _categoryRepository.GetAll($"{nameof(CategoryGetDto)}_All", q => q.Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name }));
+    }
+
     public List<TDto> GetAll<TDto>()
     {
-        return _categoryRepository.GetAll($"{nameof(Category)}_All", q => q
+        return _categoryRepository.GetAll($"{typeof(TDto).FullName}_All", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
         );
     }
 
+    public List<CategoryGetDto> GetAll(int take)
+    {
+        return _categoryRepository.GetAll($"{nameof(CategoryGetDto)}_All_Take_{take}", q => q
+            .Take(take)
+            .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name }));
+    }
+
+
     public List<TDto> GetAll<TDto>(int take)
     {
-        return _categoryRepository.GetAll($"{nameof(Category)}_All", q => q
+        return _categoryRepository.GetAll($"{typeof(TDto).FullName}_All_Take_{take}", q => q
             .Take(take)
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
@@ -44,7 +57,7 @@ public class CategoryService
 
     public List<TDto> GetAll<TDto>(Expression<Func<CategoryGetDto, TDto>> select)
     {
-        return _categoryRepository.GetAll($"{nameof(Category)}_All_Select_{Guid.NewGuid()}", q => q
+        return _categoryRepository.GetAll($"{typeof(TDto).FullName}_All_Select_{Guid.NewGuid()}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
         );
@@ -52,9 +65,38 @@ public class CategoryService
 
     public List<TDto> GetAll<TDto>(Expression<Func<CategoryGetDto, TDto>> select, int take)
     {
-        return _categoryRepository.GetAll($"{nameof(Category)}_All_Select_{Guid.NewGuid()}", q => q
+        return _categoryRepository.GetAll($"{typeof(TDto).FullName}_All_Select_{Guid.NewGuid()}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
+        );
+    }
+
+    public List<CategoryGetDto> GetAll(string? filterQuery, string? orderQuery, object? filterValue, int? take)
+    {
+        Func<IQueryable<CategoryGetDto>, IQueryable<CategoryGetDto>> queryFilter = q => q;
+        Func<IQueryable<CategoryGetDto>, IQueryable<CategoryGetDto>> orderFilter = q => q;
+        Func<IQueryable<CategoryGetDto>, IQueryable<CategoryGetDto>> takeFilter = q => q;
+
+        if (filterValue is not null && filterQuery is not null)
+        {
+            queryFilter = q => q.Where(filterQuery, filterValue);
+        }
+
+        if (orderQuery is not null)
+        {
+            orderFilter = q => q.OrderBy(orderQuery);
+        }
+
+        if (take is not null)
+        {
+            takeFilter = q => q.Take((int)take);
+        }
+
+        return _categoryRepository.GetAll($"{nameof(CategoryGetDto)}_All_{filterQuery}_{filterValue}_{orderQuery}_{take}", q => q
+            .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
+            ._(queryFilter)
+            ._(orderFilter)
+            ._(takeFilter)
         );
     }
 
@@ -79,7 +121,7 @@ public class CategoryService
             takeFilter = q => q.Take((int)take);
         }
 
-        return _categoryRepository.GetAll($"{nameof(Category)}_All_{filterQuery}_{filterValue}_{orderQuery}_{take}", q => q
+        return _categoryRepository.GetAll($"{typeof(TDto).FullName}_All_{filterQuery}_{filterValue}_{orderQuery}_{take}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             ._(queryFilter)
             ._(orderFilter)
@@ -88,17 +130,29 @@ public class CategoryService
         );
     }
 
+    public async Task<List<CategoryGetDto>> GetAllAsync()
+    {
+        return await _categoryRepository.GetAllAsync($"{nameof(CategoryGetDto)}_All", q => q.Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name }));
+    }
+
     public async Task<List<TDto>> GetAllAsync<TDto>()
     {
-        return await _categoryRepository.GetAllAsync($"{nameof(Category)}_All", q => q
+        return await _categoryRepository.GetAllAsync($"{typeof(TDto).FullName}_All", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
         );
     }
 
+    public async Task<List<CategoryGetDto>> GetAllAsync(int take)
+    {
+        return await _categoryRepository.GetAllAsync($"{nameof(CategoryGetDto)}_All_Take_{take}", q => q
+            .Take(take)
+            .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name }));
+    }
+
     public async Task<List<TDto>> GetAllAsync<TDto>(int take)
     {
-        return await _categoryRepository.GetAllAsync($"{nameof(Category)}_All", q => q
+        return await _categoryRepository.GetAllAsync($"{typeof(TDto).FullName}_All", q => q
             .Take(take)
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
@@ -107,7 +161,7 @@ public class CategoryService
 
     public async Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<CategoryGetDto, TDto>> select)
     {
-        return await _categoryRepository.GetAllAsync($"{nameof(Category)}_All_Select_{Guid.NewGuid()}", q => q
+        return await _categoryRepository.GetAllAsync($"{typeof(TDto).FullName}_All_Select_{Guid.NewGuid()}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
         );
@@ -115,9 +169,38 @@ public class CategoryService
 
     public async Task<List<TDto>> GetAllAsync<TDto>(Expression<Func<CategoryGetDto, TDto>> select, int take)
     {
-        return await _categoryRepository.GetAllAsync($"{nameof(Category)}_All_Select_{Guid.NewGuid()}", q => q
+        return await _categoryRepository.GetAllAsync($"{typeof(TDto).FullName}_All_Select_{Guid.NewGuid()}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
+        );
+    }
+
+    public async Task<List<CategoryGetDto>> GetAllAsync(string? filterQuery, string? orderQuery, object? filterValue, int? take)
+    {
+        Func<IQueryable<CategoryGetDto>, IQueryable<CategoryGetDto>> queryFilter = q => q;
+        Func<IQueryable<CategoryGetDto>, IQueryable<CategoryGetDto>> orderFilter = q => q;
+        Func<IQueryable<CategoryGetDto>, IQueryable<CategoryGetDto>> takeFilter = q => q;
+
+        if (filterValue is not null && filterQuery is not null)
+        {
+            queryFilter = q => q.Where(filterQuery, filterValue);
+        }
+
+        if (orderQuery is not null)
+        {
+            orderFilter = q => q.OrderBy(orderQuery);
+        }
+
+        if (take is not null)
+        {
+            takeFilter = q => q.Take((int)take);
+        }
+
+        return await _categoryRepository.GetAllAsync($"{nameof(CategoryGetDto)}_All_{filterQuery}_{filterValue}_{orderQuery}_{take}", q => q
+            .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
+            ._(queryFilter)
+            ._(orderFilter)
+            ._(takeFilter)
         );
     }
 
@@ -142,7 +225,7 @@ public class CategoryService
             takeFilter = q => q.Take((int)take);
         }
 
-        return await _categoryRepository.GetAllAsync($"{nameof(Category)}_All_{filterQuery}_{filterValue}_{orderQuery}_{take}", q => q
+        return await _categoryRepository.GetAllAsync($"{typeof(TDto).FullName}_All_{filterQuery}_{filterValue}_{orderQuery}_{take}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             ._(queryFilter)
             ._(orderFilter)
@@ -151,9 +234,18 @@ public class CategoryService
         );
     }
 
+    public CategoryGetDto? GetById(int id)
+    {
+        return _categoryRepository.GetSingle($"{nameof(CategoryGetDto)}_Single_{id}", q => q
+            .Where(c => c.Id == id)
+            .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
+        );
+    }
+
     public TDto? GetById<TDto>(int id)
     {
-        return _categoryRepository.GetSingle($"{nameof(Category)}_Single_{id}", q => q
+        return _categoryRepository.GetSingle($"{typeof(TDto).FullName}_Single_{id}", q => q
+            .Where(c => c.Id == id)
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
         );
@@ -161,15 +253,25 @@ public class CategoryService
 
     public TDto? GetById<TDto>(int id, Expression<Func<CategoryGetDto, TDto>> select)
     {
-        return _categoryRepository.GetSingle($"{nameof(Category)}_Single_{id}", q => q
+        return _categoryRepository.GetSingle($"{typeof(TDto).FullName}_Single_{id}", q => q
+            .Where(c => c.Id == id)
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .Select(select)
         );
     }
 
+    public async Task<CategoryGetDto?> GetByIdAsync(int id)
+    {
+        return await _categoryRepository.GetSingleAsync($"{nameof(CategoryGetDto)}_Single_{id}", q => q
+            .Where(c => c.Id == id)
+            .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
+        );
+    }
+
     public async Task<TDto?> GetByIdAsync<TDto>(int id)
     {
-        return await _categoryRepository.GetSingleAsync($"{nameof(Category)}_Single_{id}", q => q
+        return await _categoryRepository.GetSingleAsync($"{typeof(TDto).FullName}_Single_{id}", q => q
+            .Where(c => c.Id == id)
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .ProjectTo<CategoryGetDto, TDto>(_mapper)
         );
@@ -177,7 +279,8 @@ public class CategoryService
 
     public async Task<TDto?> GetByIdAsync<TDto>(int id, Expression<Func<CategoryGetDto, TDto>> select)
     {
-        return await _categoryRepository.GetSingleAsync($"{nameof(Category)}_Single_{id}", q => q
+        return await _categoryRepository.GetSingleAsync($"{typeof(TDto).FullName}_Single_{id}", q => q
+            .Where(c => c.Id == id)
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
             .Select(select)
         );
@@ -337,7 +440,7 @@ public class CategoryService
         {
             foreach (var productId in productIds)
             {
-                _productService.TryDeleteCascade(productId);
+                await _productService.TryDeleteCascadeAsync(productId);
             }
             return (true, null);
         }
