@@ -5,8 +5,92 @@ using System.Linq.Expressions;
 using SP_Shopping.Dtos.Product;
 using SP_Shopping.ServiceDtos.Product;
 using SP_Shopping.ServiceDtos.Category;
+using SP_Shopping.ServiceDtos.User;
 
 namespace SP_Shopping.Utilities.Mappers;
+
+#region ToApplicationUser
+
+public static class MapToApplicationUser
+{
+    public static ApplicationUser From(this UserGetDto u) => Expression.FromUserGetDto().Compile()(u);
+    public static ApplicationUser From(this UserCreateDto u) => Expression.FromUserCreateDto().Compile()(u);
+    public static ApplicationUser From(this UserEditDto u) => Expression.FromUserEditDto().Compile()(u);
+
+    public static class Expression
+    {
+        public static Expression<Func<UserGetDto, ApplicationUser>> FromUserGetDto()
+        {
+            return u => new ApplicationUser
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                Email = u.Email,
+                PhoneNumber = u.PhoneNumber,
+                Roles = u.Roles,
+                Description = u.Description,
+                InsertionDate = u.InsertionDate,
+                CartItem = u.CartItems,
+                Products = u.Products.Select(MapToProduct.Expression.FromProductGetDto().Compile()).ToList()
+            };
+        }
+
+        public static Expression<Func<UserCreateDto, ApplicationUser>> FromUserCreateDto()
+        {
+            return u => new ApplicationUser
+            {
+                UserName = u.UserName,
+                Email = u.Email,
+                PhoneNumber = u.PhoneNumber,
+                Roles = u.Roles,
+                Description = u.Description,
+                InsertionDate = DateTime.Now
+            };
+        }
+
+        public static Expression<Func<UserEditDto, ApplicationUser>> FromUserEditDto()
+        {
+            return u => new ApplicationUser
+            {
+                UserName = u.UserName,
+                Email = u.Email,
+                PhoneNumber = u.PhoneNumber,
+                Roles = u.Roles,
+                Description = u.Description,
+            };
+        }
+
+    }
+}
+
+#endregion ToApplicationUser
+
+#region ToUserGetDto
+
+public static class MapToUserGetDto
+{
+    public static UserGetDto From(this ApplicationUser u) => Expression.FromApplicationUser().Compile()(u);
+    public static class Expression
+    {
+        public static Expression<Func<ApplicationUser, UserGetDto>> FromApplicationUser()
+        {
+            return u => new UserGetDto
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                Email = u.Email,
+                PhoneNumber = u.PhoneNumber,
+                Roles = u.Roles,
+                Description = u.Description,
+                InsertionDate = u.InsertionDate,
+                CartItems = u.CartItem,
+                Products = u.Products.Select(MapToProductGet.Expression.FromProduct().Compile()).ToList()
+            };
+        }
+    }
+}
+
+#endregion ToUserGetDto
 
 #region ToProductDetailsDto
 
