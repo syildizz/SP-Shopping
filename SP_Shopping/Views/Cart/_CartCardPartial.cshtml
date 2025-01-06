@@ -1,9 +1,10 @@
 ﻿@using SP_Shopping.Utilities.ImageHandler
 @using SP_Shopping.Utilities.ImageHandlerKeys
+@using System.Globalization
 @model CartItemDetailsDto
 @inject IImageHandlerDefaulting<ProductImageKey> _productImageHandler
 
-<div class="card justify-content-around m-3" style="min-height: 10em;">
+<div data-card="true" class="card justify-content-around m-3" style="min-height: 10em;">
     <div class="row g-0 align-items-center h-100">
         <div class="col-sm-3 d-flex card-body justify-content-center">
             <img 
@@ -21,13 +22,13 @@
         <div class="col-sm-3 card-body d-flex card-body justify-content-center">
             <div class="card-text card-text-fixer">
             <form asp-action="Edit" asp-route-id="@Model.ProductId" class="d-flex flex-row justify-content-center gap-2">
-                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@Model.Count" value="@Model.Count" class="form-control" style="min-width: 5em;" min="0" oninput="this.reportValidity();" />
+                <input name="@nameof(CartItemDetailsDto.Count)" asp-for="@Model.Count" value="@Model.Count" class="form-control" style="min-width: 5em;" min="0" />
                 <button type="submit" class="btn btn-secondary btn-sm">Update</button>
             </form>
             </div>
         </div>
         <div class="col-sm-2 card-body d-flex flex-column card-body justify-content-center align-items-center">
-            <div class="card-text card-text-fixer">
+            <div data-single-price="@Model.Price.ToString("N", CultureInfo.InvariantCulture)" class="card-text card-text-fixer">
                 @((Model.Price * Model.Count).ToString("C"))
             </div>
         </div>

@@ -8,7 +8,7 @@
 
 <div class="row gap-5">
     <div class="col-lg-8">
-        <div>
+        <div id="cart-cards">
             @foreach (var card in Model)
             {
                 <partial name="_CartCardPartial" model="card" />
@@ -17,8 +17,69 @@
     </div>
     <div class="col">
         <h1>Your order</h1>
-        <h3 class="my-3 p-3">Total price: @totalPrice.ToString("C")</h3>
+        <h3 class="my-3 p-3">Total price: <span id="total-price">@totalPrice.ToString("C")</span></h3>
     </div>
-
 </div>
+
+<script defer>
+
+    // Get cards
+    const cards = [...document.getElementById("cart-cards").children];
+    const totalPriceText = document.getElementById("total-price");
+
+    // Add event handlers
+    cards.forEach(c => {
+        const countInput = c.querySelector("input[name='Count']");
+        const priceText = c.querySelector("[data-single-price]");
+        const currencySign = priceText.textContent.trim()[0];
+
+        countInput.addEventListener("input", e => {
+            if (!!countInput.value && countInput.validity.valid) {
+                priceText.textContent = getCurrencyString(calculateGroupPrice(countInput, priceText), currencySign);
+
+                let totalPrice = 0;
+                for (let card of cards) {
+                    const _countInput = card.querySelector("input[name='Count']");                    
+                    const _priceText = card.querySelector("[data-single-price]");
+                    totalPrice += calculateGroupPrice(_countInput, _priceText);
+                }
+                totalPriceText.textContent = getCurrencyString(totalPrice, currencySign);
+            }
+            else {
+                priceText.textContent = "Invalid";
+                totalPriceText.textContent = "Invalid";
+                countInput.reportValidity();
+            }
+        })
+    });
+
+    /**
+     * Calculates the price of a cartItem factoring in the count.
+     * @@param {HTMLInputElement} countInput The input element for the number of items in the cart
+     * @@param {HTMLElement} priceText The div element that holds the price
+     * @@returns {number} A floating point number of the total price of the cart item
+     */
+    function calculateGroupPrice(countInput, priceText) {
+        // Remove commas due to javascript formatting of floating point number
+        const singlePrice = parseFloat(priceText.dataset["singlePrice"].replace(',', ''));
+        const itemCount = parseInt(countInput.value);
+        return singlePrice * itemCount;
+    }
+
+    /**
+     * Returns a string with the correct currency format.
+     * @@param {number} num A floating point number
+     * @@param {string} currencySign A currency sign to prepend
+     * @@returns {string} A string formatformatted as a currency
+     */
+    function getCurrencyString(num, currencySign) {
+        return currencySign + num
+        .toLocaleString(
+            undefined, 
+            { style: 'currency', currency: "USD" }
+        )
+        .slice(currencySign.length);
+    }
+
+</script>
 
