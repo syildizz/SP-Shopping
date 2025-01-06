@@ -18,5 +18,5 @@ public interface IProductService
     Task<(bool succeeded, ICollection<Message>? errorMesages)> TryUpdateAsync(Product product, IFormFile? image);
     (bool succeeded, ICollection<Message>? errorMessages) TryDelete(Product product);
     Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteAsync(Product product);
-    (bool succeeded, ICollection<Message>? errorMessages) TryDeleteCascade(Product product);
+    Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteCascadeAsync(Product product);
 }

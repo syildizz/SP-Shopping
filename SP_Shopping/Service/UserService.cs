@@ -241,7 +241,7 @@ public class UserService
         {
             foreach (var productId in productIds)
             {
-                if (!(await _productService.TryDeleteCascadeAsync(productId)).TryOut(out var errMsgs)) {
+                if (!(await _productService.TryDeleteCascadeAsync(new Product { Id = productId })).TryOut(out var errMsgs)) {
                     return (false, errMsgs);
                 }
             }

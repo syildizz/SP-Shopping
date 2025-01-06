@@ -285,7 +285,7 @@ public class ProductService
 
     }
 
-    public (bool succeeded, ICollection<Message>? errorMessages) TryDeleteCascade(Product product)
+    public async Task<(bool succeeded, ICollection<Message>? errorMessages)> TryDeleteCascadeAsync(Product product)
     {
 
         ICollection<Message> errorMessages = [];
@@ -307,7 +307,7 @@ public class ProductService
 
         if (transactionSucceeded)
         {
-            _productHubContext.Clients.All.NotifyChangeInProductWithId(product.Id).RunSynchronously();
+            await _productHubContext.Clients.All.NotifyChangeInProductWithId(product.Id);
             return (true, null);
         }
         else

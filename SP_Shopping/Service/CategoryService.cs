@@ -201,7 +201,7 @@ public class CategoryService
         {
             foreach (var productId in productIds)
             {
-                _productService.TryDeleteCascade(new Product { Id = productId });
+                await _productService.TryDeleteCascadeAsync(new Product { Id = productId });
             }
             return (true, null);
         }
