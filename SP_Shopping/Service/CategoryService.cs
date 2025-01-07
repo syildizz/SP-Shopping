@@ -59,7 +59,7 @@ public class CategoryService
     {
         return _categoryRepository.GetAll($"{typeof(TDto).FullName}_All_Select_{Guid.NewGuid()}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
-            .ProjectTo<CategoryGetDto, TDto>(_mapper)
+            .Select(select)
         );
     }
 
@@ -67,7 +67,7 @@ public class CategoryService
     {
         return _categoryRepository.GetAll($"{typeof(TDto).FullName}_All_Select_{Guid.NewGuid()}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
-            .ProjectTo<CategoryGetDto, TDto>(_mapper)
+            .Select(select)
         );
     }
 
@@ -163,7 +163,7 @@ public class CategoryService
     {
         return await _categoryRepository.GetAllAsync($"{typeof(TDto).FullName}_All_Select_{Guid.NewGuid()}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
-            .ProjectTo<CategoryGetDto, TDto>(_mapper)
+            .Select(select)
         );
     }
 
@@ -171,7 +171,7 @@ public class CategoryService
     {
         return await _categoryRepository.GetAllAsync($"{typeof(TDto).FullName}_All_Select_{Guid.NewGuid()}", q => q
             .Select(c => new CategoryGetDto { Id = c.Id, Name = c.Name })
-            .ProjectTo<CategoryGetDto, TDto>(_mapper)
+            .Select(select)
         );
     }
 
