@@ -2,7 +2,7 @@
 
 namespace SP_Shopping.ServiceDtos.User;
 
-public class UserCreateDto
+public class UserCreateDto : IDisposable
 {
     public string UserName { get; set; }
     public string Password { get; set; }
@@ -11,4 +11,10 @@ public class UserCreateDto
     public List<ApplicationRole> Roles { get; set; } = [];
     public string? Description { get; set; }
     public Stream? Image { get; set; }
+    public void Dispose()
+    {
+        if (Image is not null and var image) {
+            image.Dispose();
+        }
+    }
 }

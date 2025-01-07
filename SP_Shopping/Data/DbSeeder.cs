@@ -4,6 +4,7 @@ using SP_Shopping.Models;
 using SP_Shopping.Service;
 using SP_Shopping.ServiceDtos.Category;
 using SP_Shopping.ServiceDtos.Product;
+using SP_Shopping.ServiceDtos.User;
 using SP_Shopping.Utilities;
 using System.Text.Json;
 
@@ -119,39 +120,45 @@ public class DbSeeder : IDisposable
             return;
         }
 
-        if (!await MakeAdminUser(imageStreams))
+        List<string> userIds = [];
+
+        if (!(await MakeAdminUser(imageStreams)).TryOut(out string? adminId))
         {
             return;
         }
+        else
+        {
+            userIds.Add(adminId!);
+        }
 
-        List<ApplicationUser> users = userSeedData
-            .Select(u =>
+
+        List<UserCreateDto> udtos = userSeedData
+            .Select(u => new UserCreateDto()
             {
-                var user = new ApplicationUser();
-                user.UserName = u.UserName;
-                user.Email = u.Email;
-                user.PhoneNumber = u.PhoneNumber;
-                user.Description = u.Description;
-                user.Roles = [];
-                return user;
+                UserName = u.UserName,
+                Password = "123456",
+                Email = u.Email,
+                PhoneNumber = u.PhoneNumber,
+                Roles = [],
+                Description = u.Description,
+                Image = imageStreams[_random.Next(imageStreams.Count)]
             })
             .DistinctBy(u => u.UserName)
             .ToList();
 
-        foreach (var user in users)
+        foreach (var udto in udtos)
         {
-            Stream? chosenImage = imageStreams[_random.Next(imageStreams.Count)];
-            FormFile? ff = chosenImage is null ? null : new FormFile(chosenImage, 0, chosenImage.Length, "idk", "idk");
-            var (succeeded, errMsgs) = await _shoppingServices.User.TryCreateAsync(user, "123456", ff);
-            if (ff is not null)
+            var (succeeded, id, errMsgs) = await _shoppingServices.User.TryCreateAsync(udto);
+            if (udto.Image is not null)
             {
-                chosenImage!.Position = 0;
+                udto.Image.Position = 0;
             }
             if (!succeeded)
             {
                 _logger.LogError("Failed to seed user in database due to {ErrMsgs}", errMsgs);
                 return;
             }
+            userIds.Add(id!);
         }
 
 
@@ -162,7 +169,7 @@ public class DbSeeder : IDisposable
                 Price = p.Price,
                 Description = p.Description,
                 CategoryId = categoryIds[_random.Next(categoryIds.Count)],
-                SubmitterId = users[_random.Next(users.Count)].Id,
+                SubmitterId = userIds[_random.Next(userIds.Count)],
                 Image = imageStreams[_random.Next(imageStreams.Count)]
             })
             .DistinctBy(p => p.Name)
@@ -188,7 +195,7 @@ public class DbSeeder : IDisposable
         List<CartItem> cartItems = cartItemSeedData
             .Select(c => new CartItem
             {
-                UserId = users[_random.Next(users.Count)].Id,
+                UserId = userIds[_random.Next(userIds.Count)],
                 ProductId = productIds[_random.Next(productIds.Count)],
                 Count = c.Count
             })
@@ -245,39 +252,39 @@ public class DbSeeder : IDisposable
     }
 
 
-    private async Task<bool> MakeAdminUser(List<Stream?> imageStreams)
+    private async Task<(bool succeeded, string? id)> MakeAdminUser(List<Stream?> imageStreams)
     {
 
         ApplicationRole? adminRole = await _shoppingServices.Role.GetSingleAsync(q => q.Where(r => r.Name == "Admin"));
         if (adminRole == null)
         {
             _logger.LogError("Failed to get admin role from database");
-            return false;
+            return (false, null);
         }
 
-        var admin = new ApplicationUser
+        var admindto = new UserCreateDto
         {
             UserName = "admin",
+            Password = "123456",
             Email = "admin@admin.com",
             PhoneNumber = "111111",
             Description = "Admin user",
-            Roles = adminRole is not null ? [adminRole] : []
+            Roles = adminRole is not null ? [adminRole] : [],
+            Image = imageStreams[_random.Next(imageStreams.Count)]
         };
 
-        Stream? chosenImage = imageStreams[_random.Next(imageStreams.Count)];
-        FormFile? ff = chosenImage is null ? null : new FormFile(chosenImage, 0, chosenImage.Length, "idk", "idk");
-        var (succeeded, errMsgs) = await _shoppingServices.User.TryCreateAsync(admin, "123456", ff);
-        if (ff is not null)
+        var (succeeded, id, errMsgs) = await _shoppingServices.User.TryCreateAsync(admindto);
+        if (admindto.Image is not null)
         {
-            chosenImage!.Position = 0;
+            admindto.Image.Position = 0;
         }
         if (!succeeded)
         {
             _logger.LogError("Failed to seed user in database due to {ErrMsgs}", errMsgs);
-            return false;
+            return (false, null);
         }
 
-        return true;
+        return (true, id);
     }
 
 

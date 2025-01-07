@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using SP_Shopping.Dtos.User;
 using SP_Shopping.Service;
+using SP_Shopping.ServiceDtos.Product;
 using SP_Shopping.Utilities.Filters;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace SP_Shopping.Controllers;
 public class UserController
@@ -21,11 +24,22 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering User/Index");
 
-        UserPageDto? udto = await _shoppingServices.User.GetSingleAsync(q => 
-            _mapper.ProjectTo<UserPageDto>(q
-                .Where(u => u.Id == id)
-            )
-        );
+        UserPageDto? udto = await _shoppingServices.User.GetByIdAsync(id!, u => new UserPageDto
+        {
+            Id = u.Id,
+            UserName = u.UserName,
+            Email = u.Email,
+            Description = u.Description,
+            InsertionDate = u.InsertionDate,
+            RoleNames = u.Roles.Select(r => r.ToString()).ToList(),
+            ProductDetails = u.Products == null ? null : u.Products.Select(p => new UserPageDto.UserPageProductDto
+            {
+                Id = p.Id,
+                CategoryName = p.Category.Name,
+                Name = p.Name,
+                Price = p.Price
+            })
+        });
 
         if (udto is null)
         {

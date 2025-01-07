@@ -163,7 +163,7 @@ public class ProductsController
         }
         else
         {
-            if (!await _shoppingServices.User.ExistsAsync(q => q.Where(u => u.Id == pdto.SubmitterId)))
+            if (!await _shoppingServices.User.ExistsAsync(pdto.SubmitterId))
             {
                 _logger.LogDebug("{SubmitterId} is not a valid user id.", pdto.SubmitterId);
                 _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Warning, Content = $"{pdto.SubmitterId} is not a valid user id" });
@@ -332,8 +332,6 @@ public class ProductsController
 
     private async Task<IEnumerable<SelectListItem>> GetUsersSelectListAsync()
     {
-        return await _shoppingServices.User.GetAllAsync(q => q
-            .Select(u => new SelectListItem { Text = u.UserName, Value = u.Id })
-        );
+        return await _shoppingServices.User.GetAllAsync(u => new SelectListItem { Text = u.UserName, Value = u.Id });
     }
 }

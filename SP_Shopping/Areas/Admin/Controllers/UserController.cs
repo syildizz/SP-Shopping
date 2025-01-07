@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using SP_Shopping.Areas.Admin.Dtos.User;
 using SP_Shopping.Models;
 using SP_Shopping.Service;
+using SP_Shopping.ServiceDtos.User;
 using SP_Shopping.Utilities;
 using SP_Shopping.Utilities.Filters;
 using SP_Shopping.Utilities.ImageHandler;
@@ -110,13 +111,15 @@ public class UserController
         }
 
         _logger.LogDebug("Fetching product information matching search term.");
-        var pdtoList = await _shoppingServices.User.GetAllAsync(q =>
-            _mapper.ProjectTo<AdminUserDetailsDto>(q
-                ._(queryFilter)
-                ._(sortFilter)
-                .Take(20)
-            )
-        );
+        //var pdtoList = await _shoppingServices.User.GetAllAsync(q =>
+        //    _mapper.ProjectTo<AdminUserDetailsDto>(q
+        //        ._(queryFilter)
+        //        ._(sortFilter)
+        //        .Take(20)
+        //    )
+        //);
+        //TODO: write actual method
+        var pdtoList = (List<AdminUserDetailsDto>)[];
 
         return View(pdtoList);
         
@@ -128,11 +131,7 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering Admin/Edit.");
 
-        var udto = await _shoppingServices.User.GetSingleAsync(q => 
-            _mapper.ProjectTo<AdminUserEditDto>(q
-                .Where(u => u.Id == id)
-            )
-        );
+        var udto = await _shoppingServices.User.GetByIdAsync(id!);
 
         if (udto is null)
         {
@@ -150,18 +149,24 @@ public class UserController
 
         if (ModelState.IsValid)
         {
-            var user = _mapper.Map<ApplicationUser>(udto);
+            using var user = new UserEditDto
+            {
+                UserName = udto.UserName,
+                Password = null,
+                Email = udto.Email,
+                PhoneNumber = udto.PhoneNumber,
+                Roles = await _shoppingServices.Role.GetAllAsync(q => q
+                .Where(r => r.NormalizedName != null && udto.Roles.Contains(r.NormalizedName))),
+                Description = udto.Description,
+                Image = udto.ProfilePicture?.OpenReadStream()
+            };
 
             if (user is null)
             {
                 return NotFound("The user is not found");
             }
 
-            user.Roles = await _shoppingServices.Role.GetAllAsync(q => q
-                .Where(r => r.NormalizedName != null && udto.Roles.Contains(r.NormalizedName))
-            );
-
-            if (!(await _shoppingServices.User.TryUpdateAsync(user, udto.ProfilePicture)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.User.TryUpdateAsync(udto.Id, user)).TryOut(out var errMsgs))
             {
                _messageHandler.Add(TempData, errMsgs!); 
                return RedirectToAction("Edit", new { id = udto.Id });
@@ -179,13 +184,10 @@ public class UserController
     [IfArgNullBadRequestFilter(nameof(id))]
     public async Task<IActionResult> Delete(string? id)
     {
-        var user = await _shoppingServices.User.GetSingleAsync(q => q
-            .Where(u => u.Id == id)
-        );
-
+        var user = await _shoppingServices.User.GetByIdAsync(id!);
         if (user is not null)
         {
-            if (!(await _shoppingServices.User.TryDeleteAsync(user)).TryOut(out var errMsgs))
+            if (!(await _shoppingServices.User.TryDeleteAsync(id!)).TryOut(out var errMsgs))
             {
                 _messageHandler.Add(TempData, errMsgs!);
                return RedirectToAction("Index");
@@ -202,9 +204,12 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering Admin/User/Adminize");
 
-        var user = await _shoppingServices.User.GetSingleAsync(q => q.Where(u => u.Id == id).Include(u => u.Roles));
+        var udto = await _shoppingServices.User.GetByIdAsync(id!);
 
-        if (user is null) return NotFound("User is not found");
+        if (udto is null) return NotFound("User is not found");
+
+        var user = Utilities.Mappers.MapToApplicationUser.From(udto);
+
         if (await _userManager.IsInRoleAsync(user, "Admin"))
         {
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Info, Content = "User is already admin" });
@@ -237,9 +242,12 @@ public class UserController
     {
         _logger.LogInformation("GET: Entering Admin/User/Unadminize");
 
-        var user = await _shoppingServices.User.GetSingleAsync(q => q.Where(u => u.Id == id).Include(u => u.Roles));
+        var udto = await _shoppingServices.User.GetByIdAsync(id!);
+
+        if (udto is null) return NotFound("User is not found");
+
+        var user = Utilities.Mappers.MapToApplicationUser.From(udto);
         
-        if (user is null) return NotFound("User is not found");
         if (!await _userManager.IsInRoleAsync(user, "Admin"))
         {
             _messageHandler.Add(TempData, new Message { Type = Message.MessageType.Info, Content = "User is already not admin" });
@@ -270,10 +278,7 @@ public class UserController
     {
         _logger.LogInformation($"POST: Entering Admin/User/ResetImage.");
         _logger.LogDebug("Fetching user for id \"{Id}\".", id);
-        var userExists = await _shoppingServices.User.ExistsAsync(q => q
-            .Where(p => p.Id == id)
-        );
-
+        var userExists = await _shoppingServices.User.ExistsAsync(id!);
         if (!userExists)
         {
             _logger.LogError("The product with the passed id of \"{Id}\" does not exist.", id);

@@ -143,7 +143,7 @@ public class CartController
         // Check that the keys are valid.
 
         _logger.LogDebug("Checking if user with \"{userId}\" exists in database.", cartItem.UserId);
-        bool userExists = await _shoppingServices.User.ExistsAsync(q => q.Where(u => u.Id == cartItem.UserId));
+        bool userExists = await _shoppingServices.User.ExistsAsync(cartItem.UserId);
         if (!userExists)
         {
             _logger.LogError("The user id of \"{UserId}\" does not exist in the database.", cartItem.UserId);
